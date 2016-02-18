@@ -1,0 +1,66 @@
+################################################################## 
+###       Scraper Functions to put together game URLs          ###
+# Author: Maksim Horowitz                                        #
+# Code Style Guide: Google R Format                              #
+################################################################## 
+
+#' Extract GameIDs for each game in a given NFL season
+#' @description This function is a helper for the Proper.PBP.URL.Formatting function.
+#' The outputs of extracting_gameids is used in conjunction with Proper.PBP.URL.Formatting
+#' to create the URLs for each NFL game in a specified season
+#' @param Season (numeric) A numeric 4-digit year associated with an NFL season
+#' @return A vector of NFL GameIDs from the specified season
+#' @examples
+#' # Scraping all game IDs from 2010 Season
+#' extracting_gameids(2010) 
+extracting_gameids <- function(Season) {
+  
+  # Setting up to Pull Regular Season Weeks
+  
+  # String for the regular season part of the URL
+  url.year.sched <- paste("http://www.nfl.com/schedules", Season, 
+                          "REG", sep = "/")
+  
+  # This Runs through the Week of the season and adds it as part of the URL
+  url.schedule.weeks <- sapply(1:17, FUN = function(x) {
+                                                      paste(url.year.sched, 
+                                                            x, 
+                                                            sep = "" )
+                                                      })
+  # Here I use regular expressions to scrape out the gameids for each game in
+  # the specified season
+  game.id.list <- sapply(url.schedule.weeks, 
+                       FUN = function(x) {sourceHTML <- scrapeR::scrape(url = x, 
+                                                               headers = TRUE,
+                                                               parse = FALSE)
+                                          extract.game.id <- stringr::str_extract_all(unlist(sourceHTML),
+                                                            pattern = "data-gameid=\"[0-9]{10}\"")
+                                          game.ids <- stringr::str_extract_all(unlist(extract.game.id),
+                                                     pattern = "[0-9]{10}")
+                       })
+  
+  game.id.list <- unlist(game.id.list)
+  names(game.id.list) <- NULL
+  game.id.list
+}
+
+
+#' Formatting URL for location of NFL Game JSON Data
+#' @description This function pastes together the proper formatting of 
+#' the nfl play by play data JSON URL such that it can be used in our 
+#' play-by-play functions.  This function calls the extracting_gameids function
+#' 
+#' @param GameID (numeric) A 10-digit game ID associated with a specific NFL 
+#' game
+#' 
+#' @return A url where the game JSON data for the given game can be found
+#' @examples
+#' # Putting all game IDs in to proper URL format
+#' proper_url_formatting(2010) 
+
+proper_jsonurl_formatting <- function(GameID) {
+  
+  # Paste together the proper location of the JSON data
+  paste("http://www.nfl.com/liveupdate/game-center/",GameID, "/",
+        GameID,"_gtd.json", sep = "")
+}
