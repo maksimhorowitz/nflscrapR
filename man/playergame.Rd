@@ -2,7 +2,7 @@
 % Please edit documentation in R/PlayerGameFunctions.R
 \name{playergame}
 \alias{playergame}
-\title{Boxscore for a Single Game}
+\title{Detailed Boxscore for Single NFL Games}
 \usage{
 playergame(URLString)
 }
@@ -12,8 +12,9 @@ data from a single game}
 }
 \value{
 This function outputs a single dataframe containing all rushing, passing,
-receiving, fumble, and defensive statistics for each player in a single  game.
-Each player is assigned one line associated wih their statisitcs.
+receiving, kick return, punt return, kicking, fumble, and defensive
+statistics for each player in a single  game. Each player is assigned one
+line associated wih their statisitcs.
 }
 \description{
 This function is used to neatly read all a players measurable
@@ -21,12 +22,12 @@ statistics from a given game.  Each player's statistics can be viewed on one
 line.
 }
 \details{
-This dataframe includes 36 variables including identifiers such as:
+This dataframe includes 55 variables including identifiers such as:
  \itemize{
  \item{"gameID", "date", "team", "playerID", "name"}
  }
-Statistics are included for passing, rushing, receiving, defensive,
-and fumbles.
+Statistics are included for passing, rushing, receiving, kick return,
+punt return, kicking, defensive, and fumbles.
 }
 \examples{
 # URL Link to NFL JSON data for a random game

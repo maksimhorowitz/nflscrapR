@@ -1,21 +1,22 @@
 ### Player Games Functions ###
 
-#' Boxscore for a Single Game
+#' Detailed Boxscore for Single NFL Games
 #' @description This function is used to neatly read all a players measurable 
 #' statistics from a given game.  Each player's statistics can be viewed on one 
-#' line.  
+#' line.
 #' @param URLString (character) A URL character string linking to the JSON API 
 #' data from a single game
-#' @details This dataframe includes 36 variables including identifiers such as:
+#' @details This dataframe includes 55 variables including identifiers such as:
 #'  \itemize{
 #'  \item{"gameID", "date", "team", "playerID", "name"}
 #'  }
-#' Statistics are included for passing, rushing, receiving, defensive, 
-#' and fumbles.
+#' Statistics are included for passing, rushing, receiving, kick return,
+#' punt return, kicking, defensive, and fumbles.
 #' 
 #' @return This function outputs a single dataframe containing all rushing, passing,
-#' receiving, fumble, and defensive statistics for each player in a single  game.  
-#' Each player is assigned one line associated wih their statisitcs.
+#' receiving, kick return, punt return, kicking, fumble, and defensive 
+#' statistics for each player in a single  game. Each player is assigned one 
+#' line associated wih their statisitcs.
 #' @examples
 #' # URL Link to NFL JSON data for a random game
 #' nfl.data <- "http://www.nfl.com/liveupdate/game-center/2013090800/2013090800_gtd.json"
@@ -33,18 +34,155 @@ playergame <- function(URLString) {
                              t(sapply(nfl.json[[1]][[1]]$stats$passing, c))),
                   data.frame(Team = nfl.json[[1]][[2]]$abbr,
                              t(sapply(nfl.json[[1]][[2]]$stats$passing, c))))
+  
   dfrush <- rbind(data.frame(Team = nfl.json[[1]][[1]]$abbr,
                              t(sapply(nfl.json[[1]][[1]]$stats$rushing, c))),
                   data.frame(Team = nfl.json[[1]][[2]]$abbr,
                              t(sapply(nfl.json[[1]][[2]]$stats$rushing, c))))
+  
   dfrec <- rbind(data.frame(Team = nfl.json[[1]][[1]]$abbr,
                             t(sapply(nfl.json[[1]][[1]]$stats$receiving, c))),
                  data.frame(Team = nfl.json[[1]][[2]]$abbr,
                             t(sapply(nfl.json[[1]][[2]]$stats$receiving, c))))
+  
   dfdef <- rbind(data.frame(Team = nfl.json[[1]][[1]]$abbr,
                             t(sapply(nfl.json[[1]][[1]]$stats$defense, c))),
                  data.frame(Team = nfl.json[[1]][[2]]$abbr,
                             t(sapply(nfl.json[[1]][[2]]$stats$defense, c))))
+  # Accounting for the change that one or both teams never punt or never kick
+  
+  #########
+  # Kicking
+  #########
+  
+  if (length(nfl.json[[1]][[1]]$stats$kicking) == 0 & 
+        length(nfl.json[[1]][[2]]$stats$kicking) > 0) {
+    dfkicking <- data.frame(Team = nfl.json[[1]][[2]]$abbr,
+                            t(sapply(nfl.json[[1]][[2]]$stats$kicking, c)))
+  } 
+  
+  else if (length(nfl.json[[1]][[1]]$stats$kicking) > 0 & 
+             length(nfl.json[[1]][[2]]$stats$kicking) == 0) {
+    dfkicking <- data.frame(Team = nfl.json[[1]][[1]]$abbr,
+                            t(sapply(nfl.json[[1]][[1]]$stats$kicking, c)))
+  }
+  
+  else if (length(nfl.json[[1]][[1]]$stats$kicking) == 0 & 
+             length(nfl.json[[1]][[2]]$stats$kicking) == 0) {
+    dfkicking <- data.frame("Team" = NA , "name" = NA , "fgm" = NA, 
+                            "fga" = NA, "fgyds" = NA, 
+                            "totpfg" = NA, "xpmade" = NA, "xpmissed" = NA,
+                            "xpa" = NA, "xpb" = NA, "xptot" = NA)
+  } 
+  
+  else {
+    dfkicking <-  rbind(data.frame(Team = nfl.json[[1]][[1]]$abbr,
+                                   t(sapply(nfl.json[[1]][[1]]$stats$kicking, 
+                                            c))),
+                        data.frame(Team = nfl.json[[1]][[2]]$abbr,
+                                   t(sapply(nfl.json[[1]][[2]]$stats$kicking,
+                                            c))))
+  }
+  
+  ##########
+  # Punt Ret
+  ##########
+  if (length(nfl.json[[1]][[1]]$stats$puntret) == 0 & 
+    length(nfl.json[[1]][[2]]$stats$puntret) > 0) {
+    dfpuntret <- data.frame(Team = nfl.json[[1]][[2]]$abbr,
+                         t(sapply(nfl.json[[1]][[2]]$stats$puntret, c)))
+  } 
+  
+  else if (length(nfl.json[[1]][[1]]$stats$puntret) > 0 & 
+             length(nfl.json[[1]][[2]]$stats$puntret) == 0) {
+    dfpuntret <- data.frame(Team = nfl.json[[1]][[1]]$abbr,
+                            t(sapply(nfl.json[[1]][[1]]$stats$puntret, c)))
+  }
+  
+  else if (length(nfl.json[[1]][[1]]$stats$puntret) == 0 & 
+             length(nfl.json[[1]][[2]]$stats$puntret) == 0) {
+  dfpuntret <- data.frame("Team" = NA , "name" = NA , "punt.rets" = NA, 
+                          "puntret.avg" = NA, "puntret.tds" = NA, 
+                          "puntret.lng" = NA, "puntret.lngtd" = NA)
+  } 
+  
+  else {
+    dfpuntret <-  rbind(data.frame(Team = nfl.json[[1]][[1]]$abbr,
+                     t(sapply(nfl.json[[1]][[1]]$stats$puntret, c))),
+          data.frame(Team = nfl.json[[1]][[2]]$abbr,
+                     t(sapply(nfl.json[[1]][[2]]$stats$puntret, c))))
+  }
+  
+  ##########
+  # Kick Ret
+  ##########
+  
+  if (length(nfl.json[[1]][[1]]$stats$kickret) == 0 & 
+        length(nfl.json[[1]][[2]]$stats$kickret) > 0) {
+    dfkickret <- data.frame(Team = nfl.json[[1]][[2]]$abbr,
+                            t(sapply(nfl.json[[1]][[2]]$stats$kickret, c)))
+  } 
+  
+  else if (length(nfl.json[[1]][[1]]$stats$kickret) > 0 & 
+             length(nfl.json[[1]][[2]]$stats$kickret) == 0) {
+    dfkickret <- data.frame(Team = nfl.json[[1]][[1]]$abbr,
+                            t(sapply(nfl.json[[1]][[1]]$stats$kickret, c)))
+  }
+  
+  else if (length(nfl.json[[1]][[1]]$stats$kickret) == 0 & 
+             length(nfl.json[[1]][[2]]$stats$kickret) == 0) {
+    dfkickret <- data.frame("Team" = NA , "name" = NA , "kick.rets" = NA, 
+                            "kickret.avg" = NA, "kickret.tds" = NA, 
+                            "kickret.lng" = NA, "kickret.lngtd" = NA)
+  } 
+  
+  else {
+    dfkickret <-  rbind(data.frame(Team = nfl.json[[1]][[1]]$abbr,
+                                   t(sapply(nfl.json[[1]][[1]]$stats$kickret, 
+                                            c))),
+                        data.frame(Team = nfl.json[[1]][[2]]$abbr,
+                                   t(sapply(nfl.json[[1]][[2]]$stats$kickret, 
+                                            c))))
+  }
+  
+  # Adding rushlongtd, and reclongtd for 2009 season which did not include 
+  # these variables.  Arbitrarily made 0.
+  if (ncol(dfrec) == 8 & ncol(dfrush) == 8) {
+    dfrec$reclngtd <- 0
+    dfrush$rushlngtd <- 0
+    
+    # reorder columns to be in uniform order with other seasons
+    dfrec <- dfrec[,c(1,2,3,4,5,6,9,7,8)]
+    dfrush <- dfrush[,c(1,2,3,4,5,6,9,7,8)]
+  }
+
+  # Adding kickret, lngtd for 2009 season which did not include these variable.
+  # Arbitrarily made 0.
+  if (ncol(dfkickret) == 6) {dfkickret$kickret.lngtd <- 0}
+  if (ncol(dfpuntret) == 6) {dfpuntret$puntret.lngtd <- 0}
+  
+  # Changing colnames of all stat dfs
+  colnames(dfpass) <- c("Team", "name", "pass.att", "pass.comp", "passyds", 
+                        "pass.tds", "pass.ints", "pass.twopta", "pass.twoptm")
+  
+  colnames(dfrush) <- c("Team", "name", "rush.att", "rushyds", "rushtds", 
+                        "rushlng", "rushlngtd", "rush.twopta", "rush.twoptm")
+  
+  colnames(dfrec) <- c("Team", "name", "recept", "recyds", "rec.tds", "reclng",
+                       "reclngtd", "rec.twopta", "rec.twoptm")
+  
+  colnames(dfdef) <- c("Team", "name", "tackles", "asst.tackles", "sacks",
+                       "defints", "forced.fumbs")
+  
+  colnames(dfkicking) <- c("Team", "name", "fgm", "fga", "fgyds", "totpts.fg",
+                           "xpmade", "xpmissed", "xpa", "xpb", "xppts.tot")
+  
+  colnames(dfkickret) <- c("Team", "name", "kick.rets", "kickret.avg", 
+                           "kickret.tds", "kick.ret.lng", "kickret.lngtd")
+  
+  colnames(dfpuntret) <- c("Team", "name", "punt.rets", "puntret.avg", 
+                           "puntret.tds", "puntret.lng", "puntret.lngtd")
+  
   
   # Case when both teams have at least one fumble
   if (length(nfl.json[[1]][[1]]$stats$fumbles) > 0 & 
@@ -81,13 +219,16 @@ playergame <- function(URLString) {
     dfpass$playerID <- rownames(dfpass)
     dfrush$playerID <- rownames(dfrush)
     dfrec$playerID <- rownames(dfrec)
+    dfkicking$playerID <- rownames(dfkicking)
+    dfpuntret$playerID <- rownames(dfpuntret)
+    dfkickret$playerID <- rownames(dfkickret)
     dfdef$playerID <- rownames(dfdef)
     
     # This stage is where we merge all the dataframes together so each player 
     # has one line
     final.df <- Reduce(function(x, y) 
     {merge(x, y, by = c("Team", "playerID", "name"),all=TRUE, sort = FALSE)},
-    list(dfpass, dfrush, dfrec, dfdef))
+    list(dfpass, dfrush, dfrec, dfkickret, dfpuntret, dfkicking, dfdef))
     
     # Adding Fumble columns with 0's due to no occurance of fumbles in game
     final.df$totalfumbs <- 0
@@ -107,6 +248,9 @@ playergame <- function(URLString) {
     dfpass$playerID <- rownames(dfpass)
     dfrush$playerID <- rownames(dfrush)
     dfrec$playerID <- rownames(dfrec)
+    dfkicking$playerID <- rownames(dfkicking)
+    dfpuntret$playerID <- rownames(dfpuntret)
+    dfkickret$playerID <- rownames(dfkickret)
     dffumb$playerID <- rownames(dffumb)
     dfdef$playerID <- rownames(dfdef)
     
@@ -114,8 +258,9 @@ playergame <- function(URLString) {
     # has one line 
     
     final.df <- Reduce(function(x,y) {
-      merge(x, y, by = c("Team", "playerID", "name"), all = TRUE, sort = FALSE)},
-      list(dfpass, dfrush, dfrec, dffumb, dfdef))
+      merge(x, y, by = c("Team", "playerID", "name"), all = TRUE, sort = FALSE)}
+      , list(dfpass, dfrush, dfrec, dfkickret, dfpuntret,
+             dfkicking, dfdef, dffumb))
   }
   
   final.df <- data.frame(Team = final.df[,1],
@@ -142,53 +287,10 @@ playergame <- function(URLString) {
   # Unlist the listed variables in order to return the output dataframe in a 
   # friendlier format
   
-  final.df2$playerID <- unlist(final.df2$playerID)
-  final.df2$name <- unlist(final.df2$name)
-  final.df2$Team.x <- unlist(final.df2$Team.x)
-  final.df2$att.x <- unlist(final.df2$att.x)
-  final.df2$cmp <- unlist(final.df2$cmp)
-  final.df2$yds.x <- unlist(final.df2$yds.x)
-  final.df2$tds.x <- unlist(final.df2$tds.x)
-  final.df2$ints <- unlist(final.df2$ints)
-  final.df2$twopta.x <- unlist(final.df2$twopta.x)
-  final.df2$twoptm.x <- unlist(final.df2$twoptm.x)
-  final.df2$att.y <- unlist(final.df2$att.y)
-  final.df2$yds.y <- unlist(final.df2$yds.y)
-  final.df2$tds.y <- unlist(final.df2$tds.y)
-  final.df2$lng.x <- unlist(final.df2$lng.x)
-  final.df2$lngtd.x <- unlist(final.df2$lngtd.x)
-  final.df2$twopta.y <- unlist(final.df2$twopta.y)
-  final.df2$twoptm.y <- unlist(final.df2$twoptm.y)
-  final.df2$rec <- unlist(final.df2$rec)
-  final.df2$yds <- unlist(final.df2$yds)
-  final.df2$tds <- unlist(final.df2$tds)
-  final.df2$lng.y <- unlist(final.df2$lng.y)
-  final.df2$lngtd.y <- unlist(final.df2$lngtd.y)
-  final.df2$twopta <- unlist(final.df2$twopta)
-  final.df2$twoptm <- unlist(final.df2$twoptm)
-  final.df2$totalfumbs <- unlist(final.df2$totalfumbs)
-  final.df2$recfumbs <- unlist(final.df2$recfumbs)
-  final.df2$totalrecfumbs <- unlist(final.df2$totalrecfumbs)
-  final.df2$fumbyds <- unlist(final.df2$fumbyds)
-  final.df2$fumbslost <- unlist(final.df2$fumbslost)
-  final.df2$tkl <- unlist(final.df2$tkl)
-  final.df2$ast <- unlist(final.df2$ast)
-  final.df2$sk <- unlist(final.df2$sk)
-  final.df2$int <- unlist(final.df2$int)
-  final.df2$ffum <- unlist(final.df2$ffum)
+  final.df2 <- data.frame(lapply(final.df2, unlist))
   
-  colnames(final.df2)<- c("gameID", "date", "team", "playerID", "name",
-                          "passatt","compl","passyds", "passtds", "passint", 
-                          "passtwoptattempts", "passtwoptmade", "rushatt",
-                          "rushyds", "rushtds", "rushlong", "rushlongtd",
-                          "rushtwoptattp", "rushtwoptmade", "recpt", "recyds", 
-                          "rectds", "reclong", "reclongtd",
-                          "rectwoptatt", "rectwoptmade", "totalfumbs",
-                          "fumbsrecovered","totalrecfumbs",
-                          "fumbydds", "fumbslost", "tackles", "assistedtkls",
-                          "sacks", "defint", "forcedfumbs")
   
-  final.df2[order(final.df2$date, final.df2$team),]
+  final.df2[order(final.df2$date, final.df2$Team),]
 }
 
 # Everygame in a Given Season
@@ -221,16 +323,17 @@ season_playergame <- function(Season) {
   playergame.season <- do.call(rbind, playergame.season.unformatted)
   
   # Final output dataframe
-  data.frame(Year = Season, playergameseason)
+  data.frame(Year = Season, playergame.season)
 }
 
 # Aggregated for Each Player over the Season 
 
-#' Players Aggregate Season Statistics (Passing, Rushing, Receiving, Fumbles,
-#' and Defense)
+#' Detailed Player Aggregate Season Statistics
 #' @description This function outputs a dataframe with the season statistics for
 #' each player who recorded atleast one measured statistic in any game throughout
-#' the specified season.  This function gives one line per player.
+#' the specified season.  This function gives one line per player with the 
+#' following statistics: Passing, Rushing, Receiving, Kick Return,
+#' Punt Return, Fumbles, and Defense
 #' @param Season (numeric) A 4-digit year associated with a given season 
 #' @details This function calls season_playergame and then does aggregation 
 #' across an entire season 
@@ -239,7 +342,6 @@ season_playergame <- function(Season) {
 #' @examples
 #' # Returns the Season-Total Statistics for Each Player in the 2015 Season
 #' agg_player_season(2015)
-
 agg_player_season <- function(Season) {
   
   # Use the season_playergame function to generate a dataset with all the games
@@ -253,13 +355,17 @@ agg_player_season <- function(Season) {
   
   season.sum.agg <- dplyr::summarise_each(season.sum.agg, 
                                         funs(sum), -date, -rushlong, -rushlongtd
-                                        , -reclong, -reclongtd, -gameID)
+                                        , -reclong, -reclongtd, -gameID, 
+                                        -puntret.lng, -puntret.lngtd, 
+                                        -kick.ret.lng, -kickret.lngtd)
   
   # Here we find the max "long run" and max "long reception"
   season.max.agg <- dplyr::group_by(playerdata.year, Year, team, playerID, name) 
   
   season.max.agg <- dplyr::summarise_each(season.max.agg, funs(max), rushlong, 
-                                        rushlongtd, reclong, reclongtd)
+                                        rushlongtd, reclong, reclongtd, 
+                                        puntret.lng, puntret.lngtd, 
+                                        kick.ret.lng, kickret.lngtd)
   
   # Merging the Two datasets
   merge(season.sum.agg, season.max.agg, 

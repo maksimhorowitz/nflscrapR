@@ -2,8 +2,7 @@
 % Please edit documentation in R/PlayerGameFunctions.R
 \name{agg_player_season}
 \alias{agg_player_season}
-\title{Players Aggregate Season Statistics (Passing, Rushing, Receiving, Fumbles,
-and Defense)}
+\title{Detailed Player Aggregate Season Statistics}
 \usage{
 agg_player_season(Season)
 }
@@ -17,7 +16,9 @@ their total season statistics
 \description{
 This function outputs a dataframe with the season statistics for
 each player who recorded atleast one measured statistic in any game throughout
-the specified season.  This function gives one line per player.
+the specified season.  This function gives one line per player with the
+following statistics: Passing, Rushing, Receiving, Kick Return,
+Punt Return, Fumbles, and Defense
 }
 \details{
 This function calls season_playergame and then does aggregation

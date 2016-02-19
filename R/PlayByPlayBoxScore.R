@@ -642,7 +642,7 @@ drive_summary <- function(URLString) {
 #' @examples
 #' # Parsed drive Summarize of final game in 2015 NFL Season
 #' nfl2015.finalregseasongame <- "http://www.nfl.com/liveupdate/game-center/2016010310/2016010310_gtd.json"
-#' simple_BoxScore(nfl2015.finalregseasongame, home = TRUE) 
+#' simple_boxscore(nfl2015.finalregseasongame, home = TRUE) 
 
 simple_boxscore <- function(URLString, 
                                    home = TRUE) {
