@@ -321,9 +321,9 @@ game_play_by_play <- function(URLString) {
                                     pattern = "extra point is GOOD") != -1)
   
   extrapoint.nogood <- which(sapply(PBP$desc, regexpr, 
-                                    pattern = "extra point is No Good") != -1)
+         pattern = "(extra point is No Good) | (extra point is Blocked)") != -1)
   
-  PBP$PlayType[extrapoint.good] <- "Extra Point"
+  PBP$PlayType[c(extrapoint.good,extrapoint.nogood)] <- "Extra Point"
   
   # Extra Point Result
   PBP$ExPointResult <- NA
@@ -528,7 +528,7 @@ game_play_by_play <- function(URLString) {
   PBP$FieldGoalDistance <- unlist(PBP$FieldGoalDistance)
   
   ## Final OutPut ##
-  PBP[,c("Date", "GameCode", "Drive", "qtr", "down", "time", "TimeUnder", 
+  PBP[,c("Date", "GameID", "Drive", "qtr", "down", "time", "TimeUnder", 
          "SideofField", "yrdln", "ydstogo", "ydsnet", "GoalToGo", "FirstDown", 
          "posteam", "DefensiveTeam", "desc", "PlayAttempted", "Yards.Gained", 
          "sp", "Touchdown", "ExPointResult", "TwoPointConv", "PlayType", 
