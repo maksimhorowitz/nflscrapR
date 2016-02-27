@@ -4,45 +4,45 @@
 \alias{game_play_by_play}
 \title{Parsed Descriptive Play-by-Play Function for a Single Game}
 \usage{
-game_play_by_play(URLString)
+game_play_by_play(GameID)
 }
 \arguments{
-\item{URLString}{(character) A URL string with the location of a single 
-NFL game JSON API}
+\item{GameID}{(character or numeric) A 10 digit game ID associated with a 
+given NFL game.}
 }
 \value{
-A dataframe with 50 columns specifying various statistics associated 
-with each play of the specified NFL game.
+A dataframe with 52 columns specifying various statistics and 
+outcomes associated with each play of the specified NFL game.
 }
 \description{
 This function intakes the JSON play-by-play data of a single
- game and parses the play description column individual variables allowing 
- the user to segment the game in a variety of different ways allowing for
- in-depth analysis.
+ game and parses the play description column into individual variables 
+ allowing the user to segment the game in a variety of different ways for 
+ model building and analysis.
 }
 \details{
 Through simple list manipulation using the dp.call function and 
 rbind this function creates a 10 column dataframe with basic information 
  the NFL JSON API.  These columns include the following:
 \itemize{
- \item{"Drive"}
+ \item{"Drive"} - Drive number
  \item{"sp"} - Whether the play resulted in a score (any kind of score)
- \item{"qrt"}
- \item{"down"}
+ \item{"qrt"} - Quarter of Game
+ \item{"down"} - Down of the given play
  \item{"time"} - Time at start of play
  \item{"yrdln"} - Between 0 and 50
  \item{"ydstogo"} - For a first down
- \item{"ydsnet"}
+ \item{"ydsnet"} - Total yards gained on a given drive
  \item{"posteam"} - The offensive team
  \item{"desc"} - A detailed description of what occured during the play
 }
 
-Through string manipulation and parsing of the desc column, 40 columns were 
-added to the original dataframe allowing the user to have a detailed 
-understanding of the events of each play.  The added variables are specified 
+Through string manipulation and parsing of the description column, 42 columns 
+were added to the original dataframe allowing the user to have a detailed 
+breakdown of the events of each play.  The added variables are specified 
 below:
 \itemize{
- \item{"Date", "GameID"}
+ \item{"Date", "GameID", "TimeSecs", "TimeDiff"}
  \item{"DefensiveTeam", "SideofField"}
  \item{"GoalToGo", "FirstDown", "PlayAttempted"} 
  \item{"Yards.Gained", "TimeUnder"}
@@ -61,7 +61,14 @@ below:
 }
 \examples{
 # Parsed play-by-play of the final game in the 2015 NFL season 
-nfl2015.finalregseasongame <- "http://www.nfl.com/liveupdate/game-center/2016010310/2016010310_gtd.json"
-Game_PBP(nfl2015.finalregseasongame) 
+
+# Save the gameID into a variable 
+nfl2015.finalregseasongame.gameID <- "2016010310"
+
+# Input the variable into the function to output the desired dataframe
+finalgame2015.pbp <- game_play_by_play(nfl2015.finalregseasongame.gameID) 
+
+# Subset the dataframe based on passing plays
+subset(finalgame2015.pbp, PlayType == "Pass")
 }
 

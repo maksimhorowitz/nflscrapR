@@ -8,33 +8,33 @@
 
 #' Parsed Descriptive Play-by-Play Function for a Single Game
 #' @description This function intakes the JSON play-by-play data of a single
-#'  game and parses the play description column individual variables allowing 
-#'  the user to segment the game in a variety of different ways allowing for
-#'  in-depth analysis.
-#' @param URLString (character) A URL string with the location of a single 
-#' NFL game JSON API
+#'  game and parses the play description column into individual variables 
+#'  allowing the user to segment the game in a variety of different ways for 
+#'  model building and analysis.
+#' @param GameID (character or numeric) A 10 digit game ID associated with a 
+#' given NFL game.
 #' @details Through simple list manipulation using the dp.call function and 
 #' rbind this function creates a 10 column dataframe with basic information 
 #'  the NFL JSON API.  These columns include the following:
 #' \itemize{
-#'  \item{"Drive"}
+#'  \item{"Drive"} - Drive number
 #'  \item{"sp"} - Whether the play resulted in a score (any kind of score)
-#'  \item{"qrt"}
-#'  \item{"down"}
+#'  \item{"qrt"} - Quarter of Game
+#'  \item{"down"} - Down of the given play
 #'  \item{"time"} - Time at start of play
 #'  \item{"yrdln"} - Between 0 and 50
 #'  \item{"ydstogo"} - For a first down
-#'  \item{"ydsnet"}
+#'  \item{"ydsnet"} - Total yards gained on a given drive
 #'  \item{"posteam"} - The offensive team
 #'  \item{"desc"} - A detailed description of what occured during the play
 #' }
 #' 
-#' Through string manipulation and parsing of the desc column, 40 columns were 
-#' added to the original dataframe allowing the user to have a detailed 
-#' understanding of the events of each play.  The added variables are specified 
+#' Through string manipulation and parsing of the description column, 42 columns 
+#' were added to the original dataframe allowing the user to have a detailed 
+#' breakdown of the events of each play.  The added variables are specified 
 #' below:
 #' \itemize{
-#'  \item{"Date", "GameID"}
+#'  \item{"Date", "GameID", "TimeSecs", "TimeDiff"}
 #'  \item{"DefensiveTeam", "SideofField"}
 #'  \item{"GoalToGo", "FirstDown", "PlayAttempted"} 
 #'  \item{"Yards.Gained", "TimeUnder"}
@@ -51,20 +51,31 @@
 #'  \item{"PosTeamScore", "DefTeamScore", "ScoreDiff", "AbsScoreDiff"}
 #'  }
 #'  
-#' @return A dataframe with 50 columns specifying various statistics associated 
-#' with each play of the specified NFL game.
+#' @return A dataframe with 52 columns specifying various statistics and 
+#' outcomes associated with each play of the specified NFL game.
 #' @examples
 #' # Parsed play-by-play of the final game in the 2015 NFL season 
-#' nfl2015.finalregseasongame <- "http://www.nfl.com/liveupdate/game-center/2016010310/2016010310_gtd.json"
-#' Game_PBP(nfl2015.finalregseasongame) 
-game_play_by_play <- function(URLString) {
+#' 
+#' # Save the gameID into a variable 
+#' nfl2015.finalregseasongame.gameID <- "2016010310"
+#' 
+#' # Input the variable into the function to output the desired dataframe
+#' finalgame2015.pbp <- game_play_by_play(nfl2015.finalregseasongame.gameID) 
+#' 
+#' # Subset the dataframe based on passing plays
+#' subset(finalgame2015.pbp, PlayType == "Pass")
+game_play_by_play <- function(GameID) {
   # Google R stlye format
   
   #########################
   #########################
   
   # Converting JSON data
-  nfl.json <- RJSONIO::fromJSON(RCurl::getURL(URLString))
+  
+  # Converting GameID into URL string
+  urlstring <- proper_jsonurl_formatting(GameID)
+  
+  nfl.json <- RJSONIO::fromJSON(RCurl::getURL(urlstring))
   number.drives <- length(nfl.json[[1]]$drives) - 1
   PBP <- NULL
   for (ii in 1:number.drives) {
@@ -91,7 +102,7 @@ game_play_by_play <- function(URLString) {
   PBP$yrdln <- sapply(yline.info, FUN = function(x) x[2])
   
   # Game Date  
-  date.step1 <- stringr::str_extract(URLString, pattern = "/[0-9]{10}/")
+  date.step1 <- stringr::str_extract(urlstring, pattern = "/[0-9]{10}/")
   date.step2 <- stringr::str_extract(date.step1, pattern = "[0-9]{8}")
   year <- substr(date.step2, start = 1, stop = 4)
   month <- substr(date.step2, start = 5, stop = 6)
@@ -579,8 +590,9 @@ game_play_by_play <- function(URLString) {
 
 #' Parsed Descriptive Play-by-Play Function for a Full Season
 #' @description This function outputs all plays of an entire season in one dataframe.  
-#' It calls upon the game_play_by_play and applies it over every 
-#' game in the season.
+#' It calls the game_play_by_play function and applies it over every 
+#' game in the season by extracting each game ID and url in the specified season.
+#' 
 #' @param Season (numeric) A 4-digit year corresponding to an NFL season of 
 #' interest
 #'
@@ -589,12 +601,13 @@ game_play_by_play <- function(URLString) {
 #' from a given season.  This dataframe is prime for use with the dplyr and 
 #' plyr packages.
 #' @return A dataframe contains all the play-by-play information for a single
-#'      season.  This includes all the 50 variables collected in our 
+#'      season.  This includes all the 52 variables collected in our 
 #'      game_play_by_play function (see documentation for game_play_by_play for
 #'      details)
 #' @examples
 #' # Play-by-Play Data from All games in 2010
 #' pbp.data.2010 <- season_PBP(2010)
+#' 
 #' # Looking at all Baltimore Ravens Offensive Plays 
 #' subset(pbp.data.2010, posteam = "BAL")
 season_play_by_play <- function(Season) {
@@ -616,10 +629,28 @@ season_play_by_play <- function(Season) {
 # Drive Summary Function
 
 #' Drive Summary and Results 
-#' @description This function outputs the end result of each drive of a given
-#'  game
-#' @param URLString: A string with the URL location of a single NFL 
-#' game JSON API
+#' @description This function outputs the results dataframe of each drive of a 
+#' given game
+#' @param GameID (character or numeric) A 10 digit game ID associated with a 
+#' given NFL game.
+#' @details The outputted dataframe has 16 variables associated with a specific 
+#' aspect of a drive including the scoring result, number of plays, the duration 
+#' of the drive, and the offensive and defensive teams.  All 16 variable are
+#' explained in more detail below:
+#' \itemize{
+#'  \item{"posteam"} - The offensive team on the drive
+#'  \item{"qrt"} - The quarter at the end of the drive
+#'  \item{"fs"} - Number of first downs in the drive
+#'  \item{"result"} - End result of the drive
+#'  \item{"penyds"} - Net penalty yards of the drive for the offensive team
+#'  \item{"ydsgained"} - Number of yards gained on the drive
+#'  \item{"numplaus"} - Number of plays on the drive
+#'  \item{"postime"} - The duration of the 
+#'  \item{"Startqrt"} - The quarter at the beginning of the drive
+#'  \item{"StartTime} - The time left in the quarter at the start of the drive
+#'  \item{"StartYardln"} - Yardline at the start of the drive
+#'  \item{"StartTeam"} - The offensive team on the drive 
+#'  }
 #' @return A dataframe that has the summary statistics for each drive
 #'      final output includes first downs, drive result, penalty yards, 
 #'      of plays, time of possession, quarter at the start of the drive, 
@@ -628,15 +659,18 @@ season_play_by_play <- function(Season) {
 #'      end of drive Yard line, end of drive team with possession
 #' @examples
 #' # Parsed drive Summarize of final game in 2015 NFL Season
-#' nfl2015.finalregseasongame <- "http://www.nfl.com/liveupdate/game-center/2016010310/2016010310_gtd.json"
-#' drive_summary(nfl2015.finalregseasongame) 
-drive_summary <- function(URLString) {
+#' nfl2015.finalregseasongame.gameID <- "2016010310"
+#' drive_summary(nfl2015.finalregseasongame.gameID) 
+drive_summary <- function(GameID) {
   # Google R stlye format
   ######################
   ######################
   
+  # Generating Game URL
+  urlstring <- proper_jsonurl_formatting(GameID)
+  
   # Converting JSON data
-  nfl.json.data <- RJSONIO::fromJSON(RCurl::getURL(URLString))
+  nfl.json.data <- RJSONIO::fromJSON(RCurl::getURL(urlstring))
   
   # Creating Dataframe of Drive Outcomes
   drive.data <- data.frame(do.call(rbind, (nfl.json.data[[1]]$drives)))
@@ -657,43 +691,44 @@ drive_summary <- function(URLString) {
   drive.data.final <- cbind(drive.data[, -c(start.index,end.index)], 
                             start.data, end.data)
   
+
   # Removing last row and 4th column of irrelevant information
-  drive.data.final[-nrow(drive.data), -4]
+  drive.data.final[-nrow(drive.data),-c(3,4)]
 }
 
 
 ################################################################## 
 # Simple Box Score 
 
-#' Drive Summary and Results 
+#' Simple Game Boxscore
 #' @description This function pulls data from an NFL url and contructs it into a formatted 
 #' boxscore.
-#' @param URLString (character) is a character string of the URL of where to 
-#'                         pull the data from
+#' @param GameID (character or numeric) A 10 digit game ID associated with a 
+#' given NFL game.
 #' @param home (boolean): home = TRUE will pull home stats, 
 #'                  home = FALSE pulls away stats
-#' @return A list of statistics including passing, rushing, receiving, defense,
-#'  kicking, kick return, and punt return statistics for the specified game
+#' @return A list of playerstatistics including passing, rushing, receiving, 
+#' defense, kicking, kick return, and punt return statistics for the specified 
+#' game.
 #' @examples
 #' # Parsed drive Summarize of final game in 2015 NFL Season
-#' nfl2015.finalregseasongame <- "http://www.nfl.com/liveupdate/game-center/2016010310/2016010310_gtd.json"
-#' simple_boxscore(nfl2015.finalregseasongame, home = TRUE) 
+#' nfl2015.finalregseasongame.gameID <- "2016010310"
+#' simple_boxscore(nfl2015.finalregseasongame.gameID, home = TRUE) 
 
-simple_boxscore <- function(URLString, 
+simple_boxscore <- function(GameID, 
                                    home = TRUE) {
   # Google R stlye format
   ##################
   ##################
+  
+  # Generating Game URL
+  urlstring <- proper_jsonurl_formatting(GameID)
 
-  #   Start of Function
-  
-  nfl.json.data <- RJSONIO::fromJSON(RCurl::getURL(URLString))
-  
-  #   GameID
-  game.id <- stringr::str_extract(URLString, pattern = "[0-9]{10}")
+  # Start of Function
+  nfl.json.data <- RJSONIO::fromJSON(RCurl::getURL(urlstring))
   
   # Date of Game   
-  datestep1 <- stringr::str_extract(URLString, pattern = "/[0-9]{10}/")
+  datestep1 <- stringr::str_extract(urlstring, pattern = "/[0-9]{10}/")
   datestep2 <- stringr::str_extract(datestep1, pattern = "[0-9]{8}")
   year <- substr(datestep2, start = 1, stop = 4)
   month <- substr(datestep2, start = 5, stop = 6)
@@ -704,47 +739,47 @@ simple_boxscore <- function(URLString,
   if (home == TRUE) {
     home.team.name <- nfl.json.data[[1]]$home$abbr
     # Passing Stats
-    qb.stats <- data.frame(stat = "passing", date, game.id, home.team.name, 
+    qb.stats <- data.frame(stat = "passing", date, GameID, home.team.name, 
                           t(sapply(nfl.json.data[[1]]$home$stats$passing, c)))
     qb.stats$playerID <- rownames(t(sapply(nfl.json.data[[1]]$home$stats$passing, 
                                           c)))
     # Running Stats
-    rb.stats <- data.frame(stat = "rush", date, game.id, home.team.name, 
+    rb.stats <- data.frame(stat = "rush", date, GameID, home.team.name, 
                           t(sapply(nfl.json.data[[1]]$home$stats$rushing, c)))
     rb.stats$playerID <- rownames(t(sapply(nfl.json.data[[1]]$home$stats$rushing, 
                                           c)))
     # Receiving Stats
-    wr.stats <- data.frame(stat = "receiving", date, game.id, home.team.name, 
+    wr.stats <- data.frame(stat = "receiving", date, GameID, home.team.name, 
                           t(sapply(nfl.json.data[[1]]$home$stats$receiving, c)))
     wr.stats$playerID <- rownames(t(sapply(nfl.json.data[[1]]$home$stats$receiving, 
                                           c)))
     # Defensive Stats
-    def.stats <- data.frame(stat = "defense", date, game.id, home.team.name, 
+    def.stats <- data.frame(stat = "defense", date, GameID, home.team.name, 
                            t(sapply(nfl.json.data[[1]]$home$stats$defense, c)))
     def.stats$playerID <- rownames(
                                   t(sapply(nfl.json.data[[1]]$home$stats$defense 
                                            , c)))
     # Kicking Stats
-    kicker.stats <- data.frame(stat = "kicking", date, game.id, home.team.name, 
+    kicker.stats <- data.frame(stat = "kicking", date, GameID, home.team.name, 
                               t(sapply(nfl.json.data[[1]]$home$stats$kicking, 
                                        c)))
     kicker.stats$playerID <- rownames(t(
       sapply(nfl.json.data[[1]]$home$stats$kicking, 
              c)))
     # Fumble Stats
-    fumb.stats <- data.frame(stat = "fumbles", date, game.id, home.team.name, 
+    fumb.stats <- data.frame(stat = "fumbles", date, GameID, home.team.name, 
                             t(sapply(nfl.json.data[[1]]$home$stats$fumbles, c)))
     fumb.stats$playerID <- rownames(t(
       sapply(nfl.json.data[[1]]$home$stats$fumbles, 
              c)))
     # Kick Return Stats
-    kr.stats <- data.frame(stat = "kickreturn", date, game.id, home.team.name, 
+    kr.stats <- data.frame(stat = "kickreturn", date, GameID, home.team.name, 
                           t(sapply(nfl.json.data[[1]]$home$stats$kickret, c)))
     kr.stats$playerID <- rownames(t(
                                   sapply(nfl.json.data[[1]]$home$stats$kickret, 
              c)))
     # Punt Return Stats
-    pr.stats <- data.frame(stat = "puntreturn", date, game.id, home.team.name, 
+    pr.stats <- data.frame(stat = "puntreturn", date, GameID, home.team.name, 
                           t(sapply(nfl.json.data[[1]]$home$stats$puntret, c)))
     pr.stats$playerID <- rownames(t(
       sapply(nfl.json.data[[1]]$home$stats$puntret, 
@@ -763,49 +798,49 @@ simple_boxscore <- function(URLString,
     away.team.name <- nfl.json.data[[1]]$away$abbr
     
     # Passing Away Stats
-    qb.away.stats <- data.frame(stat = "passing", game.id, away.team.name, 
+    qb.away.stats <- data.frame(stat = "passing", GameID, away.team.name, 
                               t(sapply(nfl.json.data[[1]]$away$stats$passing, 
                                        c)))
     qb.away.stats$playerID <- rownames(t(sapply(nfl.json.data[[1]]$away$stats$passing, 
                                               c)))
     # Running Away Stats
-    rb.away.stats <- data.frame(stat = "rushing", date, game.id, away.team.name, 
+    rb.away.stats <- data.frame(stat = "rushing", date, GameID, away.team.name, 
                               t(sapply(nfl.json.data[[1]]$away$stats$rushing, 
                                        c)))
     rb.away.stats$playerID <- rownames(t(sapply(nfl.json.data[[1]]$away$stats$rushing, 
                                               c)))
     # Receiving Away Stats
-    wr.away.stats <- data.frame(stat = "receiving", date, game.id, away.team.name, 
+    wr.away.stats <- data.frame(stat = "receiving", date, GameID, away.team.name, 
                               t(sapply(nfl.json.data[[1]]$away$stats$receiving, 
                                        c)))
     wr.away.stats$playerID <- rownames(t(sapply(nfl.json.data[[1]]$away$stats$receiving, 
                                               c)))
     # Defensive Away Stats
-    def.away.stats <- data.frame(stat = "defense", date, game.id, away.team.name, 
+    def.away.stats <- data.frame(stat = "defense", date, GameID, away.team.name, 
                                t(sapply(nfl.json.data[[1]]$away$stats$defense, 
                                         c)))
     def.away.stats$playerID <- rownames(t(sapply(nfl.json.data[[1]]$away$stats$defense, 
                                                c)))
     # Kicking Away Stats
-    kicker.away.stats <- data.frame(stat = "kicking", date, game.id, away.team.name, 
+    kicker.away.stats <- data.frame(stat = "kicking", date, GameID, away.team.name, 
                                   t(sapply(nfl.json.data[[1]]$away$stats$kicking
                                            , c)))
     kicker.away.stats$playerID <- rownames(t(sapply(nfl.json.data[[1]]$away$stats$kicking, 
                                                   c)))
     # Fumble Away Stats
-    fumb.away.stats <- data.frame(stat = "fumbles", date, game.id, away.team.name, 
+    fumb.away.stats <- data.frame(stat = "fumbles", date, GameID, away.team.name, 
                                 t(sapply(nfl.json.data[[1]]$away$stats$fumbles, 
                                          c)))
     fumb.away.stats$playerID <- rownames(t(sapply(nfl.json.data[[1]]$away$stats$fumbles, 
                                                 c)))
     # Kick Return Away Stats
-    kr.away.stats <- data.frame(stat = "kickreturn", date, game.id, away.team.name,
+    kr.away.stats <- data.frame(stat = "kickreturn", date, GameID, away.team.name,
                               t(sapply(nfl.json.data[[1]]$away$stats$kickret, 
                                        c)))
     kr.away.stats$playerID <- rownames(t(sapply(nfl.json.data[[1]]$away$stats$kickret, 
                                               c)))
     # Punt Return Away Stats
-    pr.away.stats <- data.frame(stat = "puntreturn", date, game.id, 
+    pr.away.stats <- data.frame(stat = "puntreturn", date, GameID, 
                                 away.team.name, 
                               t(sapply(nfl.json.data[[1]]$away$stats$puntret, 
                                        c)))

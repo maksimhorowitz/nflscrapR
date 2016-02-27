@@ -7,11 +7,11 @@
 proper_jsonurl_formatting(GameID)
 }
 \arguments{
-\item{GameID}{(numeric) A 10-digit game ID associated with a specific NFL 
-game}
+\item{GameID}{(character or numeric) A 10 digit game ID associated with a 
+given NFL game.}
 }
 \value{
-A url where the game JSON data for the given game can be found
+The url where the game JSON data for the given game can be found.
 }
 \description{
 This function pastes together the proper formatting of 
@@ -19,7 +19,10 @@ the nfl play by play data JSON URL such that it can be used in our
 play-by-play functions.  This function calls the extracting_gameids function
 }
 \examples{
+# Save the gameID into a variable 
+nfl2015.finalregseasongame.gameID <- "2016010310"
+
 # Putting all game IDs in to proper URL format
-proper_url_formatting(2010) 
+proper_url_formatting(nfl2015.finalregseasongame.gameID) 
 }
 

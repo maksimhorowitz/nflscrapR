@@ -2,20 +2,21 @@
 % Please edit documentation in R/PlayByPlayBoxScore.R
 \name{simple_boxscore}
 \alias{simple_boxscore}
-\title{Drive Summary and Results}
+\title{Simple Game Boxscore}
 \usage{
-simple_boxscore(URLString, home = TRUE)
+simple_boxscore(GameID, home = TRUE)
 }
 \arguments{
-\item{URLString}{(character) is a character string of the URL of where to 
-pull the data from}
+\item{GameID}{(character or numeric) A 10 digit game ID associated with a 
+given NFL game.}
 
 \item{home}{(boolean): home = TRUE will pull home stats, 
 home = FALSE pulls away stats}
 }
 \value{
-A list of statistics including passing, rushing, receiving, defense,
- kicking, kick return, and punt return statistics for the specified game
+A list of playerstatistics including passing, rushing, receiving, 
+defense, kicking, kick return, and punt return statistics for the specified 
+game.
 }
 \description{
 This function pulls data from an NFL url and contructs it into a formatted 
@@ -23,7 +24,7 @@ boxscore.
 }
 \examples{
 # Parsed drive Summarize of final game in 2015 NFL Season
-nfl2015.finalregseasongame <- "http://www.nfl.com/liveupdate/game-center/2016010310/2016010310_gtd.json"
-simple_boxscore(nfl2015.finalregseasongame, home = TRUE) 
+nfl2015.finalregseasongame.gameID <- "2016010310"
+simple_boxscore(nfl2015.finalregseasongame.gameID, home = TRUE) 
 }
 

@@ -2,13 +2,13 @@
 % Please edit documentation in R/PlayerGameFunctions.R
 \name{playergame}
 \alias{playergame}
-\title{Detailed Boxscore for Single NFL Games}
+\title{Detailed Boxscore for Single NFL Game}
 \usage{
-playergame(URLString)
+playergame(GameID)
 }
 \arguments{
-\item{URLString}{(character) A URL character string linking to the JSON API 
-data from a single game}
+\item{GameID}{(character or numeric) A 10 digit game ID associated with a 
+given NFL game.}
 }
 \value{
 This function outputs a single dataframe containing all rushing, passing,

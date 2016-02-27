@@ -9,7 +9,7 @@ extracting_gameids(Season, playoffs = FALSE)
 \arguments{
 \item{Season}{(numeric) A numeric 4-digit year associated with an NFL season}
 
-\item{playoffs}{TRUE if you want the playoffs gameIDs for the specified 
+\item{playoffs}{(boolean) TRUE if you want the playoffs gameIDs for the specified 
 season.  FALSE (default) if you want the game IDs from the regular season}
 }
 \value{

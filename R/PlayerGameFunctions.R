@@ -1,11 +1,11 @@
 ### Player Games Functions ###
 
-#' Detailed Boxscore for Single NFL Games
+#' Detailed Boxscore for Single NFL Game
 #' @description This function is used to neatly read all a players measurable 
 #' statistics from a given game.  Each player's statistics can be viewed on one 
 #' line.
-#' @param URLString (character) A URL character string linking to the JSON API 
-#' data from a single game
+#' @param GameID (character or numeric) A 10 digit game ID associated with a 
+#' given NFL game.
 #' @details This dataframe includes 55 variables including identifiers such as:
 #'  \itemize{
 #'  \item{"gameID", "date", "team", "playerID", "name"}
@@ -18,14 +18,17 @@
 #' statistics for each player in a single  game. Each player is assigned one 
 #' line associated wih their statisitcs.
 #' @examples
-#' # URL Link to NFL JSON data for a random game
-#' nfl.data <- "http://www.nfl.com/liveupdate/game-center/2013090800/2013090800_gtd.json"
-#' PlayerGameTest <- playergame(nfl.data)
-#' 
-playergame <- function(URLString) {
+#' # GameID for a random game
+#' nfl.data.gameID <- "2013090800"
+#' PlayerGameData <- playergame(nfl.data.gameID)
+#' head(PlayerGameTest)
+playergame <- function(GameID) {
+  
+  # Converting GameID into URL string
+  urlstring <- proper_jsonurl_formatting(GameID)
   
   # Converting URL into readable JSON format
-  nfl.json <- RJSONIO::fromJSON(RCurl::getURL(URLString))
+  nfl.json <- RJSONIO::fromJSON(RCurl::getURL(urlstring))
   
   # Here we build the dataframes for the rushing, passing, receving, defense,
   # and fumbling stats
@@ -270,10 +273,10 @@ playergame <- function(URLString) {
   rownames(final.df) <- NULL
   
   # GameID
-  game.id <- stringr::str_extract(URLString, pattern = "[0-9]{10}")
+  game.id <- stringr::str_extract(urlstring, pattern = "[0-9]{10}")
   
   # Date of Game   
-  datestep1 <- stringr::str_extract(URLString, pattern = "/[0-9]{10}/")
+  datestep1 <- stringr::str_extract(urlstring, pattern = "/[0-9]{10}/")
   datestep2 <- stringr::str_extract(datestep1, pattern = "[0-9]{8}")
   year <- substr(datestep2, start = 1, stop = 4)
   month <- substr(datestep2, start = 5, stop = 6)

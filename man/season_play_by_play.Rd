@@ -12,14 +12,14 @@ interest}
 }
 \value{
 A dataframe contains all the play-by-play information for a single
-     season.  This includes all the 50 variables collected in our 
+     season.  This includes all the 52 variables collected in our 
      game_play_by_play function (see documentation for game_play_by_play for
      details)
 }
 \description{
 This function outputs all plays of an entire season in one dataframe.  
-It calls upon the game_play_by_play and applies it over every 
-game in the season.
+It calls the game_play_by_play function and applies it over every 
+game in the season by extracting each game ID and url in the specified season.
 }
 \details{
 This function calls the extracting_gameids, 
@@ -30,6 +30,7 @@ plyr packages.
 \examples{
 # Play-by-Play Data from All games in 2010
 pbp.data.2010 <- season_PBP(2010)
+
 # Looking at all Baltimore Ravens Offensive Plays 
 subset(pbp.data.2010, posteam = "BAL")
 }

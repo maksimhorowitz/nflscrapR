@@ -9,7 +9,7 @@
 #' The outputs of extracting_gameids is used in conjunction with Proper.PBP.URL.Formatting
 #' to create the URLs for each NFL game in a specified season
 #' @param Season (numeric) A numeric 4-digit year associated with an NFL season
-#' @param playoffs TRUE if you want the playoffs gameIDs for the specified 
+#' @param playoffs (boolean) TRUE if you want the playoffs gameIDs for the specified 
 #' season.  FALSE (default) if you want the game IDs from the regular season
 #' @return A vector of NFL GameIDs from the specified season
 #' @examples
@@ -79,13 +79,15 @@ extracting_gameids <- function(Season, playoffs = FALSE) {
 #' the nfl play by play data JSON URL such that it can be used in our 
 #' play-by-play functions.  This function calls the extracting_gameids function
 #' 
-#' @param GameID (numeric) A 10-digit game ID associated with a specific NFL 
-#' game
-#' 
-#' @return A url where the game JSON data for the given game can be found
+#' @param GameID (character or numeric) A 10 digit game ID associated with a 
+#' given NFL game.
+#' @return The url where the game JSON data for the given game can be found.
 #' @examples
+#' # Save the gameID into a variable 
+#' nfl2015.finalregseasongame.gameID <- "2016010310"
+#' 
 #' # Putting all game IDs in to proper URL format
-#' proper_url_formatting(2010) 
+#' proper_url_formatting(nfl2015.finalregseasongame.gameID) 
 
 proper_jsonurl_formatting <- function(GameID) {
   

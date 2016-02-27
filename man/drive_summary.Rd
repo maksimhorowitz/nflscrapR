@@ -4,11 +4,11 @@
 \alias{drive_summary}
 \title{Drive Summary and Results}
 \usage{
-drive_summary(URLString)
+drive_summary(GameID)
 }
 \arguments{
-\item{URLString:}{A string with the URL location of a single NFL 
-game JSON API}
+\item{GameID}{(character or numeric) A 10 digit game ID associated with a 
+given NFL game.}
 }
 \value{
 A dataframe that has the summary statistics for each drive
@@ -19,12 +19,32 @@ A dataframe that has the summary statistics for each drive
      end of drive Yard line, end of drive team with possession
 }
 \description{
-This function outputs the end result of each drive of a given
- game
+This function outputs the results dataframe of each drive of a 
+given game
+}
+\details{
+The outputted dataframe has 16 variables associated with a specific 
+aspect of a drive including the scoring result, number of plays, the duration 
+of the drive, and the offensive and defensive teams.  All 16 variable are
+explained in more detail below:
+\itemize{
+ \item{"posteam"} - The offensive team on the drive
+ \item{"qrt"} - The quarter at the end of the drive
+ \item{"fs"} - Number of first downs in the drive
+ \item{"result"} - End result of the drive
+ \item{"penyds"} - Net penalty yards of the drive for the offensive team
+ \item{"ydsgained"} - Number of yards gained on the drive
+ \item{"numplaus"} - Number of plays on the drive
+ \item{"postime"} - The duration of the 
+ \item{"Startqrt"} - The quarter at the beginning of the drive
+ \item{"StartTime} - The time left in the quarter at the start of the drive
+ \item{"StartYardln"} - Yardline at the start of the drive
+ \item{"StartTeam"} - The offensive team on the drive 
+ }
 }
 \examples{
 # Parsed drive Summarize of final game in 2015 NFL Season
-nfl2015.finalregseasongame <- "http://www.nfl.com/liveupdate/game-center/2016010310/2016010310_gtd.json"
-drive_summary(nfl2015.finalregseasongame) 
+nfl2015.finalregseasongame.gameID <- "2016010310"
+drive_summary(nfl2015.finalregseasongame.gameID) 
 }
 
