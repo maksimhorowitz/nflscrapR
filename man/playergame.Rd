@@ -30,9 +30,9 @@ Statistics are included for passing, rushing, receiving, kick return,
 punt return, kicking, defensive, and fumbles.
 }
 \examples{
-# URL Link to NFL JSON data for a random game
-nfl.data <- "http://www.nfl.com/liveupdate/game-center/2013090800/2013090800_gtd.json"
-PlayerGameTest <- playergame(nfl.data)
-
+# GameID for a random game
+nfl.data.gameID <- "2013090800"
+PlayerGameData <- playergame(nfl.data.gameID)
+head(PlayerGameTest)
 }
 
