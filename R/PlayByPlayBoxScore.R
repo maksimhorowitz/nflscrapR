@@ -102,6 +102,34 @@ game_play_by_play <- function(URLString) {
   PBP$Date <- date
   PBP$GameID <- stringr::str_extract(date.step1, pattern = "[0-9]{10}")
   
+  # Adding Zero time to Quarter End
+  
+  quarter.end <- which(sapply(PBP$desc, regexpr, 
+                              pattern = "END QUARTER|END GAME") != -1)
+  
+  PBP$time[quarter.end] <- "00:00"
+  
+  # Time in Seconds 
+  qtr.timeinsecs <- lubridate::period_to_seconds(lubridate::ms(PBP$time))
+  
+  # Quarter 1
+  qtr.timeinsecs[which(PBP$qtr == 1)] <- qtr.timeinsecs[
+                                            which(PBP$qtr == 1)] + (900*3)
+  
+  # Quarter 2
+  qtr.timeinsecs[which(PBP$qtr == 2)] <- qtr.timeinsecs[
+                                            which(PBP$qtr == 2)] + (900*2)
+  # Quarter 3
+  qtr.timeinsecs[which(PBP$qtr == 3)] <- qtr.timeinsecs[
+                                            which(PBP$qtr == 3)] + 900
+  
+  PBP$TimeSecs <- qtr.timeinsecs
+  
+  # Time Difference (in seconds)
+  plays.time.diff <- abs(c(0, diff(qtr.timeinsecs)))
+  
+  PBP$PlayTimeDiff <- plays.time.diff
+  
   ######################################
   # Picking Apart the Description Column
   ######################################
@@ -373,6 +401,12 @@ game_play_by_play <- function(URLString) {
   
   PBP$PlayType[kickoff] <- "Kickoff"
   
+  # Onside Kick
+  
+  onside <- which(sapply(PBP$desc, regexpr, pattern = "onside") != -1)
+  
+  PBP$PlayType[onside] <- "Onside Kick"
+  
   # Spike
   spike.play <- which(sapply(PBP$desc, regexpr, pattern = "spiked") != -1)
   
@@ -529,7 +563,8 @@ game_play_by_play <- function(URLString) {
   
   ## Final OutPut ##
   PBP[,c("Date", "GameID", "Drive", "qtr", "down", "time", "TimeUnder", 
-         "SideofField", "yrdln", "ydstogo", "ydsnet", "GoalToGo", "FirstDown", 
+         "TimeSecs", "PlayTimeDiff", "SideofField", "yrdln", 
+         "ydstogo", "ydsnet", "GoalToGo", "FirstDown", 
          "posteam", "DefensiveTeam", "desc", "PlayAttempted", "Yards.Gained", 
          "sp", "Touchdown", "ExPointResult", "TwoPointConv", "PlayType", 
          "Passer", "PassAttempt", "PassOutcome", "PassLength", "PassLocation",
