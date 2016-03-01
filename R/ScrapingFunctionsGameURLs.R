@@ -4,6 +4,7 @@
 # Code Style Guide: Google R Format                              #
 ################################################################## 
 
+
 #' Extract GameIDs for each game in a given NFL season
 #' @description This function is a helper for the Proper.PBP.URL.Formatting function.
 #' The outputs of extracting_gameids is used in conjunction with Proper.PBP.URL.Formatting
@@ -15,6 +16,7 @@
 #' @examples
 #' # Scraping all game IDs from 2010 Season
 #' extracting_gameids(2010) 
+#' @export
 extracting_gameids <- function(Season, playoffs = FALSE) {
   
   # Setting up to Pull Regular Season Weeks
@@ -88,7 +90,7 @@ extracting_gameids <- function(Season, playoffs = FALSE) {
 #' 
 #' # Putting all game IDs in to proper URL format
 #' proper_url_formatting(nfl2015.finalregseasongame.gameID) 
-
+#' @export
 proper_jsonurl_formatting <- function(GameID) {
   
   # Paste together the proper location of the JSON data

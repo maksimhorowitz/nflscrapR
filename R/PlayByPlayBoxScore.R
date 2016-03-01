@@ -4,8 +4,7 @@
 # Code Style Guide: Google R Format                              #
 ################################################################## 
 
-# Play-by Play Function 
-
+# Play-by Play Function
 #' Parsed Descriptive Play-by-Play Function for a Single Game
 #' @description This function intakes the JSON play-by-play data of a single
 #'  game and parses the play description column into individual variables 
@@ -64,6 +63,7 @@
 #' 
 #' # Subset the dataframe based on passing plays
 #' subset(finalgame2015.pbp, PlayType == "Pass")
+#' @export
 game_play_by_play <- function(GameID) {
   # Google R stlye format
   
@@ -587,7 +587,6 @@ game_play_by_play <- function(GameID) {
 }
 
 ################################################################## 
-
 #' Parsed Descriptive Play-by-Play Function for a Full Season
 #' @description This function outputs all plays of an entire season in one dataframe.  
 #' It calls the game_play_by_play function and applies it over every 
@@ -610,6 +609,7 @@ game_play_by_play <- function(GameID) {
 #' 
 #' # Looking at all Baltimore Ravens Offensive Plays 
 #' subset(pbp.data.2010, posteam = "BAL")
+#' @export
 season_play_by_play <- function(Season) {
   # Google R stlye format
   
@@ -627,7 +627,6 @@ season_play_by_play <- function(Season) {
 ################################################################## 
 
 # Drive Summary Function
-
 #' Drive Summary and Results 
 #' @description This function outputs the results dataframe of each drive of a 
 #' given game
@@ -661,6 +660,7 @@ season_play_by_play <- function(Season) {
 #' # Parsed drive Summarize of final game in 2015 NFL Season
 #' nfl2015.finalregseasongame.gameID <- "2016010310"
 #' drive_summary(nfl2015.finalregseasongame.gameID) 
+#' @export
 drive_summary <- function(GameID) {
   # Google R stlye format
   ######################
@@ -699,7 +699,6 @@ drive_summary <- function(GameID) {
 
 ################################################################## 
 # Simple Box Score 
-
 #' Simple Game Boxscore
 #' @description This function pulls data from an NFL url and contructs it into a formatted 
 #' boxscore.
@@ -714,7 +713,7 @@ drive_summary <- function(GameID) {
 #' # Parsed drive Summarize of final game in 2015 NFL Season
 #' nfl2015.finalregseasongame.gameID <- "2016010310"
 #' simple_boxscore(nfl2015.finalregseasongame.gameID, home = TRUE) 
-
+#' @export
 simple_boxscore <- function(GameID, home = TRUE) {
   
   # Google R stlye format

@@ -22,6 +22,7 @@
 #' nfl.data.gameID <- "2013090800"
 #' PlayerGameData <- playergame(nfl.data.gameID)
 #' head(PlayerGameData)
+#' @export
 playergame <- function(GameID) {
   
   # Converting GameID into URL string
@@ -297,7 +298,6 @@ playergame <- function(GameID) {
 }
 
 # Everygame in a Given Season
-
 #' Boxscore for Each Game in the Season - One line per player per game
 #' @description This function outputs a single dataframe containing all rushing, 
 #' passing, receiving, fumble, and defensive statistics for each player in 
@@ -316,6 +316,7 @@ playergame <- function(GameID) {
 #' 
 #' # Plot a graph of different play types
 #' ggplot(playerstats.2010, aes(x = PlayType)) + geom_bar()
+#' @export 
 
 season_playergame <- function(Season) {
   
@@ -333,7 +334,6 @@ season_playergame <- function(Season) {
 }
 
 # Aggregated for Each Player over the Season 
-
 #' Detailed Player Aggregate Season Statistics
 #' @description This function outputs a dataframe with the season statistics for
 #' each player who recorded atleast one measured statistic in any game throughout
@@ -348,6 +348,7 @@ season_playergame <- function(Season) {
 #' @examples
 #' # Returns the Season-Total Statistics for Each Player in the 2015 Season
 #' agg_player_season(2015)
+#' @export
 agg_player_season <- function(Season) {
   
   # Use the season_playergame function to generate a dataset with all the games
