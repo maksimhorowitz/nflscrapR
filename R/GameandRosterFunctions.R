@@ -16,10 +16,10 @@
 #' with the full team names
 #' @examples
 #' # All games in 2015 Season
-#' season_all_games(2015) # Will output a dataframe
-season_all_games <- function(Season) {
+#' season_games(2015) # Will output a dataframe
+season_games <- function(Season) {
   
-  game.ids <- extracting_game.ids(Season)
+  game.ids <- extracting_gameids(Season)
   game.urls <- sapply(game.ids, proper_url_formatting)
   
   # Game Dates

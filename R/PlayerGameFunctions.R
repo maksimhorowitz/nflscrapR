@@ -21,7 +21,7 @@
 #' # GameID for a random game
 #' nfl.data.gameID <- "2013090800"
 #' PlayerGameData <- playergame(nfl.data.gameID)
-#' head(PlayerGameTest)
+#' head(PlayerGameData)
 playergame <- function(GameID) {
   
   # Converting GameID into URL string
@@ -311,8 +311,11 @@ playergame <- function(GameID) {
 #' the specified season
 #' @examples
 #' # Player-Game function over the entire season in 2010
-#' # Returns a dataframe with 360 Rows and 36 Columns
-#' PlayerGame.Function(2010)
+#' playerstats.2010 <- season_playergame(2010)
+#' head(playerstats.2010)
+#' 
+#' # Plot a graph of different play types
+#' ggplot(playerstats.2010, aes(x = PlayType)) + geom_bar()
 
 season_playergame <- function(Season) {
   
@@ -338,8 +341,8 @@ season_playergame <- function(Season) {
 #' following statistics: Passing, Rushing, Receiving, Kick Return,
 #' Punt Return, Fumbles, and Defense
 #' @param Season (numeric) A 4-digit year associated with a given season 
-#' @details This function calls season_playergame and then does aggregation 
-#' across an entire season 
+#' @details This function calls season_playergame and then aggregates 
+#' across an entire season to gather season totals and season max statistics
 #' @return Returns a dataframe with a single line for each player aggregating 
 #' their total season statistics
 #' @examples

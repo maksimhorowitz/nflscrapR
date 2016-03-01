@@ -29,7 +29,7 @@ plyr packages.
 }
 \examples{
 # Play-by-Play Data from All games in 2010
-pbp.data.2010 <- season_PBP(2010)
+pbp.data.2010 <- season_play_by_play(2010)
 
 # Looking at all Baltimore Ravens Offensive Plays 
 subset(pbp.data.2010, posteam = "BAL")

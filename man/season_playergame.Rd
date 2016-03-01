@@ -22,7 +22,10 @@ per each game they record a measured statistic
 }
 \examples{
 # Player-Game function over the entire season in 2010
-# Returns a dataframe with 360 Rows and 36 Columns
-PlayerGame.Function(2010)
+playerstats.2010 <- season_playergame(2010)
+head(playerstats.2010)
+
+# Plot a graph of different play types
+ggplot(playerstats.2010, aes(x = PlayType)) + geom_bar()
 }
 
