@@ -616,8 +616,7 @@ season_play_by_play <- function(Season) {
   # Below the function put together the proper URLs for each game in each 
   # season and runs the game_play_by_play function across the entire season
   game_ids <- extracting_gameids(Season)
-  game_urls <- sapply(game_ids, proper_jsonurl_formatting)
-  pbp_data_unformatted <- lapply(game_urls, FUN = game_play_by_play)
+  pbp_data_unformatted <- lapply(game_ids, FUN = game_play_by_play)
   
   df_pbp_data <- do.call(rbind, pbp_data_unformatted)
   

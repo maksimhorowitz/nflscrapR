@@ -320,9 +320,8 @@ playergame <- function(GameID) {
 season_playergame <- function(Season) {
   
   game.ids <- extracting_gameids(Season)
-  game.urls <- sapply(game.ids, proper_jsonurl_formatting)
   
-  playergame.season.unformatted <- lapply(game.urls, FUN = playergame)
+  playergame.season.unformatted <- lapply(game.ids, FUN = playergame)
   
   # Rowbinding all the games from the specified season
   

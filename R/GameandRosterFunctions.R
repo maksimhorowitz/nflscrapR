@@ -20,7 +20,7 @@
 season_games <- function(Season) {
   
   game.ids <- extracting_gameids(Season)
-  game.urls <- sapply(game.ids, proper_url_formatting)
+  game.urls <- sapply(game.ids, proper_jsonurl_formatting)
   
   # Game Dates
   year <- substr(game.ids, start = 1, stop = 4)

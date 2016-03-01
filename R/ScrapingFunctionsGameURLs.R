@@ -94,6 +94,6 @@ extracting_gameids <- function(Season, playoffs = FALSE) {
 proper_jsonurl_formatting <- function(GameID) {
   
   # Paste together the proper location of the JSON data
-  paste("http://www.nfl.com/liveupdate/game-center/",GameID, "/",
-        GameID,"_gtd.json", sep = "")
+  paste("http://www.nfl.com/liveupdate/game-center/", GameID, "/",
+        GameID, "_gtd.json", sep = "")
 }
