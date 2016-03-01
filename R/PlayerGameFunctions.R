@@ -22,7 +22,7 @@
 #' nfl.data.gameID <- "2013090800"
 #' PlayerGameData <- playergame(nfl.data.gameID)
 #' head(PlayerGameData)
-#' @export
+
 playergame <- function(GameID) {
   
   # Converting GameID into URL string
@@ -316,7 +316,7 @@ playergame <- function(GameID) {
 #' 
 #' # Plot a graph of different play types
 #' ggplot(playerstats.2010, aes(x = PlayType)) + geom_bar()
-#' @export 
+ 
 season_playergame <- function(Season) {
   
   game.ids <- extracting_gameids(Season)
@@ -347,7 +347,7 @@ season_playergame <- function(Season) {
 #' @examples
 #' # Returns the Season-Total Statistics for Each Player in the 2015 Season
 #' agg_player_season(2015)
-#' @export
+
 agg_player_season <- function(Season) {
   
   # Use the season_playergame function to generate a dataset with all the games

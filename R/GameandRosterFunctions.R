@@ -16,7 +16,7 @@
 #' @examples
 #' # All games in 2015 Season
 #' season_games(2015) # Will output a dataframe
-#' @export
+
 season_games <- function(Season) {
   
   game.ids <- extracting_gameids(Season)
@@ -61,7 +61,7 @@ season_games <- function(Season) {
 #' @examples
 #' # Roster for Baltimore Ravens in 2013
 #' season_rosters(2013, TeamInt = "BAL") 
-#' @export
+
 season_rosters <- function(Season, TeamInt) {
   
   # Use the season_playergame to gather all names of players on a given team
