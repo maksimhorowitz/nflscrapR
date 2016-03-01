@@ -317,7 +317,6 @@ playergame <- function(GameID) {
 #' # Plot a graph of different play types
 #' ggplot(playerstats.2010, aes(x = PlayType)) + geom_bar()
 #' @export 
-
 season_playergame <- function(Season) {
   
   game.ids <- extracting_gameids(Season)
