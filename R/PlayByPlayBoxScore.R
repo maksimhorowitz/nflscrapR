@@ -360,14 +360,31 @@ game_play_by_play <- function(GameID) {
                                     pattern = "extra point is GOOD") != -1)
   
   extrapoint.nogood <- which(sapply(PBP$desc, regexpr, 
-         pattern = "(extra point is No Good) | (extra point is Blocked)") != -1)
+                                    pattern = "(extra point is No Good)") != -1)
   
-  PBP$PlayType[c(extrapoint.good,extrapoint.nogood)] <- "Extra Point"
+  extrapoint.blocked <- which(sapply(PBP$desc, regexpr, 
+                                    pattern = "(extra point is Blocked)") != -1)
+  
+  PBP$PlayType[c(extrapoint.good, 
+                 extrapoint.nogood,
+                 extrapoint.blocked)] <- "Extra Point"
   
   # Extra Point Result
   PBP$ExPointResult <- NA
-  PBP$ExPointResult[extrapoint.good] <- "Good"
-  PBP$ExPointResult[extrapoint.nogood] <- "No Good"
+  PBP$ExPointResult[extrapoint.good] <- "Made"
+  PBP$ExPointResult[extrapoint.nogood] <- "Missed"
+  PBP$ExPointResult[extrapoint.blocked] <- "Blocked"
+  
+  # Defensive 2-pt conversion
+  def.twopt.suc <- which(sapply(PBP$desc, regexpr,
+                            pattern = "DEFENSIVE TWO-POINT ATTEMPT\\. (.){1,70}\\. ATTEMPT SUCCEEDS") != -1)
+  
+  def.twopt.fail <- which(sapply(PBP$desc, regexpr,
+                                pattern = "DEFENSIVE TWO-POINT ATTEMPT\\. (.){1,70}\\. ATTEMPT FAILS") != -1)
+  
+  PBP$DefTwoPoint <- NA
+  PBP$DefTwoPoint[def.twopt.suc] <- "Success"
+  PBP$DefTwoPoint[def.twopt.fail] <- "Failure"
   
   # Fumbles
   
@@ -408,7 +425,8 @@ game_play_by_play <- function(GameID) {
   PBP$PlayType[qb.kneel] <- "QB Kneel"
   
   # Kick Off
-  kickoff <- which(sapply(PBP$desc, regexpr, pattern = "kick(s)?") != -1)
+  kickoff <- which(sapply(PBP$desc, regexpr, 
+                          pattern = "kick(s)? [0-9]{2,3}") != -1)
   
   PBP$PlayType[kickoff] <- "Kickoff"
   
@@ -577,10 +595,11 @@ game_play_by_play <- function(GameID) {
          "TimeSecs", "PlayTimeDiff", "SideofField", "yrdln", 
          "ydstogo", "ydsnet", "GoalToGo", "FirstDown", 
          "posteam", "DefensiveTeam", "desc", "PlayAttempted", "Yards.Gained", 
-         "sp", "Touchdown", "ExPointResult", "TwoPointConv", "PlayType", 
-         "Passer", "PassAttempt", "PassOutcome", "PassLength", "PassLocation",
-         "InterceptionThrown", "Rusher", "RushAttempt", "RunLocation", "RunGap", 
-         "Receiver", "Reception", "Tackler1", "Tackler2", "FieldGoalResult", 
+         "sp", "Touchdown", "ExPointResult", "TwoPointConv", "DefTwoPoint",
+         "PlayType", "Passer", "PassAttempt", "PassOutcome", "PassLength", 
+         "PassLocation", "InterceptionThrown", "Rusher", "RushAttempt", 
+         "RunLocation", "RunGap",  "Receiver", "Reception", 
+         "Tackler1", "Tackler2", "FieldGoalResult", 
          "FieldGoalDistance", "Fumble", "Sack", "Accepted.Penalty", 
          "PenalizedTeam", "PenaltyType", "PenalizedPlayer", "Penalty.Yards", 
          "PosTeamScore", "DefTeamScore", "ScoreDiff", "AbsScoreDiff")]
