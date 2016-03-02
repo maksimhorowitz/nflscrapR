@@ -30,7 +30,11 @@ The creation of this package puts granular data into the hands of the any R user
 library(devtools)
 
 # For now you must install it from github
-devtools::install_github(repo = "maksimhorowitz/nflscrapR")
+if (!is.element("nflscrapR",installed.packages())) {
+  # Print Installing nflscrapR
+  devtools::install_github(repo = "maksimhorowitz/nflscrapR")
+}
+
 library(nflscrapR)
 ```
 
@@ -72,15 +76,7 @@ guides(color = FALSE) +
 
 # K-S Test to if there is a difference in the distributions
 # Jitter to differentiate the values a bit
-# The results of the ks.test tell lead us to retain the null hypothesis
+# The results of the ks.test leads us to retain the null hypothesis
 # that these distributions are identical.
 ks.test(jitter(qbs2009$ydsperattm), jitter(qbs2015$ydsperattm))
 ```
-
-I normally structure my README as follows:
-
-A paragraph that describes the high-level purpose of the package.
-
-An example that shows how to use the package to solve a simple problem.
-
-Installation instructions, giving code that can be copied and pasted into R.

@@ -15,16 +15,11 @@ Downloading and Loading the Package
 library(devtools)
 
 # For now you must install it from github
-devtools::install_github(repo = "maksimhorowitz/nflscrapR")
-#> Downloading GitHub repo maksimhorowitz/nflscrapR@master
-#> from URL https://api.github.com/repos/maksimhorowitz/nflscrapR/zipball/master
-#> Installing nflscrapR
-#> '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
-#>   --no-environ --no-save --no-restore CMD INSTALL  \
-#>   '/private/var/folders/mj/g04tq7p927jd4y25_68tvf180000gn/T/RtmpPf8Z22/devtools5d5456467002/maksimhorowitz-nflscrapR-5dba1ec'  \
-#>   --library='/Library/Frameworks/R.framework/Versions/3.2/Resources/library'  \
-#>   --install-tests
-#> 
+if (!is.element("nflscrapR",installed.packages())) {
+  # Print Installing nflscrapR
+  devtools::install_github(repo = "maksimhorowitz/nflscrapR")
+}
+
 library(nflscrapR)
 ```
 
@@ -73,7 +68,7 @@ guides(color = FALSE) +
 
 # K-S Test to if there is a difference in the distributions
 # Jitter to differentiate the values a bit
-# The results of the ks.test tell lead us to retain the null hypothesis
+# The results of the ks.test leads us to retain the null hypothesis
 # that these distributions are identical.
 ks.test(jitter(qbs2009$ydsperattm), jitter(qbs2015$ydsperattm))
 #> 
@@ -83,11 +78,3 @@ ks.test(jitter(qbs2009$ydsperattm), jitter(qbs2015$ydsperattm))
 #> D = 0.090713, p-value = 0.1556
 #> alternative hypothesis: two-sided
 ```
-
-I normally structure my README as follows:
-
-A paragraph that describes the high-level purpose of the package.
-
-An example that shows how to use the package to solve a simple problem.
-
-Installation instructions, giving code that can be copied and pasted into R.
