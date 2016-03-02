@@ -47,7 +47,8 @@ below:
  \item{"GoalToGo", "FirstDown", "PlayAttempted"} 
  \item{"Yards.Gained", "TimeUnder"}
  \item{"ExPointResult", "TwoPointConv", "FieldGoalResult", 
-       "FieldGoalDistance", "TouchDown}
+       "FieldGoalDistance", "TouchDown"}
+ \item{"Defensive Two Point", "Safety"}
  \item{"PlayType"}
  \item{"Passer", "PassAttempt", "PassOutcome", "PassLength", "PassLocation",
        "InterceptionThrown"}

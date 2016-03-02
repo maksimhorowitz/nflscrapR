@@ -38,7 +38,8 @@
 #'  \item{"GoalToGo", "FirstDown", "PlayAttempted"} 
 #'  \item{"Yards.Gained", "TimeUnder"}
 #'  \item{"ExPointResult", "TwoPointConv", "FieldGoalResult", 
-#'        "FieldGoalDistance", "TouchDown}
+#'        "FieldGoalDistance", "TouchDown"}
+#'  \item{"Defensive Two Point", "Safety"}
 #'  \item{"PlayType"}
 #'  \item{"Passer", "PassAttempt", "PassOutcome", "PassLength", "PassLocation",
 #'        "InterceptionThrown"}
@@ -411,13 +412,18 @@ game_play_by_play <- function(GameID) {
   PBP$PlayType[two.minute.warning] <- "Two Minute Warning"
   
   # Sack 
-  Sack.Plays <- which(sapply(PBP$desc, regexpr, pattern = "sacked") != -1)
+  sack.plays <- which(sapply(PBP$desc, regexpr, pattern = "sacked") != -1)
   
-  PBP$PlayType[Sack.Plays] <- "Sack"
+  PBP$PlayType[sack.plays] <- "Sack"
   
   # Sack- Binary
   PBP$Sack <- 0
-  PBP$Sack[Sack.Plays] <- 1
+  PBP$Sack[sack.plays] <- 1
+  
+  # Safety - Binary
+  safety.plays <- which(sapply(PBP$desc, regexpr, pattern = "SAFETY") != -1)
+  PBP$Safety <- 0
+  PBP$Safety[safety.plays] <- 1
   
   # QB Kneel
   qb.kneel <- which(sapply(PBP$desc, regexpr, pattern = "kneels") != -1)
@@ -595,10 +601,10 @@ game_play_by_play <- function(GameID) {
          "TimeSecs", "PlayTimeDiff", "SideofField", "yrdln", 
          "ydstogo", "ydsnet", "GoalToGo", "FirstDown", 
          "posteam", "DefensiveTeam", "desc", "PlayAttempted", "Yards.Gained", 
-         "sp", "Touchdown", "ExPointResult", "TwoPointConv", "DefTwoPoint",
-         "PlayType", "Passer", "PassAttempt", "PassOutcome", "PassLength", 
-         "PassLocation", "InterceptionThrown", "Rusher", "RushAttempt", 
-         "RunLocation", "RunGap",  "Receiver", "Reception", 
+         "sp", "Touchdown", "ExPointResult", "TwoPointConv", "DefTwoPoint", 
+         "Safety", "PlayType", "Passer", "PassAttempt", "PassOutcome", 
+         "PassLength", "PassLocation", "InterceptionThrown", "Rusher", 
+         "RushAttempt", "RunLocation", "RunGap",  "Receiver", "Reception", 
          "Tackler1", "Tackler2", "FieldGoalResult", 
          "FieldGoalDistance", "Fumble", "Sack", "Accepted.Penalty", 
          "PenalizedTeam", "PenaltyType", "PenalizedPlayer", "Penalty.Yards", 
