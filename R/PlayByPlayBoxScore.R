@@ -87,6 +87,10 @@ game_play_by_play <- function(GameID) {
                 )
   }
   
+  # Adjusting Possession Team
+  PBP$posteam <- ifelse(PBP$posteam == "NULL", dplyr::lag(PBP$posteam),
+                                              PBP$posteam)
+  
   # Fixing Possession team for Kick-Offs
   kickoff.index <- which(sapply(PBP$desc, regexpr, 
                                 pattern = 
@@ -96,8 +100,20 @@ game_play_by_play <- function(GameID) {
                                 pos.teams[2], pos.teams[1])
   PBP[kickoff.index, "posteam"] <- correct.kickoff.pos
   
+  
   # Yard Line Information
-  yline.info <- sapply(PBP$yrdln, strsplit, split = " ")
+  
+  # In the earlier seasons when there was a dead ball (i.e. timeout)
+  # the yardline info was left blank or NULL. Also if the ball was at midfield then
+  # there was no team associated so I had to add a space to make the strsplit
+  # work
+  yline.info.1 <- ifelse(PBP$yrdln == "50", "MID 50", PBP$yrdln)  
+  yline.info.1 <- ifelse(nchar(PBP$yrdln) == 0 |
+                         PBP$yrdln == "NULL", dplyr::lag(PBP$yrdln), 
+                         yline.info.1)
+  
+
+  yline.info <- sapply(yline.info.1, strsplit, split = " ")
   
   PBP$SideofField <- sapply(yline.info, FUN = function(x) x[1])
   PBP$yrdln <- sapply(yline.info, FUN = function(x) x[2])
@@ -377,6 +393,9 @@ game_play_by_play <- function(GameID) {
   PBP$ExPointResult[extrapoint.blocked] <- "Blocked"
   
   # Defensive 2-pt conversion
+  
+  
+  
   def.twopt.suc <- which(sapply(PBP$desc, regexpr,
                             pattern = "DEFENSIVE TWO-POINT ATTEMPT\\. (.){1,70}\\. ATTEMPT SUCCEEDS") != -1)
   
