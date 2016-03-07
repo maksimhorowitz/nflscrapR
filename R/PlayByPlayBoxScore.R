@@ -657,22 +657,26 @@ game_play_by_play <- function(GameID) {
   home.team.name <- nfl.json[[1]]$home$abbr
   
   ## Away Team ##
-  # Regular offensive passing, rushing, or kickoff TD
+  # Regular offensive passing, rushing
   team.away.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == away.team.name
                         & !PBP$ReturnResult %in% "Touchdown"
                         & !PBP$PlayType %in% "Kickoff")] <- 6
-  # Give points for Kickoffs
+  # Give points for Kickoff TDs
   team.away.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == away.team.name
                         & PBP$ReturnResult %in% "Touchdown"
-                        & !PBP$PlayType %in% "Kickoff")] <- 6
-  # Give points for Punts and INTs
+                        & PBP$PlayType %in% "Kickoff")] <- 6
+  # Give points for Punt Return TDs
   team.away.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == home.team.name
                         & PBP$ReturnResult %in% "Touchdown"
-                        & (PBP$PlayType %in% "Punt" | 
-                             PBP$InterceptionThrown == 1))] <- 6
+                        & PBP$PlayType %in% "Punt")] <- 6
+  # Give points for Interceptions
+  team.away.score[which(PBP$Touchdown == 1 
+                        & PBP$posteam == home.team.name
+                        & PBP$ReturnResult %in% "Touchdown"
+                        & !is.na(PBP$Interceptor))] <- 6
   # Make sure to give away team points for fumble ret for TD
   team.away.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == home.team.name 
@@ -712,13 +716,22 @@ game_play_by_play <- function(GameID) {
   team.home.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == home.team.name
                         & PBP$ReturnResult %in% "Touchdown"
-                        & !PBP$PlayType %in% "Kickoff")] <- 6
-  # Give points for Punts and INTs
+                        & PBP$PlayType %in% "Kickoff")] <- 6
+  # Give points for Punts 
   team.home.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == away.team.name
                         & PBP$ReturnResult %in% "Touchdown"
-                        & (PBP$PlayType %in% "Punt" | 
-                             PBP$InterceptionThrown == 1))] <- 6
+                        & PBP$PlayType %in% "Punt")] <- 6
+  # Give points for Interceptions
+  team.home.score[which(PBP$Touchdown == 1 
+                        & PBP$posteam == away.team.name
+                        & PBP$ReturnResult %in% "Touchdown"
+                        & !is.na(PBP$Interceptor))] <- 6
+  
+  # team.away.score[which(PBP$Touchdown == 1 
+  #                      & PBP$posteam == home.team.name
+  #                     & PBP$ReturnResult %in% "Touchdown"
+  #                    & PBP$InterceptionThrown == 1)] <- 6
   # Make sure to give home team points for fumble ret for TD
   team.home.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == away.team.name 
