@@ -191,8 +191,14 @@ pbp2015.rr <- subset(pbp2015, ReturnResult == "Touchdown" & sp == 0)
 
 faulty.gameIDs <- pbp2015.rr$GameID
 
-sapply(faulty.gameIDs, FUN = function(x) 
-                              {y <- subset(game_play_by_play(x), 
-                                ReturnResult == "Touchdown" & sp == 0)
-                              nrow(y)}) 
+lapply(faulty.gameIDs, FUN = function(x) 
+                              {tail(game_play_by_play(x)[,c("GameID", 
+                                                            "posteam",
+                                                            "DefensiveTeam",
+                                                            "PosTeamScore",
+                                                            "DefTeamScore")])}) 
 
+
+View(game_play_by_play(faulty.gameIDs[3]))
+
+pbp2015[grep(pbp2015$desc, pattern = "Replay Official reviewed"),"desc"]

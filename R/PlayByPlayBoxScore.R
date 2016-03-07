@@ -177,7 +177,8 @@ game_play_by_play <- function(GameID) {
   touchdown.step1 <- sapply(PBP$desc, stringr::str_extract, 
                             pattern = "TOUCHDOWN")
   nullified <- grep(PBP$desc, pattern = "TOUCHDOWN NULLIFIED")
-  touchdown.step1[nullified] <- NA
+  reversed <- grep(PBP$desc, pattern = "TOUCHDOWN(.)+REVERSED")
+  touchdown.step1[c(nullified, reversed)] <- NA
   PBP$Touchdown <- ifelse(!is.na(touchdown.step1), 1, 0)
   
   # Two Point Conversion 
@@ -350,9 +351,16 @@ game_play_by_play <- function(GameID) {
   # Field Goal
   fieldgoal <- which(sapply(PBP$desc, regexpr, 
                             pattern = "field goal") != -1)
+  fieldgoal.null <- which(sapply(PBP$desc, regexpr, 
+                            pattern = "field goal(.)+NULLIFIED") != -1)
+  fieldgoal.rev <- which(sapply(PBP$desc, regexpr, 
+                            pattern = "field goal(.)+REVERSED") != -1)
+  fieldgoal <- setdiff(fieldgoal, c(fieldgoal.null, fieldgoal.rev))
   
   missed.fg <- which(sapply(PBP$desc, regexpr, 
                             pattern = "field goal is No Good") != -1)
+  blocked.fg  <- which(sapply(PBP$desc, regexpr, 
+                            pattern = "field goal is BLOCKED") != -1)
   
   PBP$PlayType[fieldgoal] <- "Field Goal"
   
@@ -370,7 +378,8 @@ game_play_by_play <- function(GameID) {
   # Field Goal Result
   PBP$FieldGoalResult <- NA
   PBP$FieldGoalResult[missed.fg] <- "No Good"
-  PBP$FieldGoalResult[setdiff(fieldgoal,missed.fg)] <- "Good"
+  PBP$FieldGoalResult[blocked.fg] <- "Blocked"
+  PBP$FieldGoalResult[setdiff(fieldgoal,c(missed.fg, blocked.fg))] <- "Good"
   
   # Extra Point
   extrapoint.good <- which(sapply(PBP$desc, regexpr,
@@ -425,6 +434,26 @@ game_play_by_play <- function(GameID) {
                               pattern = "END QUARTER") != -1)
   
   PBP$PlayType[end.quarter] <- "Quarter End"
+  
+  # Challenge or Replay Review
+  
+  # Binary 
+  PBP$Challenge.Replay <- 0
+  
+  replay.offic <- grep(PBP$desc, pattern = "Replay Official reviewed")
+  challenged <- grep(PBP$desc, pattern = "challenge")
+  
+  PBP$Challenge.Replay[c(replay.offic, challenged)] <- 1
+  
+  # Results
+  
+  PBP$ChalReplayResult <- NA
+  
+  upheld.play <- grep(PBP$desc, pattern = "the play was Upheld")
+  reversed.play <- grep(PBP$desc, pattern = "the play was REVERSED")
+  
+  PBP$ChalReplayResult[upheld.play] <- "Upheld"
+  PBP$ChalReplayResult[reversed.play] <- "Reversed"
   
   # 2 Minute Warning
   two.minute.warning <- which(sapply(PBP$desc, regexpr, 
@@ -762,12 +791,6 @@ game_play_by_play <- function(GameID) {
                         & PBP$posteam == away.team.name
                         & PBP$ReturnResult %in% "Touchdown"
                         & !is.na(PBP$Interceptor))] <- 6
-  
-  # team.away.score[which(PBP$Touchdown == 1 
-  #                      & PBP$posteam == home.team.name
-  #                     & PBP$ReturnResult %in% "Touchdown"
-  #                    & PBP$InterceptionThrown == 1)] <- 6
-  # Make sure to give home team points for fumble ret for TD
   team.home.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == away.team.name 
                         & PBP$ReturnResult %in% "Touchdown"
