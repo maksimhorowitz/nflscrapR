@@ -407,7 +407,11 @@ game_play_by_play <- function(GameID) {
   # Fumbles
   
   PBP$Fumble <- 0
-  fumble.index <- which(sapply(PBP$desc, regexpr, pattern = "FUMBLE") != -1) 
+  fumble.index1 <- which(sapply(PBP$desc, regexpr, pattern = "FUMBLE") != -1) 
+  fumble.overruled <- which(sapply(PBP$desc[fumble.index1], 
+                               regexpr, 
+                               pattern = "(NULLIFIED)|(Reversed)") != -1)
+  fumble.index <- setdiff(fumble.index1, fumble.overruled)
   PBP$Fumble[fumble.index] <- 1
   
   # Timeouts
@@ -530,6 +534,12 @@ game_play_by_play <- function(GameID) {
   # Punt Outcome
   punt.tds <- which(sapply(PBP$desc[punt.play], regexpr, 
                            pattern = "TOUCHDOWN") != -1)
+  punt.tds.null <- which(sapply(PBP$desc[punt.play], regexpr, 
+                           pattern = "NULLIFIED") != -1)
+  punt.tds.rev <- which(sapply(PBP$desc[punt.play], regexpr, 
+                           pattern = "REVERSED") != -1)
+  punt.tds <- setdiff(punt.tds, c(punt.tds.null, punt.tds.rev))
+  
   punts.touchbacks <- which(sapply(PBP$desc[punt.play], regexpr, 
                                    pattern = "Touchback") != -1)
   punts.faircatch <- which(sapply(PBP$desc[punt.play], regexpr, 
@@ -537,6 +547,18 @@ game_play_by_play <- function(GameID) {
   # Kickoff Outcome
   kick.tds <- which(sapply(PBP$desc[kickoff], regexpr, 
                            pattern = "TOUCHDOWN") != -1)
+  kick.tds.null <- which(sapply(PBP$desc[kickoff], regexpr, 
+                           pattern = "NULLIFIED") != -1)
+  kick.tds.rev <- which(sapply(PBP$desc[kickoff], regexpr, 
+                           pattern = "REVERSED") != -1)
+  kick.tds <- setdiff(kick.tds, c(kick.tds.null, kick.tds.rev))
+  
+  kick.tds.null <- which(sapply(PBP$desc[kickoff], regexpr, 
+                           pattern = "NULLIFIED") != -1)
+  kick.tds.rev <- which(sapply(PBP$desc[kickoff], regexpr, 
+                                pattern = "REVERSED") != -1)
+  kick.tds <- setdiff(kick.tds, c(kick.tds.null, kick.tds.rev))
+  
   kick.touchbacks <- which(sapply(PBP$desc[kickoff], regexpr, 
                           pattern = "Touchback") != -1)
   kick.faircatch <- which(sapply(PBP$desc[kickoff], regexpr, 
@@ -547,10 +569,23 @@ game_play_by_play <- function(GameID) {
   # Interception Outcome
   intercept.td <- which(sapply(PBP$desc[which(PBP$InterceptionThrown == 1)], 
                                regexpr, pattern = "TOUCHDOWN") != -1)
+  intercept.td.null <- which(sapply(PBP$desc[which(PBP$InterceptionThrown == 1)] 
+                               , regexpr, pattern = "NULLIFIED") != -1)
+  intercept.td.rev <- which(sapply(PBP$desc[which(PBP$InterceptionThrown == 1)], 
+                               regexpr, pattern = "REVERSED") != -1)
+  
+  intercept.td <- setdiff(intercept.td, c(intercept.td.null, intercept.td.rev))
   
   # Fumble Outcome
   fumble.td <- which(sapply(PBP$desc[fumble.index], 
                                regexpr, pattern = "TOUCHDOWN") != -1)
+  # May be able to remove bottom two lines
+  fumble.td.null <- which(sapply(PBP$desc[fumble.index], 
+                            regexpr, pattern = "NULLIFIED") != -1)
+  fumble.td.rev <- which(sapply(PBP$desc[fumble.index], 
+                                 regexpr, pattern = "REVERSED") != -1)
+  
+  fumble.td <- setdiff(fumble.td, c(fumble.td.null, fumble.td.rev))
   
   PBP$ReturnResult <- NA
   PBP$ReturnResult[punt.play][punt.tds] <- "Touchdown"

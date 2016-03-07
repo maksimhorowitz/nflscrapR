@@ -174,3 +174,25 @@ safety.game[10,]
 
 which(safety.game$Safety == 1 &
         safety.game$posteam == away.team.name)
+
+## Another issue game
+
+issue.game2 <- game_play_by_play(2012091600)
+
+View(subset(issue.game2, sp ==1 & posteam == "NYG"))
+
+View(subset(issue.game, sp ==1))
+
+### 
+
+pbp2015 <- season_play_by_play(2015)
+
+pbp2015.rr <- subset(pbp2015, ReturnResult == "Touchdown" & sp == 0)
+
+faulty.gameIDs <- pbp2015.rr$GameID
+
+sapply(faulty.gameIDs, FUN = function(x) 
+                              {y <- subset(game_play_by_play(x), 
+                                ReturnResult == "Touchdown" & sp == 0)
+                              nrow(y)}) 
+
