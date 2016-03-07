@@ -11,7 +11,7 @@ game_play_by_play(GameID)
 given NFL game.}
 }
 \value{
-A dataframe with 52 columns specifying various statistics and 
+A dataframe with 54 columns specifying various statistics and 
 outcomes associated with each play of the specified NFL game.
 }
 \description{
@@ -37,7 +37,7 @@ rbind this function creates a 10 column dataframe with basic information
  \item{"desc"} - A detailed description of what occured during the play
 }
 
-Through string manipulation and parsing of the description column, 42 columns 
+Through string manipulation and parsing of the description column, 44 columns 
 were added to the original dataframe allowing the user to have a detailed 
 breakdown of the events of each play.  The added variables are specified 
 below:
