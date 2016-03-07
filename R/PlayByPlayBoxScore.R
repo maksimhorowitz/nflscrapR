@@ -688,8 +688,8 @@ game_play_by_play <- function(GameID) {
   team.away.score[which(PBP$TwoPointConv == "Success" 
                         & PBP$posteam == away.team.name)] <- 2
   # Points for safeties
-  team.away.score[which(safety.game$Safety == 1 
-                        & safety.game$posteam == home.team.name)] <- 2
+  team.away.score[which(PBP$Safety == 1 
+                        & PBP$posteam == home.team.name)] <- 2
   # Points for made extra point
   team.away.score[which(PBP$ExPointResult == "Made" 
                         & PBP$posteam == away.team.name)] <- 1
@@ -734,8 +734,8 @@ game_play_by_play <- function(GameID) {
   team.home.score[which(PBP$TwoPointConv == "Success" 
                         & PBP$posteam == home.team.name)] <- 2
   # Points for safeties
-  team.home.score[which(safety.game$Safety == 1 
-                        & safety.game$posteam == away.team.name)] <- 2
+  team.home.score[which(PBP$Safety == 1 
+                        & PBP$posteam == away.team.name)] <- 2
   # Points for made extra point
   team.home.score[which(PBP$ExPointResult == "Made" 
                         & PBP$posteam == home.team.name)] <- 1
