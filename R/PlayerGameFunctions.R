@@ -1,22 +1,76 @@
 ### Player Games Functions ###
 
 #' Detailed Boxscore for Single NFL Game
-#' @description This function is used to neatly read all a players measurable 
+#' @description This function is used to neatly read all of a players measurable 
 #' statistics from a given game.  Each player's statistics can be viewed on one 
 #' line.
 #' @param GameID (character or numeric) A 10 digit game ID associated with a 
 #' given NFL game.
-#' @details This dataframe includes 55 variables including identifiers such as:
+#' @details This dataframe includes 56 variables including identifiers such as:
 #'  \itemize{
-#'  \item{"gameID", "date", "team", "playerID", "name"}
+#'  \item{"Year", "gameID", "date", "team", "playerID", "name"}
 #'  }
 #' Statistics are included for passing, rushing, receiving, kick return,
-#' punt return, kicking, defensive, and fumbles.
+#' punt return, kicking, defensive, and fumbles.  The outputted columns are as
+#' follows:
 #' 
-#' @return This function outputs a single dataframe containing all rushing, passing,
-#' receiving, kick return, punt return, kicking, fumble, and defensive 
-#' statistics for each player in a single  game. Each player is assigned one 
-#' line associated wih their statisitcs.
+#'  \itemize{
+#'  \item{"pass.att"} - Number of pass attempts
+#'  \item{"pass.comp"} - Number of completed passes
+#'  \item{"passyds"} - Number of pass yards
+#'  \item{pass.tds"} - Number of passing touchdowns
+#'  \item{"pass.ints"} - Number of pass interceptions
+#'  \item{"pass.twopta"} - Number of passing two point conversions attempted
+#'  \item{"pass.twoptm"} - Number of passing two point conversions converted
+#'  \item{"rush.att"} - Number of rush attempts
+#'  \item{"rushyds"} - Number of rushing Yards
+#'  \item{"rushtds"} - Number of rushing touchdowns
+#'  \item{"rushlng"} - Most yards gained on a rush attempt
+#'  \item{"rushlngtd"} - Yards gained on longest touchdown run
+#'  \item{"rush.twopta"} - Number of rushing two point conversions attempted
+#'  \item{"rush.twoptm"} - Number of rushing two point conversions converted
+#'  \item{"recept"} - Number of receptions
+#'  \item{"recyds"} - Number of receiving yards
+#'  \item{"rec.tds"} - Number of receiving touchdowns
+#'  \item{"reclng"} - Longest reception
+#'  \item{"reclngtd"} - Longest receiving touchdown
+#'  \item{"rec.twopta"} - Number of targets on a two point conversion attempt
+#'  \item{"rec.twoptm"} - Number of receptions that resulted in a two point conversion success
+#'  \item{"kick.rets"} - Number of kickoff returns
+#'  \item{"kickret.avg"} - Average number of yards gained on kickoff returns
+#'  \item{"kickret.tds"} - Number of kickoff return touchdown
+#'  \item{"kick.ret.lng"} - Yards gained on longest kickoff return
+#'  \item{"kickret.lngtd"} - Yards gained on longest kickoff return that resulted in a touchdown
+#'  \item{"punt.rets"} - Number of punt returns
+#'  \item{"puntret.avg"} - Average number of yards gained on punt returns
+#'  \item{"puntret.tds"} - Number of punt return touchdowns
+#'  \item{"puntret.lng"} - Yards gained on longest punt return
+#'  \item{"puntret.lngtd"} - Yards gained on longest punt return that resulted in a touchdown
+#'  \item{"fgm"} - Number of field goals made
+#'  \item{"fga"} - Number of field goals attempted
+#'  \item{"fgyds"} - Yard length of longest made field
+#'  \item{"totpts.fg"} - Point value of all made field goals
+#'  \item{"xpmade"} - Number of extra points made
+#'  \item{"xpmissed"} - Number of extra points missed
+#'  \item{"xpa"} - Number of attempted extra points
+#'  \item{"xpb"} - Number of extra points blocked
+#'  \item{"xppts.tot"} - Point value of all made extra points
+#'  \item{"tackles"} - Number of tackles recorded
+#'  \item{"asst.tackles"} - Number of assisted tackles
+#'  \item{"sacks"} - Number of sacks
+#'  \item{"defints"} - Number of defensive interceptions
+#'  \item{"forced.fumbs"} - Number of forced fumbles
+#'  \item{"totalfumbs"} - Total fumbles associated with a player
+#'  \item{"recfumbs"} - Number of recovered fumble
+#'  \item{"totalrecfumbs"} - Number of recovered fumble
+#'  \item{"fumbyds"} - Number of yards recorded on fumble returns
+#'  \item{"fumbslost"} - Number of fumbles lost
+#' }
+#'  
+#' @return This function outputs a single 55 column dataframe containing all 
+#' rushing, passing, receiving, kick return, punt return, kicking, fumble, 
+#' and defensive statistics for each player in a single  game. Each player is
+#'  assigned one line associated wih their statisitcs.
 #' @examples
 #' # GameID for a random game
 #' nfl.data.gameID <- "2013090800"

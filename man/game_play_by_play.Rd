@@ -2,7 +2,7 @@
 % Please edit documentation in R/PlayByPlayBoxScore.R
 \name{game_play_by_play}
 \alias{game_play_by_play}
-\title{Parsed Descriptive Play-by-Play Function for a Single Game}
+\title{Parsed Descriptive Play-by-Play Dataset for a Single Game}
 \usage{
 game_play_by_play(GameID)
 }
@@ -11,7 +11,7 @@ game_play_by_play(GameID)
 given NFL game.}
 }
 \value{
-A dataframe with 54 columns specifying various statistics and 
+A dataframe with 61 columns specifying various statistics and 
 outcomes associated with each play of the specified NFL game.
 }
 \description{
@@ -21,9 +21,9 @@ This function intakes the JSON play-by-play data of a single
  model building and analysis.
 }
 \details{
-Through simple list manipulation using the dp.call function and 
-rbind this function creates a 10 column dataframe with basic information 
- the NFL JSON API.  These columns include the following:
+Through list manipulation using the do.call and rbind functions
+ a 10 column dataframe with basic information populates directly from the NFL 
+ JSON API.  These columns include the following:
 \itemize{
  \item{"Drive"} - Drive number
  \item{"sp"} - Whether the play resulted in a score (any kind of score)
@@ -37,27 +37,110 @@ rbind this function creates a 10 column dataframe with basic information
  \item{"desc"} - A detailed description of what occured during the play
 }
 
-Through string manipulation and parsing of the description column, 44 columns 
-were added to the original dataframe allowing the user to have a detailed 
-breakdown of the events of each play.  The added variables are specified 
-below:
+Through string manipulation and parsing of the description column using the 
+base R and stringR, 51 columns were added to the original dataframe allowing 
+the user to have a detailed breakdown of the events of each play.  
+The added variables are specified below:
 \itemize{
- \item{"Date", "GameID", "TimeSecs", "TimeDiff"}
- \item{"DefensiveTeam", "SideofField"}
- \item{"GoalToGo", "FirstDown", "PlayAttempted"} 
- \item{"Yards.Gained", "TimeUnder"}
- \item{"ExPointResult", "TwoPointConv", "FieldGoalResult", 
-       "FieldGoalDistance", "TouchDown"}
- \item{"Defensive Two Point", "Safety"}
- \item{"PlayType"}
- \item{"Passer", "PassAttempt", "PassOutcome", "PassLength", "PassLocation",
-       "InterceptionThrown"}
- \item{"Rusher", "RushAttempt", "RunLocation", "RunGap"}
- \item{"Receiver", "Reception"}
- \item{"Tackler1", "Tackler2", "Fumble", "Sack"}
- \item{"Accepted.Penalty", "PenalizedTeam", "Penalty Type", 
-       "Penalized Player", "Penalty.Yards"}
- \item{"PosTeamScore", "DefTeamScore", "ScoreDiff", "AbsScoreDiff"}
+ \item{"Date"} - Date of game
+ \item{"GameID"} - The ID of the specified game
+ \item{"TimeSecs"} - Time remaining in game in seconds
+ \item{"PlayTimeDiff"} - The time difference between plays in seconds
+ \item{"DefensiveTeam"} - The defensive team on the play (for punts the 
+ receiving team is on defense, for kickoffs the receiving team is on offense)
+ \item{"TimeUnder"} - 
+ \item{"SideofField"} - The side of the field that the line of scrimmage 
+ is on
+ \item{GoalToGo} - Binary variable indicting if the play is in a goal-to-go
+ situation
+ \item{"FirstDown"} - Binary: 0 if the play did not result in a first down 
+ and 1 if it did
+ \item{"PlayAttempted"} - A variabled used to count the number of plays in a 
+ game (should always be equal to 1)
+ \item{"Yards.Gained"} - Amount of yards gained on the play
+ \item{"Touchdown"} - Binary: 1 if the play resulted in a TD else 0
+ \item{"ExPointResult"} - Result of the extra-point: Made, Missed, Blocked
+ \item{"TwoPointConv"} - Result of two-point conversion: Success of Failure
+ \item{"DefTwoPoint"} - Result of defesnive two-point conversion: Success of Failure
+ \item{"Safety"} - Binary: 1 if safety was recorded else 0
+ \item{"PlayType"} - The type of play that occured. Potential values are:
+       \itemize{
+                 \item{Kickoff, Punt, Onside Kick}
+                 \item{Passs, Run}
+                 \item{Sack}
+                 \item{Field Goal, Extra Point}
+                 \item{Quarter End, Two Minute Warning, End of Game}
+                 \item{No Play, QB Kneel, Spike, Timeout}
+         }  
+ \item{"Passer"} - The passer on the play if it was a pass play
+ \item{"PassAttempt"} - Binary variable indicating whether a pass was attempted
+ or not
+ \item{"PassOutcome"} - Pass Result: Complete or Incomplete    
+ \item{"PassLength"} - Categorical variable indicating the length of the pass:
+ Short or Deep
+ \item{"PassLocation"} - Categorical variable: left, middle, right
+ \item{"InterceptionThrown"} - Binary variable indicating whether an 
+ interception was thrown
+ \item{"Interceptor"} - The player who intercepted the ball
+ \item{"Rusher"} - The runner on the play if it was a running play
+ \item{"RushAttempt"} - Binary variable indicating whether or not a run was 
+ attempted.
+ \item{"RunLocation"} - The location of the run - left, middle, right
+ \item{"RunGap"} - The gap that the running back ran through
+ \item{"Receiver"} - The player who recorded the reception on a complete pass
+ \item{"Reception"} - Binary Variable indicating a reception on a completed 
+ pass: 1 if a reception was recorded else 0
+ \item{"ReturnResult"} - Result of a punt, kickoff, interception, or 
+ fumble return
+ \item{"Returner"} - The punt or kickoff returner
+ \item{"Tackler1"} - The primary tackler on the play
+ \item{"Tackler2"} - The secondary tackler on the play
+ \item{"FieldGoalResult"} - Outcome of a fieldgoal: made, missed, blocked
+ \item{"FieldGoalDistance"} - Field goal length in yards
+ \item{"Fumble"} - Binary variable indicating whether a fumble occured or not:
+ 1 if a fumble occured else no 
+ \item{"RecFumbTeam"} - Team that recovered the fumble
+ \item{"RecFumbPlayer"} - Player that recovered the fumble
+ \item{"Sack"} - Binary variable indicating whether a sack was recorded: 1 if
+ a sack was recorded else 0
+ \item{"Challenge.Replay"} - Binary variable indicating whether or not the 
+ play was reviewed by the replay offical on challenges or replay reviews
+ \item{"ChalReplayResult"} - Result of the replay review: Upheld or Overturned
+ \item{"Accepted.Penalty"} - Binary variable indicating whether a penalty was 
+ accpeted on the play
+ \item{"PenalizedTeam"} - The team who was penalized on the play
+ \item{"PenaltyType"} - Type of penalty on the play. Values include:
+       \itemize{    
+                 \item{Unnecessary Roughness, Roughing the Passer}
+                 \item{Illegal Formation, Defensive Offside}
+                 \item{Delay of Game, False Start, Illegal Shift}
+                 \item{Illegal Block Above the Waist, Personal Foul}
+                 \item{Unnecessary Roughness, Illegal Blindside Bloc}
+                 \item{Defensive Pass Interference, Offensive Pass Interference}
+                 \item{Fair Catch Interferenc, Unsportsmanlike Conduct}
+                 \item{Running Into the Kicker, Illegal Kick}
+                 \item{Illegal Contact, Defensive Holding}
+                 \item{Illegal Motion, Low Block}
+                 \item{Illegal Substitution, Neutral Zone Infraction}
+                 \item{Ineligible Downfield Pass, Roughing the Passer}
+                 \item{Illegal Use of Hands, Defensive Delay of Game}
+                 \item{Defensive 12 On-field, Offensive Offside}
+                 \item{Tripping, Taunting, Chop Block}
+                 \item{Interference with Opportunity to Catch, Illegal Touch Pass}
+                 \item{Illegal Touch Kick, Offside on Free Kick}
+                 \item{Intentional Grounding, Horse Collar}
+                 \item{Illegal Forward Pass, Player Out of Bounds on Punt}
+                 \item{Clipping, Roughing the Kicker, Ineligible Downfield Kick}
+                 \item{Offensive 12 On-field, Disqualification}
+      } 
+ \item{"PenalizedPlayer"} - The penalized player
+ \item{"Penalty.Yards"} - The number of yards that the penalty resulted in
+ \item{"PosTeamScore"} - The score of the possession team (offensive team)
+ \item{"DefTeamScore"} - The score of the defensive team
+ \item{"ScoreDiff"} - The difference in score between the offensive and 
+ defensive teams (offensive.score - def.score)         
+ \item{"AbsScoreDiff"} - The absolute score difference on the given play
+ 
  }
 }
 \examples{
