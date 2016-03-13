@@ -241,6 +241,26 @@ game_play_by_play <- function(GameID) {
   
   PBP$PlayTimeDiff <- plays.time.diff
   
+  ## Challenge or Replay Review ##
+  
+  # Binary 
+  PBP$Challenge.Replay <- 0
+  
+  replay.offic <- grep(PBP$desc, pattern = "Replay Official reviewed")
+  challenged <- grep(PBP$desc, pattern = "challenge")
+  
+  PBP$Challenge.Replay[c(replay.offic, challenged)] <- 1
+  
+  # Results
+  
+  PBP$ChalReplayResult <- NA
+  
+  upheld.play <- grep(PBP$desc, pattern = "the play was Upheld")
+  reversed.play <- grep(PBP$desc, pattern = "the play was REVERSED")
+  
+  PBP$ChalReplayResult[upheld.play] <- "Upheld"
+  PBP$ChalReplayResult[reversed.play] <- "Reversed"
+  
   ######################################
   # Picking Apart the Description Column
   ######################################
@@ -267,16 +287,20 @@ game_play_by_play <- function(GameID) {
   # Two Point Conversion 
   PBP$TwoPointConv <- NA
   
-  two.point.success <- which(sapply(PBP$desc, regexpr, 
-                                    pattern = 
-                                      "TWO-POINT CONVERSION ATTEMPT\\. (.){1,70}\\. ATTEMPT SUCCEEDS") != -1)
-  two.point.failure <- which(sapply(PBP$desc, regexpr, 
-                                    pattern = 
-                                      "TWO-POINT CONVERSION ATTEMPT\\. (.){1,70}\\. ATTEMPT FAILS") != -1)
+  two.point.result.ind <- which(sapply(PBP$desc, regexpr, 
+                                       pattern = 
+                                         "TWO-POINT CONVERSION ATTEMPT") != -1)
   
-  PBP$TwoPointConv[two.point.success] <- "Success"
-  PBP$TwoPointConv[two.point.failure] <- "Failure"
+  two.point.result2 <- stringr::str_extract_all(PBP$desc[two.point.result.ind],
+                                                pattern = "ATTEMPT FAILS|SUCCEEDS")
   
+  two.point.result.final1 <- unlist(lapply(two.point.result2, tail, 1))
+  two.point.result.final2 <- ifelse(two.point.result.final1 == "ATTEMPT FAILS",
+                                    "Failure", "Success")
+  
+  if (length(two.point.result.final2) != 0) {
+  PBP$TwoPointConv[two.point.result.ind] <- two.point.result.final2
+  }
   # Penalty - Binary Column 
   PBP$Accepted.Penalty <- NA
   penalty.play <- sapply(PBP$desc, stringr::str_extract, pattern = "PENALTY")
@@ -496,6 +520,9 @@ game_play_by_play <- function(GameID) {
   PBP$DefTwoPoint[def.twopt.suc] <- "Success"
   PBP$DefTwoPoint[def.twopt.fail] <- "Failure"
   
+  all.2pts <- intersect(c(def.twopt.suc, def.twopt.fail), two.point.result.ind)
+  PBP$TwoPointConv[all.2pts] <- "Failure"
+  
   # Fumbles
   
   PBP$Fumble <- 0
@@ -517,26 +544,6 @@ game_play_by_play <- function(GameID) {
                               pattern = "END QUARTER") != -1)
   
   PBP$PlayType[end.quarter] <- "Quarter End"
-  
-  ## Challenge or Replay Review ##
-  
-  # Binary 
-  PBP$Challenge.Replay <- 0
-  
-  replay.offic <- grep(PBP$desc, pattern = "Replay Official reviewed")
-  challenged <- grep(PBP$desc, pattern = "challenge")
-  
-  PBP$Challenge.Replay[c(replay.offic, challenged)] <- 1
-  
-  # Results
-  
-  PBP$ChalReplayResult <- NA
-  
-  upheld.play <- grep(PBP$desc, pattern = "the play was Upheld")
-  reversed.play <- grep(PBP$desc, pattern = "the play was REVERSED")
-  
-  PBP$ChalReplayResult[upheld.play] <- "Upheld"
-  PBP$ChalReplayResult[reversed.play] <- "Reversed"
   
   # 2 Minute Warning
   two.minute.warning <- which(sapply(PBP$desc, regexpr, 
