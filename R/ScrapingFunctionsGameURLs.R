@@ -97,3 +97,5 @@ proper_jsonurl_formatting <- function(GameID) {
   paste("http://www.nfl.com/liveupdate/game-center/", GameID, "/",
         GameID, "_gtd.json", sep = "")
 }
+
+

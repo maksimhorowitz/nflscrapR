@@ -42,6 +42,8 @@
 #'  \item{"TimeUnder"} - 
 #'  \item{"SideofField"} - The side of the field that the line of scrimmage 
 #'  is on
+#'  \item{yrdline100} - Distance to opponents enzone, ranges from 1-99.
+#'  situation
 #'  \item{GoalToGo} - Binary variable indicting if the play is in a goal-to-go
 #'  situation
 #'  \item{"FirstDown"} - Binary: 0 if the play did not result in a first down 
@@ -199,7 +201,12 @@ game_play_by_play <- function(GameID) {
   yline.info <- sapply(yline.info.1, strsplit, split = " ")
   
   PBP$SideofField <- sapply(yline.info, FUN = function(x) x[1])
-  PBP$yrdln <- sapply(yline.info, FUN = function(x) x[2])
+  PBP$yrdln <- as.numeric(sapply(yline.info, FUN = function(x) x[2]))
+  
+  # Yard Line on 100 yards Scale: Distance from Opponent Endzone
+  
+  PBP$yrdline100 <- ifelse(PBP$SideofField == PBP$posteam | PBP$yrdln == 50, 
+                          100 - PBP$yrdln, PBP$yrdln )
   
   # Game Date  
   date.step1 <- stringr::str_extract(urlstring, pattern = "/[0-9]{10}/")
@@ -276,14 +283,6 @@ game_play_by_play <- function(GameID) {
                                           "0")
                                   )
   
-  # Touchdown Play 
-  touchdown.step1 <- sapply(PBP$desc, stringr::str_extract, 
-                            pattern = "TOUCHDOWN")
-  nullified <- grep(PBP$desc, pattern = "TOUCHDOWN NULLIFIED")
-  reversed <- grep(PBP$desc, pattern = "TOUCHDOWN(.)+REVERSED")
-  touchdown.step1[c(nullified, reversed)] <- NA
-  PBP$Touchdown <- ifelse(!is.na(touchdown.step1), 1, 0)
-  
   # Two Point Conversion 
   PBP$TwoPointConv <- NA
   
@@ -301,6 +300,7 @@ game_play_by_play <- function(GameID) {
   if (length(two.point.result.final2) != 0) {
   PBP$TwoPointConv[two.point.result.ind] <- two.point.result.final2
   }
+  
   # Penalty - Binary Column 
   PBP$Accepted.Penalty <- NA
   penalty.play <- sapply(PBP$desc, stringr::str_extract, pattern = "PENALTY")
@@ -498,18 +498,38 @@ game_play_by_play <- function(GameID) {
   extrapoint.blocked <- which(sapply(PBP$desc, regexpr, 
                                     pattern = "(extra point is Blocked)") != -1)
   
+  extrapoint.aborted <- which(sapply(PBP$desc, regexpr, 
+                                     pattern = "(extra point is Aborted)") != -1)
+  
   PBP$PlayType[c(extrapoint.good, 
                  extrapoint.nogood,
-                 extrapoint.blocked)] <- "Extra Point"
+                 extrapoint.blocked,
+                 extrapoint.aborted)] <- "Extra Point"
   
   # Extra Point Result
   PBP$ExPointResult <- NA
   PBP$ExPointResult[extrapoint.good] <- "Made"
   PBP$ExPointResult[extrapoint.nogood] <- "Missed"
   PBP$ExPointResult[extrapoint.blocked] <- "Blocked"
+  PBP$ExPointResult[extrapoint.blocked] <- "Aborted"
+  
+  # Touchdown Play 
+  touchdown.step1 <- sapply(PBP$desc, stringr::str_extract, 
+                            pattern = "TOUCHDOWN")
+  nullified <- grep(PBP$desc, pattern = "TOUCHDOWN NULLIFIED")
+  reversed <- grep(PBP$desc, pattern = "TOUCHDOWN(.)+REVERSED")
+  touchdown.step1[c(nullified, reversed)] <- NA
+  PBP$Touchdown <- ifelse(!is.na(touchdown.step1), 1, 0)
+  
+  TDs.b4.extrapt <- which(PBP$PlayType == "Extra Point" | 
+                            !is.na(PBP$TwoPointConv)) - 1
+  extra.TDs <- setdiff(TDs.b4.extrapt, which(PBP$Touchdown == 1))
+  
+  if (length(extra.TDs) > 0) {
+    PBP$Touchdown[TDs.b4.extrapt] <- 1
+  }
   
   # Defensive 2-pt conversion
-  
   def.twopt.suc <- which(sapply(PBP$desc, regexpr,
                             pattern = "DEFENSIVE TWO-POINT ATTEMPT\\. (.){1,70}\\. ATTEMPT SUCCEEDS") != -1)
   
@@ -945,7 +965,7 @@ game_play_by_play <- function(GameID) {
   
   ## Final OutPut ##
   PBP[,c("Date", "GameID", "Drive", "qtr", "down", "time", "TimeUnder", 
-         "TimeSecs", "PlayTimeDiff", "SideofField", "yrdln", 
+         "TimeSecs", "PlayTimeDiff", "SideofField", "yrdln", "yrdline100",
          "ydstogo", "ydsnet", "GoalToGo", "FirstDown", 
          "posteam", "DefensiveTeam", "desc", "PlayAttempted", "Yards.Gained", 
          "sp", "Touchdown", "ExPointResult", "TwoPointConv", "DefTwoPoint", 
