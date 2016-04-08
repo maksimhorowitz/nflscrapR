@@ -28,6 +28,8 @@ aspect of a drive including the scoring result, number of plays, the duration
 of the drive, and the offensive and defensive teams.  All 16 variable are
 explained in more detail below:
 \itemize{
+ \item{"GameID"} - The ID of the given Game
+ \item{DriveNumber"} - The respective drive number in the game
  \item{"posteam"} - The offensive team on the drive
  \item{"qrt"} - The quarter at the end of the drive
  \item{"fs"} - Number of first downs in the drive

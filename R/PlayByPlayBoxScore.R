@@ -136,7 +136,7 @@
 #'  
 #'  }
 #'  
-#' @return A dataframe with 61 columns specifying various statistics and 
+#' @return A dataframe with 62 columns specifying various statistics and 
 #' outcomes associated with each play of the specified NFL game.
 #' @examples
 #' # Parsed play-by-play of the final game in the 2015 NFL season 
@@ -165,6 +165,9 @@ game_play_by_play <- function(GameID) {
   number.drives <- length(nfl.json[[1]]$drives) - 1
   PBP <- NULL
   for (ii in 1:number.drives) {
+   # For now hard coded a fix for the drive in the Patriots vs. TB game
+   # that has an empty drive 3 list
+   if (GameID == 2013092206 & ii == 3) {next}
    PBP <- rbind(PBP, cbind("Drive" = ii,
                            data.frame(do.call(rbind, 
                                      (nfl.json[[1]]$drives[[ii]]$plays))
@@ -994,7 +997,7 @@ game_play_by_play <- function(GameID) {
 #' from a given season.  This dataframe is prime for use with the dplyr and 
 #' plyr packages.
 #' @return A dataframe contains all the play-by-play information for a single
-#'      season.  This includes all the 52 variables collected in our 
+#'      season.  This includes all the 62 variables collected in our 
 #'      game_play_by_play function (see documentation for game_play_by_play for
 #'      details)
 #' @examples
@@ -1013,7 +1016,7 @@ season_play_by_play <- function(Season) {
   pbp_data_unformatted <- lapply(game_ids, FUN = game_play_by_play)
   
   df_pbp_data <- do.call(rbind, pbp_data_unformatted)
-  
+  df_pbp_data$Season <- Season
   df_pbp_data
 }
 
@@ -1030,6 +1033,8 @@ season_play_by_play <- function(Season) {
 #' of the drive, and the offensive and defensive teams.  All 16 variable are
 #' explained in more detail below:
 #' \itemize{
+#'  \item{"GameID"} - The ID of the given Game
+#'  \item{DriveNumber"} - The respective drive number in the game
 #'  \item{"posteam"} - The offensive team on the drive
 #'  \item{"qrt"} - The quarter at the end of the drive
 #'  \item{"fs"} - Number of first downs in the drive
@@ -1083,10 +1088,17 @@ drive_summary <- function(GameID) {
   # Combining all datasets into one
   drive.data.final <- cbind(drive.data[, -c(start.index,end.index)], 
                             start.data, end.data)
+  drive.data.final$GameID <- GameID
+  drive.data.final$DriveNumber <- 1:nrow(drive.data.final)
   
-
   # Removing last row and 4th column of irrelevant information
-  drive.data.final[-nrow(drive.data),-c(3,4)]
+  drive.data.final <- drive.data.final[-nrow(drive.data),-c(3,4)]
+  
+  # Output
+  drive.data.final[,c("GameID", "DriveNumber", "posteam", "qtr", "fds",
+                   "result", "penyds", "ydsgained", "numplays", "postime",
+                   "StartQrt", "StartTime", "StartYardln", "StartTeam",
+                   "EndQrt", "EndTime", "EndYardln", "EndTeam")]
 }
 
 

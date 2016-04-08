@@ -11,7 +11,7 @@ game_play_by_play(GameID)
 given NFL game.}
 }
 \value{
-A dataframe with 61 columns specifying various statistics and 
+A dataframe with 62 columns specifying various statistics and 
 outcomes associated with each play of the specified NFL game.
 }
 \description{
@@ -51,6 +51,8 @@ The added variables are specified below:
  \item{"TimeUnder"} - 
  \item{"SideofField"} - The side of the field that the line of scrimmage 
  is on
+ \item{yrdline100} - Distance to opponents enzone, ranges from 1-99.
+ situation
  \item{GoalToGo} - Binary variable indicting if the play is in a goal-to-go
  situation
  \item{"FirstDown"} - Binary: 0 if the play did not result in a first down 

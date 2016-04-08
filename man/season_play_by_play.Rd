@@ -12,7 +12,7 @@ interest}
 }
 \value{
 A dataframe contains all the play-by-play information for a single
-     season.  This includes all the 52 variables collected in our 
+     season.  This includes all the 62 variables collected in our 
      game_play_by_play function (see documentation for game_play_by_play for
      details)
 }
