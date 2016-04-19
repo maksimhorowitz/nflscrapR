@@ -22,9 +22,9 @@ statistics from a given game.  Each player's statistics can be viewed on one
 line.
 }
 \details{
-This dataframe includes 56 variables including identifiers such as:
+This dataframe includes 55 variables including identifiers such as:
  \itemize{
- \item{"Year", "gameID", "date", "team", "playerID", "name"}
+ \item{"Year", "gameID", "date", "Team", "playerID", "name"}
  }
 Statistics are included for passing, rushing, receiving, kick return,
 punt return, kicking, defensive, and fumbles.  The outputted columns are as

@@ -6,9 +6,9 @@
 #' line.
 #' @param GameID (character or numeric) A 10 digit game ID associated with a 
 #' given NFL game.
-#' @details This dataframe includes 56 variables including identifiers such as:
+#' @details This dataframe includes 55 variables including identifiers such as:
 #'  \itemize{
-#'  \item{"Year", "gameID", "date", "team", "playerID", "name"}
+#'  \item{"Year", "gameID", "date", "Team", "playerID", "name"}
 #'  }
 #' Statistics are included for passing, rushing, receiving, kick return,
 #' punt return, kicking, defensive, and fumbles.  The outputted columns are as
@@ -410,23 +410,23 @@ agg_player_season <- function(Season) {
   # Use dplyr to aggregate
   # Here we use the sum function for cumulative yards
   season.sum.agg <-  dplyr::group_by(playerdata.year,
-                                   Year, team, playerID, name)
+                                   Year, Team, playerID, name)
   
   season.sum.agg <- dplyr::summarise_each(season.sum.agg, 
-                                        funs(sum), -date, -rushlong, -rushlongtd
-                                        , -reclong, -reclongtd, -gameID, 
+                                          dplyr::funs(sum), -date, -rushlng, -rushlngtd
+                                        , -reclng, -reclngtd, -game.id, 
                                         -puntret.lng, -puntret.lngtd, 
                                         -kick.ret.lng, -kickret.lngtd)
   
   # Here we find the max "long run" and max "long reception"
-  season.max.agg <- dplyr::group_by(playerdata.year, Year, team, playerID, name) 
+  season.max.agg <- dplyr::group_by(playerdata.year, Year, Team, playerID, name) 
   
-  season.max.agg <- dplyr::summarise_each(season.max.agg, funs(max), rushlong, 
-                                        rushlongtd, reclong, reclongtd, 
+  season.max.agg <- dplyr::summarise_each(season.max.agg, dplyr::funs(max), 
+                                        rushlng, rushlngtd, reclng, reclngtd, 
                                         puntret.lng, puntret.lngtd, 
                                         kick.ret.lng, kickret.lngtd)
   
   # Merging the Two datasets
   merge(season.sum.agg, season.max.agg, 
-        by = c("Year", "team", "playerID", "name"))
+        by = c("Year", "Team", "playerID", "name"))
 }

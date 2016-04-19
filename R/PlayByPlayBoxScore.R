@@ -315,6 +315,18 @@ game_play_by_play <- function(GameID) {
   PBP$PenalizedTeam <- stringr::str_extract(penalized.team.s1,  
                                             "[A-Z]{2,3}$")
   
+  PBP$PenalizedTeam <- ifelse(PBP$PenalizedTeam == "BLT", 
+                              "BAL", 
+                              ifelse(PBP$PenalizedTeam == "JAX",
+                                     "JAC",
+                                     ifelse(PBP$PenalizedTeam == "HST",
+                                            "HOU", 
+                                            ifelse(PBP$PenalizedTeam == "SL",
+                                                   "STL", 
+                                                   ifelse(PBP$PenalizedTeam == "ARZ",
+                                                          "ARI",
+                                                          PBP$PenalizedTeam)))))
+  
   # Penalty - What was the penalty?
   penalty.type.s1 <- sapply(PBP$desc, stringr::str_extract,  
                                   pattern ="PENALTY(.){5,25},.+, [0-9] yard(s)")
@@ -404,6 +416,41 @@ game_play_by_play <- function(GameID) {
   PBP$Tackler1 <- tacklers1
   PBP$Tackler2 <- tacklers2
   
+  # Field Goal
+  fieldgoal <- which(sapply(PBP$desc, regexpr, 
+                            pattern = "field goal") != -1)
+  fieldgoal.null <- which(sapply(PBP$desc, regexpr, 
+                                 pattern = "field goal(.)+NULLIFIED") != -1)
+  fieldgoal.rev <- which(sapply(PBP$desc, regexpr, 
+                                pattern = "field goal(.)+REVERSED") != -1)
+  fieldgoal <- setdiff(fieldgoal, c(fieldgoal.null, fieldgoal.rev))
+  
+  missed.fg <- which(sapply(PBP$desc, regexpr, 
+                            pattern = "field goal is No Good") != -1)
+  blocked.fg  <- which(sapply(PBP$desc, regexpr, 
+                              pattern = "field goal is BLOCKED") != -1)
+  made.fg  <- which(sapply(PBP$desc, regexpr, 
+                           pattern = "field goal is GOOD") != -1)
+  
+  PBP$PlayType[fieldgoal] <- "Field Goal"
+  
+  # Field Goal Distance 
+  fieldgoaldist.prelim <- sapply(PBP$desc[fieldgoal], stringr::str_extract, 
+                                 pattern = "[0-9]{1,2} yard field goal")
+  
+  fieldgoaldist <- sapply(fieldgoaldist.prelim, stringr::str_extract,
+                          pattern = "[0-9]{1,2}")
+  
+  PBP$FieldGoalDistance <- NA
+  
+  PBP$FieldGoalDistance[fieldgoal] <- fieldgoaldist
+  
+  # Field Goal Result
+  PBP$FieldGoalResult <- NA
+  PBP$FieldGoalResult[missed.fg] <- "No Good"
+  PBP$FieldGoalResult[blocked.fg] <- "Blocked"
+  PBP$FieldGoalResult[made.fg] <- "Good"
+  
   # Pass Plays
   PBP$PassOutcome <- NA
   pass.play <- which(sapply( PBP$desc, regexpr, pattern = "pass") != -1)
@@ -458,39 +505,6 @@ game_play_by_play <- function(GameID) {
   
   PBP$PlayType[punt.play] <- "Punt"
   
-  # Field Goal
-  fieldgoal <- which(sapply(PBP$desc, regexpr, 
-                            pattern = "field goal") != -1)
-  fieldgoal.null <- which(sapply(PBP$desc, regexpr, 
-                            pattern = "field goal(.)+NULLIFIED") != -1)
-  fieldgoal.rev <- which(sapply(PBP$desc, regexpr, 
-                            pattern = "field goal(.)+REVERSED") != -1)
-  fieldgoal <- setdiff(fieldgoal, c(fieldgoal.null, fieldgoal.rev))
-  
-  missed.fg <- which(sapply(PBP$desc, regexpr, 
-                            pattern = "field goal is No Good") != -1)
-  blocked.fg  <- which(sapply(PBP$desc, regexpr, 
-                            pattern = "field goal is BLOCKED") != -1)
-  
-  PBP$PlayType[fieldgoal] <- "Field Goal"
-  
-  # Field Goal Distance 
-  fieldgoaldist.prelim <- sapply(PBP$desc[fieldgoal], stringr::str_extract, 
-                                   pattern = "[0-9]{1,2} yard field goal")
-  
-  fieldgoaldist <- sapply(fieldgoaldist.prelim, stringr::str_extract,
-                            pattern = "[0-9]{1,2}")
-  
-  PBP$FieldGoalDistance <- NA
-  
-  PBP$FieldGoalDistance[fieldgoal] <- fieldgoaldist
-  
-  # Field Goal Result
-  PBP$FieldGoalResult <- NA
-  PBP$FieldGoalResult[missed.fg] <- "No Good"
-  PBP$FieldGoalResult[blocked.fg] <- "Blocked"
-  PBP$FieldGoalResult[setdiff(fieldgoal,c(missed.fg, blocked.fg))] <- "Good"
-  
   # Extra Point
   extrapoint.good <- which(sapply(PBP$desc, regexpr,
                                     pattern = "extra point is GOOD") != -1)
@@ -517,20 +531,27 @@ game_play_by_play <- function(GameID) {
   PBP$ExPointResult[extrapoint.blocked] <- "Aborted"
   
   # Touchdown Play 
-  touchdown.step1 <- sapply(PBP$desc, stringr::str_extract, 
-                            pattern = "TOUCHDOWN")
-  nullified <- grep(PBP$desc, pattern = "TOUCHDOWN NULLIFIED")
-  reversed <- grep(PBP$desc, pattern = "TOUCHDOWN(.)+REVERSED")
-  touchdown.step1[c(nullified, reversed)] <- NA
-  PBP$Touchdown <- ifelse(!is.na(touchdown.step1), 1, 0)
+  #touchdown.step1 <- sapply(PBP$desc, stringr::str_extract, 
+   #                         pattern = "TOUCHDOWN")
+  touchdown.step1 <- grep(PBP$desc, pattern = "TOUCHDOWN")
+  nullified <- grep(PBP$desc[touchdown.step1], pattern = "NULLIFIED")
+  reversed <- grep(PBP$desc[touchdown.step1], pattern = "(REVERSED)$")
   
-  TDs.b4.extrapt <- which(PBP$PlayType == "Extra Point" | 
-                            !is.na(PBP$TwoPointConv)) - 1
-  extra.TDs <- setdiff(TDs.b4.extrapt, which(PBP$Touchdown == 1))
+  if (length(c(nullified, reversed)) > 0) {
+    touchdown.step1 <- touchdown.step1[-c(nullified, reversed)]
+  } 
   
-  if (length(extra.TDs) > 0) {
-    PBP$Touchdown[TDs.b4.extrapt] <- 1
-  }
+  PBP$Touchdown <- 0
+  PBP$Touchdown[touchdown.step1] <- 1
+  
+  
+ # TDs.b4.extrapt <- which(PBP$PlayType == "Extra Point" | 
+  #                          !is.na(PBP$TwoPointConv)) - 1
+  #extra.TDs <- setdiff(TDs.b4.extrapt, which(PBP$Touchdown == 1))
+  
+#  if (length(extra.TDs) > 0) {
+ #   PBP$Touchdown[TDs.b4.extrapt] <- 1
+#  }
   
   # Defensive 2-pt conversion
   def.twopt.suc <- which(sapply(PBP$desc, regexpr,
@@ -558,7 +579,7 @@ game_play_by_play <- function(GameID) {
   
   # Timeouts
   timeouts <- which(sapply(PBP$desc, regexpr, 
-                           pattern = "[A-z]imeout #[1-5] by") != -1)
+                           pattern = "[A-z]imeout( #[1-5] by)?") != -1)
   
   PBP$PlayType[timeouts] <- "Timeout"
   
@@ -805,7 +826,15 @@ game_play_by_play <- function(GameID) {
                            pattern = "[A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-)?[A-z]{1,15})?")
   
   PBP$RecFumbTeam <- NA
-  PBP$RecFumbTeam[fumble.index] <- recover.team
+  PBP$RecFumbTeam[fumble.index] <-  ifelse(recover.team == "BLT", 
+                                           "BAL", 
+                                           ifelse(recover.team == "JAX",
+                                                  "JAC",
+                                                  ifelse(recover.team == "HST",
+                                                         "HOU", 
+                                                         ifelse(recover.team == "SL",
+                                                                "STL", 
+                                                                recover.team))))
   PBP$RecFumbPlayer <- NA
   PBP$RecFumbPlayer[fumble.index] <- recover.player
   
