@@ -453,7 +453,7 @@ game_play_by_play <- function(GameID) {
   
   # Pass Plays
   PBP$PassOutcome <- NA
-  pass.play <- which(sapply( PBP$desc, regexpr, pattern = "pass") != -1)
+  pass.play <- which(sapply( PBP$desc, regexpr, pattern = "pass( )") != -1)
   incomplete.pass.play <- which(sapply(PBP$desc, regexpr, 
                                        pattern = 
                                          "(pass incomplete)|INTERCEPTED") != -1)
