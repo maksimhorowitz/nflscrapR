@@ -416,6 +416,13 @@ game_play_by_play <- function(GameID) {
   PBP$Tackler1 <- tacklers1
   PBP$Tackler2 <- tacklers2
   
+  # Timeouts
+  ## Needs to be before Field Goal
+  timeouts <- which(sapply(PBP$desc, regexpr, 
+                           pattern = "[A-z]imeout( #[1-5] by)?") != -1)
+  
+  PBP$PlayType[timeouts] <- "Timeout"
+  
   # Field Goal
   fieldgoal <- which(sapply(PBP$desc, regexpr, 
                             pattern = "field goal") != -1)
@@ -531,8 +538,7 @@ game_play_by_play <- function(GameID) {
   PBP$ExPointResult[extrapoint.blocked] <- "Aborted"
   
   # Touchdown Play 
-  #touchdown.step1 <- sapply(PBP$desc, stringr::str_extract, 
-   #                         pattern = "TOUCHDOWN")
+  
   touchdown.step1 <- grep(PBP$desc, pattern = "TOUCHDOWN")
   nullified <- grep(PBP$desc[touchdown.step1], pattern = "NULLIFIED")
   reversed <- grep(PBP$desc[touchdown.step1], pattern = "(REVERSED)$")
@@ -543,15 +549,6 @@ game_play_by_play <- function(GameID) {
   
   PBP$Touchdown <- 0
   PBP$Touchdown[touchdown.step1] <- 1
-  
-  
- # TDs.b4.extrapt <- which(PBP$PlayType == "Extra Point" | 
-  #                          !is.na(PBP$TwoPointConv)) - 1
-  #extra.TDs <- setdiff(TDs.b4.extrapt, which(PBP$Touchdown == 1))
-  
-#  if (length(extra.TDs) > 0) {
- #   PBP$Touchdown[TDs.b4.extrapt] <- 1
-#  }
   
   # Defensive 2-pt conversion
   def.twopt.suc <- which(sapply(PBP$desc, regexpr,
@@ -577,12 +574,6 @@ game_play_by_play <- function(GameID) {
   fumble.index <- setdiff(fumble.index1, fumble.overruled)
   PBP$Fumble[fumble.index] <- 1
   
-  # Timeouts
-  timeouts <- which(sapply(PBP$desc, regexpr, 
-                           pattern = "[A-z]imeout( #[1-5] by)?") != -1)
-  
-  PBP$PlayType[timeouts] <- "Timeout"
-  
   # Quarter End
   end.quarter <- which(sapply(PBP$desc, regexpr, 
                               pattern = "END QUARTER") != -1)
@@ -603,6 +594,12 @@ game_play_by_play <- function(GameID) {
   # Sack- Binary
   PBP$Sack <- 0
   PBP$Sack[sack.plays] <- 1
+  
+  # No Play
+  no.play <- which(sapply(PBP$desc, regexpr, 
+                          pattern = "No Play") != -1)
+  
+  PBP$PlayType[no.play] <- "No Play"
   
   # Safety - Binary
   safety.plays <- which(sapply(PBP$desc, regexpr, pattern = "SAFETY") != -1)
@@ -632,12 +629,6 @@ game_play_by_play <- function(GameID) {
   
   PBP$PlayType[spike.play] <- "Spike"
   
-  # No Play
-  no.play <- which(sapply(PBP$desc, regexpr, 
-                                pattern = "No Play") != -1)
-  
-  PBP$PlayType[no.play] <- "No Play"
-  
   # End of Game 
   end.game <- which(sapply(PBP$desc, regexpr, pattern = "END GAME") != -1)
   
@@ -653,7 +644,19 @@ game_play_by_play <- function(GameID) {
   # Running Play
   running.play <- which(is.na(PBP$PlayType))
   PBP$PlayType[running.play] <- "Run"
-  PBP$RushAttempt <- ifelse(PBP$PlayType == "Run", 1,0)
+  
+  # Fix plays that are run plays but were challenged and lost, so a timeout was
+  # lost
+  running.play2 <- which(sapply(PBP$desc[which(PBP$PlayType == "Timeout")], 
+                                regexpr, 
+                                pattern = "(((left|right) (tackle|end|guard))|(up the middle)) (for|to)") != -1)
+
+  PBP[which(PBP$PlayType == "Timeout"),"PlayType"][running.play2] <- "Run"
+  
+  PBP$RushAttempt <- ifelse(PBP$PlayType == "Run", 1, 0)
+    
+    ##################
+    ### SOLVE: Look at timeout play and search for "(left|right) (tack|end|guard) for..."
   
   # Run Direction
   PBP$RunLocation <- NA
@@ -665,9 +668,9 @@ game_play_by_play <- function(GameID) {
   run.middle <- which(sapply(PBP[which(PBP$PlayType == "Run"),"desc"], regexpr, 
                              pattern = "middle") != -1) 
   
-  PBP[running.play,"RunLocation"][run.left] <- "left"
-  PBP[running.play,"RunLocation"][run.right] <- "right"
-  PBP[running.play,"RunLocation"][run.middle] <- "middle"
+  PBP[c(running.play, running.play2),"RunLocation"][run.left] <- "left"
+  PBP[c(running.play, running.play2),"RunLocation"][run.right] <- "right"
+  PBP[c(running.play, running.play2),"RunLocation"][run.middle] <- "middle"
   
   # Run Gap
   PBP$RunGap <- NA
@@ -681,16 +684,16 @@ game_play_by_play <- function(GameID) {
   run.end <- which(sapply(PBP[which(PBP$PlayType == "Run"),"desc"], regexpr, 
                          pattern = "end") != -1) 
   
-  PBP[running.play,"RunGap"][run.guard] <- "guard"
-  PBP[running.play,"RunGap"][run.tackle] <- "tackle"
-  PBP[running.play,"RunGap"][run.end] <- "end"
+  PBP[c(running.play, running.play2),"RunGap"][run.guard] <- "guard"
+  PBP[c(running.play, running.play2),"RunGap"][run.tackle] <- "tackle"
+  PBP[c(running.play, running.play2),"RunGap"][run.end] <- "end"
   
   # Rusher
   
   rusherStep1 <- sapply(PBP[which(PBP$PlayType == "Run"),"desc"], 
                         stringr::str_extract, 
                         pattern = "[A-Z]\\.[A-Z][A-z]{1,20}")
-  PBP[running.play,"Rusher"] <- rusherStep1
+  PBP[c(running.play, running.play2),"Rusher"] <- rusherStep1
   
   ## Punt and Kick Return Outcome ##
   

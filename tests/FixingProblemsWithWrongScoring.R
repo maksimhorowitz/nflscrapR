@@ -50,4 +50,5 @@ nrow(g3)
 n3 <- Next_Score(g3)
 length(n3)
 
-
+"(:28) Bills attempted to call a 2nd consecutive timeout. R.Lindell 34 yard field goal is GOOD, 
+Center-G.Sanborn, Holder-B.Moorman."
