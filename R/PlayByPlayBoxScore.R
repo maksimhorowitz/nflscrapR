@@ -243,6 +243,9 @@ game_play_by_play <- function(GameID) {
   # Quarter 3
   qtr.timeinsecs[which(PBP$qtr == 3)] <- qtr.timeinsecs[
                                             which(PBP$qtr == 3)] + 900
+  # Overtime 
+  qtr.timeinsecs[which(PBP$qtr == 5)] <- qtr.timeinsecs[
+                                            which(PBP$qtr == 5)] - 900
   
   PBP$TimeSecs <- qtr.timeinsecs
   

@@ -1,6 +1,6 @@
 Package: nflscrapR
 Title: Will scrape NFL play-by-play and boxscore data across full seasons
-Version: 1.2.0
+Version: 1.3.0
 Authors@R: person("Maksim", "Horowitz", email = "mahorowi@andrew.cmu.edu", role = c("aut", "cre"))
 Description: This package allows data driven sports enthusiasts to use the NFL JSON API data to perform detailed analysis on the game, player, and season levels.  The 11 functions within this package helps parse and clean the data from Nfl.com for R users.  NflscrapR was build to enhance advanced sports analytics research specifically for American Football with the hopes of developing metrics and insights that could potentially be useful for professional NFL teams. 
     R (>= 3.0.2)
