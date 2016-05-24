@@ -1000,6 +1000,8 @@ game_play_by_play <- function(GameID) {
   PBP$posteam <- unlist(PBP$posteam)
   PBP$desc <- unlist(PBP$desc)
   PBP$FieldGoalDistance <- unlist(PBP$FieldGoalDistance)
+  PBP$Interceptor <- unlist(PBP$Interceptor)
+  PBP$RecFumbPlayer <- unlist(PBP$RecFumbPlayer)
   
   ## Final OutPut ##
   PBP[,c("Date", "GameID", "Drive", "qtr", "down", "time", "TimeUnder", 
