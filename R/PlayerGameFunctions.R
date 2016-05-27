@@ -382,7 +382,7 @@ season_playergame <- function(Season) {
   playergame.season <- do.call(rbind, playergame.season.unformatted)
   
   # Final output dataframe
-  data.frame(Year = Season, playergame.season)
+  data.frame(Season = Season, playergame.season)
 }
 
 # Aggregated for Each Player over the Season 
@@ -410,7 +410,7 @@ agg_player_season <- function(Season) {
   # Use dplyr to aggregate
   # Here we use the sum function for cumulative yards
   season.sum.agg <-  dplyr::group_by(playerdata.year,
-                                   Year, Team, playerID, name)
+                                     Season, Team, playerID, name)
   
   season.sum.agg <- dplyr::summarise_each(season.sum.agg, 
                                           dplyr::funs(sum), -date, -rushlng, -rushlngtd
@@ -419,7 +419,7 @@ agg_player_season <- function(Season) {
                                         -kick.ret.lng, -kickret.lngtd)
   
   # Here we find the max "long run" and max "long reception"
-  season.max.agg <- dplyr::group_by(playerdata.year, Year, Team, playerID, name) 
+  season.max.agg <- dplyr::group_by(playerdata.year, Season, Team, playerID, name) 
   
   season.max.agg <- dplyr::summarise_each(season.max.agg, dplyr::funs(max), 
                                         rushlng, rushlngtd, reclng, reclngtd, 
@@ -428,5 +428,5 @@ agg_player_season <- function(Season) {
   
   # Merging the Two datasets
   merge(season.sum.agg, season.max.agg, 
-        by = c("Year", "Team", "playerID", "name"))
+        by = c("Season", "Team", "playerID", "name"))
 }
