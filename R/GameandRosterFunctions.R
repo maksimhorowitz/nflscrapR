@@ -68,7 +68,7 @@ season_rosters <- function(Season, TeamInt) {
   team.roster.s1 <- subset(season_playergame(Season), Team == TeamInt)
   
   # Use dplyr to subset the data and gather games played
-  team.roster <- dplyr::group_by(team.roster.s1, Year, Team, playerID, name)
+  team.roster <- dplyr::group_by(team.roster.s1, Season, Team, playerID, name)
   team.roster <- dplyr::summarize(team.roster, length(playerID))
   
   colnames(team.roster)[ncol(team.roster)] <- "gamesplayed"
