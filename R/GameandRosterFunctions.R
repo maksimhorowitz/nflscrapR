@@ -32,9 +32,9 @@ season_games <- function(Season) {
   
   teams.unformatted <- lapply(game.urls, 
                               FUN = function(x) {
-                                cbind(t(sapply(RJSONIO::fromJSON(getURL(x))[[1]]$home[2]$abbr,
+                                cbind(t(sapply(RJSONIO::fromJSON(RCurl::getURL(x))[[1]]$home[2]$abbr,
                                                c)),
-                                      t(sapply(RJSONIO::fromJSON(getURL(x))[[1]]$away[2]$abbr,
+                                      t(sapply(RJSONIO::fromJSON(RCurl::getURL(x))[[1]]$away[2]$abbr,
                                                c)))
                               })
   

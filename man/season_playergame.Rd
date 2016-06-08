@@ -26,6 +26,7 @@ playerstats.2010 <- season_playergame(2010)
 head(playerstats.2010)
 
 # Plot a graph of different play types
+library(ggplot2)
 ggplot(playerstats.2010, aes(x = PlayType)) + geom_bar()
 }
 

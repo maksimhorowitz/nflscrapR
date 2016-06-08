@@ -14,11 +14,11 @@ Downloading and Loading the Package
 # install.packages('devtools')
 library(devtools)
 
-# For now you must install it from github
-if (!is.element("nflscrapR", installed.packages())) {
-    # Print Installing nflscrapR
-    devtools::install_github(repo = "maksimhorowitz/nflscrapR")
-}
+devtools::install_github(repo = "maksimhorowitz/nflscrapR")
+#> Skipping install for github remote, the SHA1 (05815ef8) has not changed since last install.
+#>   Use `force = TRUE` to force installation
+
+# Load the package
 
 library(nflscrapR)
 ```
