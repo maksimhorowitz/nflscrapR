@@ -77,7 +77,7 @@
 #' PlayerGameData <- playergame(nfl.data.gameID)
 #' head(PlayerGameData)
 #' @export
-playergame <- function(GameID) {
+player_game <- function(GameID) {
   
   # Converting GameID into URL string
   urlstring <- proper_jsonurl_formatting(GameID)
@@ -372,7 +372,7 @@ playergame <- function(GameID) {
 #' library(ggplot2)
 #' ggplot(playerstats.2010, aes(x = PlayType)) + geom_bar()
 #' @export
-season_playergame <- function(Season) {
+season_player_game <- function(Season) {
   
   game.ids <- extracting_gameids(Season)
   
