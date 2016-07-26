@@ -86,7 +86,7 @@ follows:
 \examples{
 # GameID for a random game
 nfl.data.gameID <- "2013090800"
-PlayerGameData <- playergame(nfl.data.gameID)
+PlayerGameData <- player_game(nfl.data.gameID)
 head(PlayerGameData)
 }
 

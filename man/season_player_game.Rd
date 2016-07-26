@@ -11,7 +11,7 @@ season_player_game(Season)
 }
 \value{
 A single line for each player in each game they played in.  The 
-output is the same as the playergame function but is run for every game in
+output is the same as the player_game function but is run for every game in
 the specified season
 }
 \description{
@@ -22,7 +22,7 @@ per each game they record a measured statistic
 }
 \examples{
 # Player-Game function over the entire season in 2010
-playerstats.2010 <- season_playergame(2010)
+playerstats.2010 <- season_player_game(2010)
 head(playerstats.2010)
 
 # Plot a graph of different play types

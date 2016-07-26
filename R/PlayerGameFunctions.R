@@ -74,7 +74,7 @@
 #' @examples
 #' # GameID for a random game
 #' nfl.data.gameID <- "2013090800"
-#' PlayerGameData <- playergame(nfl.data.gameID)
+#' PlayerGameData <- player_game(nfl.data.gameID)
 #' head(PlayerGameData)
 #' @export
 player_game <- function(GameID) {
@@ -361,11 +361,11 @@ player_game <- function(GameID) {
 #' @param Season (numeric) A 4-digit year associated with a given season  
 #'
 #' @return A single line for each player in each game they played in.  The 
-#' output is the same as the playergame function but is run for every game in
+#' output is the same as the player_game function but is run for every game in
 #' the specified season
 #' @examples
 #' # Player-Game function over the entire season in 2010
-#' playerstats.2010 <- season_playergame(2010)
+#' playerstats.2010 <- season_player_game(2010)
 #' head(playerstats.2010)
 #' 
 #' # Plot a graph of different play types
@@ -376,7 +376,7 @@ season_player_game <- function(Season) {
   
   game.ids <- extracting_gameids(Season)
   
-  playergame.season.unformatted <- lapply(game.ids, FUN = playergame)
+  playergame.season.unformatted <- lapply(game.ids, FUN = player_game)
   
   # Rowbinding all the games from the specified season
   
@@ -406,7 +406,7 @@ agg_player_season <- function(Season) {
   
   # Use the season_playergame function to generate a dataset with all the games
   # in a given season which we will aggregate over
-  playerdata.year <- season_playergame(Season)
+  playerdata.year <- season_player_game(Season)
   
   # Use dplyr to aggregate
   # Here we use the sum function for cumulative yards
@@ -428,6 +428,11 @@ agg_player_season <- function(Season) {
                                         kick.ret.lng, kickret.lngtd)
   
   # Merging the Two datasets
-  merge(season.sum.agg, season.max.agg, 
-        by = c("Season", "Team", "playerID", "name"))
+  season.stats <- merge(season.sum.agg, season.max.agg, 
+                      by = c("Season", "Team", "playerID", "name"))
+  
+  season.stats$Season <- Season
+  
+  # Final Output
+  season.stats
 }
