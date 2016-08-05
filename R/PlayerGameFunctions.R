@@ -394,7 +394,7 @@ season_player_game <- function(Season) {
 #' following statistics: Passing, Rushing, Receiving, Kick Return,
 #' Punt Return, Fumbles, and Defense
 #' @param Season (numeric) A 4-digit year associated with a given season 
-#' @details This function calls season_playergame and then aggregates 
+#' @details This function calls season_player_game and then aggregates 
 #' across an entire season to gather season totals and season max statistics
 #' @return Returns a dataframe with a single line for each player aggregating 
 #' their total season statistics
