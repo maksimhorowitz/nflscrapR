@@ -21,7 +21,7 @@ following statistics: Passing, Rushing, Receiving, Kick Return,
 Punt Return, Fumbles, and Defense
 }
 \details{
-This function calls season_playergame and then aggregates 
+This function calls season_player_game and then aggregates 
 across an entire season to gather season totals and season max statistics
 }
 \examples{

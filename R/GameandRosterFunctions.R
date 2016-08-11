@@ -65,7 +65,7 @@ season_games <- function(Season) {
 season_rosters <- function(Season, TeamInt) {
   
   # Use the season_playergame to gather all names of players on a given team
-  team.roster.s1 <- subset(season_playergame(Season), Team == TeamInt)
+  team.roster.s1 <- subset(season_player_game(Season), Team == TeamInt)
   
   # Use dplyr to subset the data and gather games played
   team.roster <- dplyr::group_by(team.roster.s1, Season, Team, playerID, name)
