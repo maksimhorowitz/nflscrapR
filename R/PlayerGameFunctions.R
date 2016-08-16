@@ -347,6 +347,8 @@ player_game <- function(GameID) {
   
   final.df2 <- data.frame(lapply(final.df2, unlist))
   
+  # Counter for games
+  final.df2$games <- 1
   
   final.df2[order(final.df2$date, final.df2$Team),]
 }
@@ -425,7 +427,7 @@ agg_player_season <- function(Season) {
   season.max.agg <- dplyr::summarise_each(season.max.agg, dplyr::funs(max), 
                                         rushlng, rushlngtd, reclng, reclngtd, 
                                         puntret.lng, puntret.lngtd, 
-                                        kick.ret.lng, kickret.lngtd)
+                                        kick.ret.lng, kickret.lngtd, -games)
   
   # Merging the Two datasets
   season.stats <- merge(season.sum.agg, season.max.agg, 
