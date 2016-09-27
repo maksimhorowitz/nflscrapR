@@ -188,7 +188,6 @@ game_play_by_play <- function(GameID) {
                                 pos.teams[2], pos.teams[1])
   PBP[kickoff.index, "posteam"] <- correct.kickoff.pos
   
-  
   # Yard Line Information
   
   # In the earlier seasons when there was a dead ball (i.e. timeout)
@@ -236,7 +235,6 @@ game_play_by_play <- function(GameID) {
   # Quarter 1
   qtr.timeinsecs[which(PBP$qtr == 1)] <- qtr.timeinsecs[
                                             which(PBP$qtr == 1)] + (900*3)
-  
   # Quarter 2
   qtr.timeinsecs[which(PBP$qtr == 2)] <- qtr.timeinsecs[
                                             which(PBP$qtr == 2)] + (900*2)
@@ -306,7 +304,7 @@ game_play_by_play <- function(GameID) {
   if (length(two.point.result.final2) != 0) {
   PBP$TwoPointConv[two.point.result.ind] <- two.point.result.final2
   }
-  
+
   # Penalty - Binary Column 
   PBP$Accepted.Penalty <- NA
   penalty.play <- sapply(PBP$desc, stringr::str_extract, pattern = "PENALTY")
@@ -364,7 +362,7 @@ game_play_by_play <- function(GameID) {
   # Modifying Down Column
   PBP$down <- unlist(PBP$down)
   PBP$down[which(PBP$down == 0)] <- NA
-  
+
   # Defenseive Team Column
   PBP$DefensiveTeam <- NA
   teams.step1 <- stringr::str_extract(unlist(unique(PBP$posteam)), "[A-Z]{2,3}")
@@ -387,7 +385,7 @@ game_play_by_play <- function(GameID) {
                                      pattern = "[A-Z]\\.[A-Z][A-z]{1,20}")
   
   ## Receiver ##
-  
+
   receiver.step1 <- sapply(PBP$desc, stringr::str_extract, 
                            pattern = 
       "pass (incomplete)?( )?[a-z]{4,5} [a-z]{4,6} to [A-Z]\\.[A-Z][A-z]{1,20}")
@@ -583,6 +581,12 @@ game_play_by_play <- function(GameID) {
   
   PBP$PlayType[end.quarter] <- "Quarter End"
   
+  # Half End 
+  end.half <- which(sapply(PBP$desc, regexpr, 
+                           pattern = "End of half") != -1)
+  
+  PBP$PlayType[end.half] <- "Half End"
+  
   # 2 Minute Warning
   two.minute.warning <- which(sapply(PBP$desc, regexpr, 
                                      pattern = "Two-Minute Warning") != -1)
@@ -603,7 +607,7 @@ game_play_by_play <- function(GameID) {
                           pattern = "No Play") != -1)
   
   PBP$PlayType[no.play] <- "No Play"
-  
+
   # Safety - Binary
   safety.plays <- which(sapply(PBP$desc, regexpr, pattern = "SAFETY") != -1)
   PBP$Safety <- 0
@@ -686,7 +690,7 @@ game_play_by_play <- function(GameID) {
   
   run.end <- which(sapply(PBP[which(PBP$PlayType == "Run"),"desc"], regexpr, 
                          pattern = "end") != -1) 
-  
+
   PBP[c(running.play, running.play2),"RunGap"][run.guard] <- "guard"
   PBP[c(running.play, running.play2),"RunGap"][run.tackle] <- "tackle"
   PBP[c(running.play, running.play2),"RunGap"][run.end] <- "end"
@@ -744,7 +748,7 @@ game_play_by_play <- function(GameID) {
                                regexpr, pattern = "REVERSED") != -1)
   
   intercept.td <- setdiff(intercept.td, c(intercept.td.null, intercept.td.rev))
-  
+
   # Fumble Outcome
   fumble.td <- which(sapply(PBP$desc[fumble.index], 
                                regexpr, pattern = "TOUCHDOWN") != -1)
@@ -767,7 +771,6 @@ game_play_by_play <- function(GameID) {
   PBP$ReturnResult[fumble.index][fumble.td] <- "Touchdown"
 
   ##  Returner ##
-  
   # Punt Returner
   
   # Fair Catches
@@ -785,7 +788,6 @@ game_play_by_play <- function(GameID) {
                            pattern = "[A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-)?[A-z]{1,15})?")
 
   # Kickoff Returner
-  
   # Fair Catches
   kickret1 <- sapply(PBP$desc[kickoff], stringr::str_extract, 
                      pattern = "by [A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-)?[A-z]{1,15})?\\.$")
@@ -819,7 +821,7 @@ game_play_by_play <- function(GameID) {
   
   PBP$Interceptor <- NA
   PBP$Interceptor[which(PBP$InterceptionThrown == 1)] <- interceptor2
-  
+
   # Fumbler Recovery Team and Player
   
   recover.step1 <- sapply(PBP$desc[fumble.index], stringr::str_extract, 
@@ -846,20 +848,22 @@ game_play_by_play <- function(GameID) {
   
   # The next few variables are counting variables
   # Used to help set up model for predictions 
-  
+
   # Plays 
   PBP$PlayAttempted <- 1
   
+  time.format <- as.POSIXct(paste("00:",
+                           unlist(PBP$time), 
+                           sep = ""), format = "%H:%M:%S")
+  # For the rows when "end of half occurs", need to lag the time 
+  # for the previous play
+  time.format[which(is.na(time.format))] <- time.format[which(is.na(time.format))-1]
+  
   # Time Under
-  PBP$TimeUnder <- substr(lubridate::ceiling_date(as.POSIXct(paste("00:", 
-                                                                   PBP$time, 
-                                                                   sep = ""), 
-                                                             format = "%H:%M:%S"
-                                                             ), "minute"), 
+  PBP$TimeUnder <- substr(lubridate::ceiling_date(time.format, "minute"), 
                           15, 16)
-  
   PBP$TimeUnder <- as.numeric(as.character(PBP$TimeUnder))
-  
+
   # Calculating Score of Game for Possesion team and Defensive Team
   
   team.home.score <- rep(0, times = nrow(PBP))
@@ -967,7 +971,7 @@ game_play_by_play <- function(GameID) {
   home.team.pos <- which(PBP$posteam == home.team.name)
   home.team.def <- which(PBP$DefensiveTeam == home.team.name)
   
-  
+
   ## Possesion and Defensive Team Scores
   PBP$PosTeamScore <- NA
   PBP$DefTeamScore <- NA
@@ -991,7 +995,6 @@ game_play_by_play <- function(GameID) {
   ##################
   
   ## Unlisting Listed Columns 
-  
   PBP$sp <- unlist(PBP$sp)
   PBP$qtr <- unlist(PBP$qtr)
   PBP$time <- unlist(PBP$time)
