@@ -263,7 +263,7 @@ game_play_by_play <- function(GameID) {
   PBP$Challenge.Replay[c(replay.offic, challenged)] <- 1
   
   # Results
-  
+
   PBP$ChalReplayResult <- NA
   
   upheld.play <- grep(PBP$desc, pattern = "the play was Upheld")
@@ -335,7 +335,7 @@ game_play_by_play <- function(GameID) {
   penalty.type.final <- stringr::str_sub(penalty.type.s2, 3, -2)
   
   PBP$PenaltyType <- penalty.type.final
-  
+
   #   Penalized Player 
   PBP$PenalizedPlayer <- NA
   penalized.player.int <- sapply(PBP$desc[ which(PBP$Accepted.Penalty == 1) ], 
@@ -580,7 +580,7 @@ game_play_by_play <- function(GameID) {
                               pattern = "END QUARTER") != -1)
   
   PBP$PlayType[end.quarter] <- "Quarter End"
-  
+
   # Half End 
   end.half <- which(sapply(PBP$desc, regexpr, 
                            pattern = "End of half") != -1)
@@ -664,7 +664,7 @@ game_play_by_play <- function(GameID) {
     
     ##################
     ### SOLVE: Look at timeout play and search for "(left|right) (tack|end|guard) for..."
-  
+
   # Run Direction
   PBP$RunLocation <- NA
   
@@ -738,7 +738,7 @@ game_play_by_play <- function(GameID) {
                                  pattern = "fair catch") != -1)
   kick.kneels <- which(sapply(PBP$desc[kickoff], regexpr, 
                               pattern = "kneel(s)?") != -1)
-  
+
   # Interception Outcome
   intercept.td <- which(sapply(PBP$desc[which(PBP$InterceptionThrown == 1)], 
                                regexpr, pattern = "TOUCHDOWN") != -1)
@@ -856,14 +856,17 @@ game_play_by_play <- function(GameID) {
                            unlist(PBP$time), 
                            sep = ""), format = "%H:%M:%S")
   # For the rows when "end of half occurs", need to lag the time 
-  # for the previous play
+  # for the previous play.  Run multiple times for back to back plays with 
+  # NA time
   time.format[which(is.na(time.format))] <- time.format[which(is.na(time.format))-1]
-  
+  time.format[which(is.na(time.format))] <- time.format[which(is.na(time.format))-1]
+  time.format[which(is.na(time.format))] <- time.format[which(is.na(time.format))-1]
   # Time Under
+  
   PBP$TimeUnder <- substr(lubridate::ceiling_date(time.format, "minute"), 
                           15, 16)
   PBP$TimeUnder <- as.numeric(as.character(PBP$TimeUnder))
-
+  
   # Calculating Score of Game for Possesion team and Defensive Team
   
   team.home.score <- rep(0, times = nrow(PBP))
