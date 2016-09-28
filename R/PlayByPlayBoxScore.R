@@ -1034,6 +1034,9 @@ game_play_by_play <- function(GameID) {
 #' 
 #' @param Season (numeric) A 4-digit year corresponding to an NFL season of 
 #' interest
+#' @param Week (numeric) A number corresponding to the number of weeks of data
+#' you want to be scraped and included in the output. If you input 3, the first
+#' three weeks of play-by-play will be scraped from the associated season.
 #'
 #' @details This function calls the extracting_gameids, 
 #' proper_jsonurl_formatting, and game_play_by_play to aggregate all the plays 
@@ -1050,12 +1053,17 @@ game_play_by_play <- function(GameID) {
 #' # Looking at all Baltimore Ravens Offensive Plays 
 #' subset(pbp.data.2010, posteam = "BAL")
 #' @export
-season_play_by_play <- function(Season) {
+season_play_by_play <- function(Season, Weeks = 16) {
   # Google R stlye format
   
   # Below the function put together the proper URLs for each game in each 
   # season and runs the game_play_by_play function across the entire season
   game_ids <- extracting_gameids(Season)
+  
+  if (Weeks < 16) {
+    game_ids <- game_ids[1:(16*Weeks)]
+  }
+  
   pbp_data_unformatted <- lapply(game_ids, FUN = game_play_by_play)
   
   df_pbp_data <- do.call(rbind, pbp_data_unformatted)
