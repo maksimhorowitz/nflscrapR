@@ -737,8 +737,6 @@ game_play_by_play <- function(GameID) {
   
   rusherStepfinal <- rusherStep2[!is.na(rusherStep2)]
   
-  print(rusherStepfinal)
-  
   PBP$Rusher[which(PBP$PlayType == "Run")][elidgiblePlays] <- rusherStepfinal
 
   ## Punt and Kick Return Outcome ##
