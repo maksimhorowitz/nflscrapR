@@ -722,6 +722,25 @@ game_play_by_play <- function(GameID) {
                         pattern = "[A-Z]\\.[A-Z][A-z]{1,20}")
   PBP[c(running.play, running.play2),"Rusher"] <- rusherStep1
   
+  # Changing to correctly reflect the rusher 
+  
+  elidgiblePlays <- grep(PBP[which(PBP$PlayType == "Run"),"desc"],
+                         pattern = "reported in as eligible")
+  
+  rusherStep2 <- sapply(PBP[which(PBP$PlayType == "Run"),"desc"], 
+         stringr::str_extract, 
+         pattern = "eligible\\.  [A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-)?[A-z]{1,15})?")
+
+  rusherStep2 <- sapply(rusherStep2, 
+                        stringr::str_extract, 
+                        pattern = "[A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-)?[A-z]{1,15})?") 
+  
+  rusherStepfinal <- rusherStep2[!is.na(rusherStep2)]
+  
+  print(rusherStepfinal)
+  
+  PBP$Rusher[which(PBP$PlayType == "Run")][elidgiblePlays] <- rusherStepfinal
+
   ## Punt and Kick Return Outcome ##
   
   # Punt Outcome
