@@ -65,6 +65,7 @@ The added variables are specified below:
  \item{"TwoPointConv"} - Result of two-point conversion: Success of Failure
  \item{"DefTwoPoint"} - Result of defesnive two-point conversion: Success of Failure
  \item{"Safety"} - Binary: 1 if safety was recorded else 0
+ \item{"PuntResult} - The resulting action of a punt.  Either a clean punt or a blocked punt
  \item{"PlayType"} - The type of play that occured. Potential values are:
        \itemize{
                  \item{Kickoff, Punt, Onside Kick}
@@ -95,6 +96,8 @@ The added variables are specified below:
  \item{"ReturnResult"} - Result of a punt, kickoff, interception, or 
  fumble return
  \item{"Returner"} - The punt or kickoff returner
+ \item{"BlockingPlayer"} - The player who blocked the extra point, 
+ field goal, or punt
  \item{"Tackler1"} - The primary tackler on the play
  \item{"Tackler2"} - The secondary tackler on the play
  \item{"FieldGoalResult"} - Outcome of a fieldgoal: made, missed, blocked

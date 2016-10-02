@@ -56,6 +56,7 @@
 #'  \item{"TwoPointConv"} - Result of two-point conversion: Success of Failure
 #'  \item{"DefTwoPoint"} - Result of defesnive two-point conversion: Success of Failure
 #'  \item{"Safety"} - Binary: 1 if safety was recorded else 0
+#'  \item{"PuntResult} - The resulting action of a punt.  Either a clean punt or a blocked punt
 #'  \item{"PlayType"} - The type of play that occured. Potential values are:
 #'        \itemize{
 #'                  \item{Kickoff, Punt, Onside Kick}
@@ -86,6 +87,8 @@
 #'  \item{"ReturnResult"} - Result of a punt, kickoff, interception, or 
 #'  fumble return
 #'  \item{"Returner"} - The punt or kickoff returner
+#'  \item{"BlockingPlayer"} - The player who blocked the extra point, 
+#'  field goal, or punt
 #'  \item{"Tackler1"} - The primary tackler on the play
 #'  \item{"Tackler2"} - The secondary tackler on the play
 #'  \item{"FieldGoalResult"} - Outcome of a fieldgoal: made, missed, blocked
@@ -417,6 +420,15 @@ game_play_by_play <- function(GameID) {
   PBP$Tackler1 <- tacklers1
   PBP$Tackler2 <- tacklers2
   
+  # Player who blocks punt or field goal or extra point
+  
+  player.blocking1 <- stringr::str_extract(PBP$desc, 
+                       pattern = "BLOCKED by [A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-)?[A-z]{1,15})?")
+  
+  player.blocking2 <- stringr::str_extract(player.blocking1, 
+                                           pattern = "[A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-)?[A-z]{1,15})?")
+    
+  PBP$BlockingPlayer <- player.blocking2
   # Timeouts
   ## Needs to be before Field Goal
   timeouts <- which(sapply(PBP$desc, regexpr, 
@@ -509,9 +521,17 @@ game_play_by_play <- function(GameID) {
                                   )
   
   # Punt
-  punt.play <- which(sapply(PBP$desc, regexpr, pattern = "punts") != -1)
+  punt.play <- which(sapply(PBP$desc, regexpr, pattern = "punt(s)?") != -1)
   
   PBP$PlayType[punt.play] <- "Punt"
+  
+  # Punt Result
+  PBP$PuntResult <- NA
+  
+  blocked.punts <- grep(PBP$desc[punt.play], pattern = "BLOCKED")
+  
+  PBP$PuntResult[punt.play] <- "Clean"
+  PBP$PuntResult[punt.play][blocked.punts] <- "Blocked"
   
   # Extra Point
   extrapoint.good <- which(sapply(PBP$desc, regexpr,
@@ -880,45 +900,55 @@ game_play_by_play <- function(GameID) {
   team.away.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == away.team.name
                         & !PBP$ReturnResult %in% "Touchdown"
-                        & !PBP$PlayType %in% "Kickoff")] <- 6
+                        & !PBP$PlayType %in% "Kickoff"
+                        & PBP$sp == 1)] <- 6
   # Give points for Kickoff TDs
   team.away.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == away.team.name
                         & PBP$ReturnResult %in% "Touchdown"
-                        & PBP$PlayType %in% "Kickoff")] <- 6
+                        & PBP$PlayType %in% "Kickoff",
+                        PBP$sp == 1)] <- 6
   # Give points for Punt Return TDs
   team.away.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == home.team.name
                         & PBP$ReturnResult %in% "Touchdown"
-                        & PBP$PlayType %in% "Punt")] <- 6
+                        & PBP$PlayType %in% "Punt"
+                        & PBP$sp == 1)] <- 6
   # Give points for Interceptions
   team.away.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == home.team.name
                         & PBP$ReturnResult %in% "Touchdown"
-                        & !is.na(PBP$Interceptor))] <- 6
+                        & !is.na(PBP$Interceptor)
+                        & PBP$sp == 1)] <- 6
   # Make sure to give away team points for fumble ret for TD
   team.away.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == home.team.name 
                         & PBP$ReturnResult %in% "Touchdown"
                         & !PBP$PlayType %in% "Kickoff"
-                        & PBP$RecFumbTeam == away.team.name)] <- 6
+                        & PBP$RecFumbTeam == away.team.name
+                        & PBP$sp == 1)] <- 6
   # Fumble and the team that fumbled recovers and scores a TD
   team.away.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == away.team.name 
                         & PBP$ReturnResult %in% "Touchdown"
-                        & PBP$RecFumbTeam == away.team.name)] <- 6
+                        & PBP$RecFumbTeam == away.team.name
+                        & PBP$sp == 1)] <- 6
   # Points for two point conversion
   team.away.score[which(PBP$TwoPointConv == "Success" 
-                        & PBP$posteam == away.team.name)] <- 2
+                        & PBP$posteam == away.team.name
+                        & PBP$sp == 1)] <- 2
   # Points for safeties
   team.away.score[which(PBP$Safety == 1 
-                        & PBP$posteam == home.team.name)] <- 2
+                        & PBP$posteam == home.team.name
+                        & PBP$sp == 1)] <- 2
   # Points for made extra point
   team.away.score[which(PBP$ExPointResult == "Made" 
-                        & PBP$posteam == away.team.name)] <- 1
+                        & PBP$posteam == away.team.name
+                        & PBP$sp == 1)] <- 1
   # Points for made field goal
   team.away.score[which(PBP$FieldGoalResult == "Good" 
-                        & PBP$posteam == away.team.name)] <- 3
+                        & PBP$posteam == away.team.name
+                        & PBP$sp == 1)] <- 3
   
   team.away.score <- cumsum(team.away.score)
   
@@ -930,44 +960,53 @@ game_play_by_play <- function(GameID) {
   team.home.score[PBP$Touchdown == 1 
                         & PBP$posteam == home.team.name 
                         & !PBP$ReturnResult %in% "Touchdown"
-                        & !PBP$PlayType %in% "Kickoff"] <- 6
+                        & !PBP$PlayType %in% "Kickoff"
+                        & PBP$sp == 1] <- 6
   # Give points for Kickoffs
   team.home.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == home.team.name
                         & PBP$ReturnResult %in% "Touchdown"
-                        & PBP$PlayType %in% "Kickoff")] <- 6
+                        & PBP$PlayType %in% "Kickoff"
+                        & PBP$sp == 1)] <- 6
   # Give points for Punts 
   team.home.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == away.team.name
                         & PBP$ReturnResult %in% "Touchdown"
-                        & PBP$PlayType %in% "Punt")] <- 6
+                        & PBP$PlayType %in% "Punt"
+                        & PBP$sp == 1)] <- 6
   # Give points for Interceptions
   team.home.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == away.team.name
                         & PBP$ReturnResult %in% "Touchdown"
-                        & !is.na(PBP$Interceptor))] <- 6
+                        & !is.na(PBP$Interceptor)
+                        & PBP$sp == 1)] <- 6
   team.home.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == away.team.name 
                         & PBP$ReturnResult %in% "Touchdown"
                         & !PBP$PlayType %in% "Kickoff"
-                        & PBP$RecFumbTeam == home.team.name)] <- 6
+                        & PBP$RecFumbTeam == home.team.name
+                        & PBP$sp == 1)] <- 6
   # Fumble and the team that fumbled recovered and scored a TD
   team.home.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == home.team.name 
                         & PBP$ReturnResult %in% "Touchdown"
-                        & PBP$RecFumbTeam == home.team.name)] <- 6
+                        & PBP$RecFumbTeam == home.team.name
+                        & PBP$sp == 1)] <- 6
   # Points for two point conversion
   team.home.score[which(PBP$TwoPointConv == "Success" 
                         & PBP$posteam == home.team.name)] <- 2
   # Points for safeties
   team.home.score[which(PBP$Safety == 1 
-                        & PBP$posteam == away.team.name)] <- 2
+                        & PBP$posteam == away.team.name
+                        & PBP$sp == 1)] <- 2
   # Points for made extra point
   team.home.score[which(PBP$ExPointResult == "Made" 
-                        & PBP$posteam == home.team.name)] <- 1
+                        & PBP$posteam == home.team.name
+                        & PBP$sp == 1)] <- 1
   # Points for made field goal
   team.home.score[which(PBP$FieldGoalResult == "Good" 
-                        & PBP$posteam == home.team.name)] <- 3
+                        & PBP$posteam == home.team.name
+                        & PBP$sp == 1)] <- 3
   
   team.home.score <- cumsum(team.home.score)
   
@@ -1015,10 +1054,10 @@ game_play_by_play <- function(GameID) {
          "ydstogo", "ydsnet", "GoalToGo", "FirstDown", 
          "posteam", "DefensiveTeam", "desc", "PlayAttempted", "Yards.Gained", 
          "sp", "Touchdown", "ExPointResult", "TwoPointConv", "DefTwoPoint", 
-         "Safety", "PlayType", "Passer", "PassAttempt", "PassOutcome", 
+         "Safety", "PuntResult", "PlayType", "Passer", "PassAttempt", "PassOutcome", 
          "PassLength", "PassLocation", "InterceptionThrown", "Interceptor",
          "Rusher", "RushAttempt", "RunLocation", "RunGap",  "Receiver", 
-         "Reception", "ReturnResult", "Returner", "Tackler1", "Tackler2", 
+         "Reception", "ReturnResult", "Returner", "BlockingPlayer","Tackler1", "Tackler2", 
          "FieldGoalResult", "FieldGoalDistance", 
          "Fumble", "RecFumbTeam", "RecFumbPlayer", "Sack", "Challenge.Replay",
          "ChalReplayResult", "Accepted.Penalty", "PenalizedTeam", "PenaltyType", 

@@ -4,7 +4,7 @@
 \alias{season_play_by_play}
 \title{Parsed Descriptive Play-by-Play Function for a Full Season}
 \usage{
-season_play_by_play(Season, Weeks = All)
+season_play_by_play(Season, Weeks = 16)
 }
 \arguments{
 \item{Season}{(numeric) A 4-digit year corresponding to an NFL season of 
