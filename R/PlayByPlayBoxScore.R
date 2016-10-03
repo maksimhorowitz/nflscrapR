@@ -727,18 +727,20 @@ game_play_by_play <- function(GameID) {
   elidgiblePlays <- grep(PBP[which(PBP$PlayType == "Run"),"desc"],
                          pattern = "reported in as eligible")
   
+  if (length(elidgiblePlays) > 0) {
+    
   rusherStep2 <- sapply(PBP[which(PBP$PlayType == "Run"),"desc"], 
          stringr::str_extract, 
-         pattern = "eligible\\.  [A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-)?[A-z]{1,15})?")
+         pattern = "eligible(\\.)?( ){1,2}(Direct snap to [A-Z]\\.[A-Z][A-z]{1,20}\\.( ){1,2})?[A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-)?[A-z]{1,15})?")
 
-  rusherStep2 <- sapply(rusherStep2, 
+  rusherStep3 <- sapply(rusherStep2, 
                         stringr::str_extract, 
-                        pattern = "[A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-)?[A-z]{1,15})?") 
+                        pattern = "([A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-)?[A-z]{1,15})?)$") 
   
-  rusherStepfinal <- rusherStep2[!is.na(rusherStep2)]
+  rusherStepfinal <- rusherStep3[!is.na(rusherStep3)]
   
   PBP$Rusher[which(PBP$PlayType == "Run")][elidgiblePlays] <- rusherStepfinal
-
+  }
   ## Punt and Kick Return Outcome ##
   
   # Punt Outcome
