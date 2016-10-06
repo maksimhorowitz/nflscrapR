@@ -4,10 +4,13 @@
 \alias{season_games}
 \title{Game Information for All Games in a Season}
 \usage{
-season_games(Season)
+season_games(Season, Weeks = 16)
 }
 \arguments{
 \item{Season}{(numeric) A 4-digit year associated with a given NFL season}
+
+\item{Week}{(numeric): A number corresponding to the number of weeks of data
+you want to be scraped and included in the output.}
 }
 \value{
 A dataframe with the gameID, the game date, 

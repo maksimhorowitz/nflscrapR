@@ -1118,9 +1118,11 @@ season_play_by_play <- function(Season, Weeks = 16) {
   # season and runs the game_play_by_play function across the entire season
   game_ids <- extracting_gameids(Season)
   
-  if (Weeks < 16) {
-    game_ids <- game_ids[1:(16*Weeks)]
+  if (Weeks %in% 3:15) {
+    game_ids <- game_ids[1:(16*Weeks)-1]
   }
+  
+  print(game_ids)
   
   pbp_data_unformatted <- lapply(game_ids, FUN = game_play_by_play)
   

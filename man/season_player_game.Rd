@@ -4,10 +4,14 @@
 \alias{season_player_game}
 \title{Boxscore for Each Game in the Season - One line per player per game}
 \usage{
-season_player_game(Season)
+season_player_game(Season, Weeks = 16)
 }
 \arguments{
 \item{Season}{(numeric) A 4-digit year associated with a given season}
+
+\item{Week}{(numeric) A number corresponding to the number of weeks of data
+you want to be scraped and included in the output. If you input 3, the first
+three weeks of player statistics will be scraped from the associated season.}
 }
 \value{
 A single line for each player in each game they played in.  The 
