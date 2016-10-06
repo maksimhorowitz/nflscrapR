@@ -361,7 +361,9 @@ player_game <- function(GameID) {
 #' per each game they record a measured statistic
 #' 
 #' @param Season (numeric) A 4-digit year associated with a given season  
-#'
+#' @param Week (numeric) A number corresponding to the number of weeks of data
+#' you want to be scraped and included in the output. If you input 3, the first
+#' three weeks of play-by-play will be scraped from the associated season.
 #' @return A single line for each player in each game they played in.  The 
 #' output is the same as the player_game function but is run for every game in
 #' the specified season
@@ -374,9 +376,13 @@ player_game <- function(GameID) {
 #' library(ggplot2)
 #' ggplot(playerstats.2010, aes(x = PlayType)) + geom_bar()
 #' @export
-season_player_game <- function(Season) {
+season_player_game <- function(Season, Weeks) {
   
   game.ids <- extracting_gameids(Season)
+  
+  if (Weeks < 16) {
+    game.ids <- game.ids[1:(16*Weeks)-1]
+  }
   
   playergame.season.unformatted <- lapply(game.ids, FUN = player_game)
   
