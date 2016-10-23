@@ -65,6 +65,7 @@ The added variables are specified below:
  \item{"TwoPointConv"} - Result of two-point conversion: Success of Failure
  \item{"DefTwoPoint"} - Result of defesnive two-point conversion: Success of Failure
  \item{"Safety"} - Binary: 1 if safety was recorded else 0
+ \item{"Onsidekick"} - Binary: 1 if the Kickoff was an onside kick
  \item{"PuntResult} - The resulting action of a punt.  Either a clean punt or a blocked punt
  \item{"PlayType"} - The type of play that occured. Potential values are:
        \itemize{

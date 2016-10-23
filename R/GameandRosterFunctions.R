@@ -24,8 +24,10 @@ season_games <- function(Season, Weeks = 16) {
   game_ids <- extracting_gameids(Season)
   
   # If statement to specify the week variable
-  if (Weeks %in% 3:15) {
+  if (Weeks %in% 4:13) {
     game_ids <- game_ids[1:(16*Weeks)-1]
+  } else if (Weeks %in% c(1:3, 14:15)) {
+    game_ids <- game_ids[1:(16*Weeks)]
   }
   
   game_urls <- sapply(game_ids, proper_jsonurl_formatting)

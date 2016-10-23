@@ -382,6 +382,8 @@ season_player_game <- function(Season, Weeks = 16) {
   
   if (Weeks %in% 3:15) {
     game_ids <- game_ids[1:(16*Weeks)-1]
+  } else if (Weeks %in% 1:2) {
+    game_ids <- game_ids[1:(16*Weeks)]
   }
   
   playergame.season.unformatted <- lapply(game_ids, FUN = player_game)
@@ -410,11 +412,11 @@ season_player_game <- function(Season, Weeks = 16) {
 #' # Returns the Season-Total Statistics for Each Player in the 2015 Season
 #' agg_player_season(2015)
 #' @export
-agg_player_season <- function(Season) {
+agg_player_season <- function(Season, Weeks = 16) {
   
   # Use the season_playergame function to generate a dataset with all the games
   # in a given season which we will aggregate over
-  playerdata.year <- season_player_game(Season)
+  playerdata.year <- season_player_game(Season, Weeks = Weeks)
   
   # Use dplyr to aggregate
   # Here we use the sum function for cumulative yards
