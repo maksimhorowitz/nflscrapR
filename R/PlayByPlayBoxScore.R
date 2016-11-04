@@ -756,23 +756,29 @@ game_play_by_play <- function(GameID) {
   PBP[c(running.play, running.play2),"Rusher"] <- rusherStep1
   
   # Changing to correctly reflect the rusher 
+
+  elidgiblePlays <- grep(PBP[which( (PBP$PlayType == "Run" & PBP$Accepted.Penalty == 0) | (PBP$PlayType == "Run" & PBP$Accepted.Penalty == 1 &PBP$posteam != PBP$PenalizedTeam)),"desc"],
+                         pattern = " (report(ed|s)?)?( in )?as eligible(.){11,}")
   
-  elidgiblePlays <- grep(PBP[which(PBP$PlayType == "Run"),"desc"],
-                         pattern = " reported in as eligible")
   
   if (length(elidgiblePlays) > 0) {
     
-  rusherStep2 <- sapply(PBP[which(PBP$PlayType == "Run"),"desc"], 
+  rusherStep2 <- sapply(PBP[which( (PBP$PlayType == "Run" & PBP$Accepted.Penalty == 0) | (PBP$PlayType == "Run" & PBP$Accepted.Penalty == 1 &PBP$posteam != PBP$PenalizedTeam)),"desc"], 
          stringr::str_extract, 
-         pattern = "as eligible(\\.)?( ){1,2}(Direct snap to [A-Z]\\.[A-Z][A-z]{1,20}\\.( ){1,2})?[A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?")
+         pattern = "(as eligible( receiver(s)?| for [A-Z]{2,3})?(\\.|,)?( ){1,2}(Direct snap to [A-z]{1,3}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?\\.( ){1,2})?[A-z]{1,3}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?)|(as eligible( receiver)?(\\.)?(.)+(\\.)? (\\(Shotgun\\) )?[A-z]{1,3}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?)|(\\(((Run formation)|([0-9]{1,2}:[0-9]{1,2}))\\) [A-z]{1,3}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)? (.){10,80}report(s|ed) as eligible(.){11,})")
 
   rusherStep3 <- sapply(rusherStep2, 
                         stringr::str_extract, 
-                        pattern = "([A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?)$") 
+                        pattern = "([A-z]{1,3}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?)$|\\(((Run formation)|([0-9]{1,2}:[0-9]{1,2})|(Shotgun))\\) [A-z]{1,3}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?") 
   
-  rusherStepfinal <- rusherStep3[!is.na(rusherStep3)]
+  rusherStep3.1 <- sapply(rusherStep3, 
+                          stringr::str_extract, 
+                          pattern = "([A-z]{1,3}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?)$") 
+  
+  rusherStepfinal <- rusherStep3.1[!is.na(rusherStep3.1)]
   
   PBP$Rusher[which(PBP$PlayType == "Run")][elidgiblePlays] <- rusherStepfinal
+  
   }
   ## Punt and Kick Return Outcome ##
   
