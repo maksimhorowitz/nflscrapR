@@ -11,7 +11,7 @@ game_play_by_play(GameID)
 given NFL game.}
 }
 \value{
-A dataframe with 62 columns specifying various statistics and 
+A dataframe with 68 columns specifying various statistics and 
 outcomes associated with each play of the specified NFL game.
 }
 \description{
@@ -144,8 +144,11 @@ The added variables are specified below:
  \item{"PosTeamScore"} - The score of the possession team (offensive team)
  \item{"DefTeamScore"} - The score of the defensive team
  \item{"ScoreDiff"} - The difference in score between the offensive and 
- defensive teams (offensive.score - def.score)         
- \item{"AbsScoreDiff"} - The absolute score difference on the given play
+ defensive teams (offensive.score - def.score)   
+ \item{"expectedpoints"} - The expected point value of the play before 
+ the snap      
+ \item{"OffWinProb"} - The win probability of the offensive team
+ \item{"DefWinProb"} - The win probability of the defensive team
  
  }
 }

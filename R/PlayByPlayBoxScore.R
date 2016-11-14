@@ -135,12 +135,15 @@
 #'  \item{"PosTeamScore"} - The score of the possession team (offensive team)
 #'  \item{"DefTeamScore"} - The score of the defensive team
 #'  \item{"ScoreDiff"} - The difference in score between the offensive and 
-#'  defensive teams (offensive.score - def.score)         
-#'  \item{"AbsScoreDiff"} - The absolute score difference on the given play
+#'  defensive teams (offensive.score - def.score)   
+#'  \item{"expectedpoints"} - The expected point value of the play before 
+#'  the snap      
+#'  \item{"OffWinProb"} - The win probability of the offensive team
+#'  \item{"DefWinProb"} - The win probability of the defensive team
 #'  
 #'  }
 #'  
-#' @return A dataframe with 62 columns specifying various statistics and 
+#' @return A dataframe with 68 columns specifying various statistics and 
 #' outcomes associated with each play of the specified NFL game.
 #' @examples
 #' # Parsed play-by-play of the final game in the 2015 NFL season 
@@ -1087,6 +1090,15 @@ game_play_by_play <- function(GameID) {
   # Score Differential and Abs Score Differential 
   
   PBP$ScoreDiff <- PBP$PosTeamScore - PBP$DefTeamScore
+  
+  ##############################################################################
+  ### Allows All Finals Plays of Game to Have a Score Difference ###
+  
+  PBP$ScoreDiff <- ifelse(PBP$PlayType == "End of Game", dplyr::lag(PBP$ScoreDiff)
+                          , PBP$ScoreDiff)
+  
+  ##############################################################################
+  
   PBP$AbsScoreDiff <- abs(PBP$PosTeamScore - PBP$DefTeamScore)
   
   # Goal to Go
@@ -1106,6 +1118,32 @@ game_play_by_play <- function(GameID) {
   PBP$Interceptor <- unlist(PBP$Interceptor)
   PBP$RecFumbPlayer <- unlist(PBP$RecFumbPlayer)
   
+  ### Adding Posteam for final play of game ###
+  ### Needed for win probability purposes #####
+  
+  PBP$posteam <- ifelse(PBP$PlayType == "End of Game", dplyr::lag(PBP$posteam),
+                        PBP$posteam)
+  
+  ## Same for Defensive Team ##
+  PBP$DefensiveTeam <- ifelse(PBP$PlayType == "End of Game", 
+                              dplyr::lag(PBP$DefensiveTeam),
+                              PBP$DefensiveTeam)
+  
+  # Loading data models #
+  if(!exists("multi.w.time.int")) {
+    data(sysdata, package = "nflscrapR") 
+  }
+  
+  ## Adding in Win Probability ##
+  
+  PBP <- win_probability(PBP)
+  
+  ## Adding in Expected Points ##
+  
+  PBP <- expected_points(PBP)
+  
+  #print(colnames(PBP))
+  
   ## Final OutPut ##
   PBP[,c("Date", "GameID", "Drive", "qtr", "down", "time", "TimeUnder", 
          "TimeSecs", "PlayTimeDiff", "SideofField", "yrdln", "yrdline100",
@@ -1120,7 +1158,8 @@ game_play_by_play <- function(GameID) {
          "Fumble", "RecFumbTeam", "RecFumbPlayer", "Sack", "Challenge.Replay",
          "ChalReplayResult", "Accepted.Penalty", "PenalizedTeam", "PenaltyType", 
          "PenalizedPlayer", "Penalty.Yards", "PosTeamScore", "DefTeamScore", 
-         "ScoreDiff", "AbsScoreDiff")]
+         "ScoreDiff", "AbsScoreDiff", "expectedpoints",
+         "OffWinProb", "DefWinProb")]
 }
 
 ################################################################## 

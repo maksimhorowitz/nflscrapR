@@ -4,7 +4,7 @@
 \alias{agg_player_season}
 \title{Detailed Player Aggregate Season Statistics}
 \usage{
-agg_player_season(Season)
+agg_player_season(Season, Weeks = 16)
 }
 \arguments{
 \item{Season}{(numeric) A 4-digit year associated with a given season}

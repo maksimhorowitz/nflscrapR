@@ -10,7 +10,7 @@ season_play_by_play(Season, Weeks = 16)
 \item{Season}{(numeric) A 4-digit year corresponding to an NFL season of 
 interest}
 
-\item{Week}{(numeric) A number corresponding to the number of weeks of data
+\item{Weeks}{(numeric) A number corresponding to the number of weeks of data
 you want to be scraped and included in the output. If you input 3, the first
 three weeks of play-by-play will be scraped from the associated season.}
 }
