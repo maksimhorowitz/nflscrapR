@@ -1129,12 +1129,6 @@ game_play_by_play <- function(GameID) {
                               dplyr::lag(PBP$DefensiveTeam),
                               PBP$DefensiveTeam)
   
-  # Loading data models #
-  if(exists("multi.w.time.int")) {
-    print("c")
-    load("sysdata.rda")
-  }
-  
   ## Adding in Win Probability ##
   
   PBP <- win_probability(PBP)
