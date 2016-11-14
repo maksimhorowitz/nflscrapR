@@ -52,7 +52,7 @@ expected_points <- function(dataset) {
   # Scoring matrix to weight probabilities of different score types
   scoring.weights <- matrix(c(0, -3, -2, -7, 3, 2, 7), ncol = 1)
   
-  dataset$expectedpoints <- round(predict(nflscrapR::multi.w.time.int, 
+  dataset$expectedpoints <- round(predict(multi.w.time.int, 
                                           newdata = dataset, 
          type = "prob") %*% scoring.weights, 2)
   
@@ -89,7 +89,7 @@ win_probability <- function(dataset) {
   ## Add inverse time variable ##
   dataset$invtime <- 1/(dataset$TimeSecs + .0000000001)
   
-  dataset$OffWinProb <- round(predict(object = nflscrapR::win.prob.model.gam, 
+  dataset$OffWinProb <- round(predict(object = win.prob.model.gam, 
                                       newdata = dataset, type = "response"), 3)
   
   dataset$DefWinProb <- 1 - dataset$OffWinProb
