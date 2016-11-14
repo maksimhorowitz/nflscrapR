@@ -1130,8 +1130,9 @@ game_play_by_play <- function(GameID) {
                               PBP$DefensiveTeam)
   
   # Loading data models #
-  if(!exists("multi.w.time.int")) {
-    data(sysdata, package = "nflscrapR") 
+  if(exists("multi.w.time.int")) {
+    print("c")
+    load("sysdata.rda")
   }
   
   ## Adding in Win Probability ##
