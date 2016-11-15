@@ -18,7 +18,9 @@ Imports:
     scrapeR,
     ggplot2,
     DT,
-    gridExtra
+    gridExtra,
+    nnet,
+    mgcv
 Suggests:
     testthat,
     knitr,

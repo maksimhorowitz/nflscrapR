@@ -28,18 +28,7 @@ expected_points <- function(dataset) {
   # Changing quarter to factor
   dataset$qtr <- factor(dataset$qtr)
   
-  # Changing Def Two Point into Reg Two Point (only one occurance last year)
-  # Changing NA to "No Score" for model purposes
-  
-  #dataset$NextScoreType[which(dataset$NextScoreType == 
-  #                                "-Defensive Two Point")] <- "-Safety"
-  #dataset$NextScoreType[which(is.na(dataset$NextScoreType))] <- "No Score"
-  
-  # Changing next score type to factor
-  # total.data$NextScoreType <- as.factor(total.data$NextScoreType)
-  
-  ## Adding beginning and end of quarter effects to accounts for scoring urgency
-  ## in the second and fourth quarters
+  # Beg and end quarter efect 
   dataset$begQeffect <- ifelse(dataset$TimeSecs >= 3100 |
                                  is.element(dataset$TimeSecs,1500:1800),
                                1, 0)
@@ -52,7 +41,7 @@ expected_points <- function(dataset) {
   # Scoring matrix to weight probabilities of different score types
   scoring.weights <- matrix(c(0, -3, -2, -7, 3, 2, 7), ncol = 1)
   
-  dataset$expectedpoints <- round(predict(multi.w.time.int, 
+  dataset$expectedpoints <- round(predict(multi.w.time.int2, 
                                           newdata = dataset, 
          type = "prob") %*% scoring.weights, 2)
   
@@ -89,7 +78,7 @@ win_probability <- function(dataset) {
   ## Add inverse time variable ##
   dataset$invtime <- 1/(dataset$TimeSecs + .0000000001)
   
-  dataset$OffWinProb <- round(predict(object = win.prob.model.gam, 
+  dataset$OffWinProb <- round(predict(object = win.prob.model.gam2, 
                                       newdata = dataset, type = "response"), 3)
   
   dataset$DefWinProb <- 1 - dataset$OffWinProb
@@ -103,6 +92,4 @@ win_probability <- function(dataset) {
   invtime.index <- which(colnames(dataset) == "invtime")
   dataset[,-invtime.index]
 }
-
-
 
