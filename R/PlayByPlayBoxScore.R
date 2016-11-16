@@ -761,9 +761,8 @@ game_play_by_play <- function(GameID) {
   # Changing to correctly reflect the rusher 
 
   elidgiblePlays <- grep(PBP[which( (PBP$PlayType == "Run" & PBP$Accepted.Penalty == 0) | (PBP$PlayType == "Run" & PBP$Accepted.Penalty == 1 &PBP$posteam != PBP$PenalizedTeam)),"desc"],
-                         pattern = " (report(ed|s)?)?( in )?as eligible(.){11,}")
-  
-  
+                         pattern = " (report(ed|s)?)?( in )?as eligible(.){15,}")
+
   if (length(elidgiblePlays) > 0) {
     
   rusherStep2 <- sapply(PBP[which( (PBP$PlayType == "Run" & PBP$Accepted.Penalty == 0) | (PBP$PlayType == "Run" & PBP$Accepted.Penalty == 1 &PBP$posteam != PBP$PenalizedTeam)),"desc"], 

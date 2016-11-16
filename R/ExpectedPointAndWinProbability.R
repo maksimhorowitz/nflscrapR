@@ -78,7 +78,7 @@ win_probability <- function(dataset) {
   ## Add inverse time variable ##
   dataset$invtime <- 1/(dataset$TimeSecs + .0000000001)
   
-  dataset$OffWinProb <- round(predict(object = win.prob.model.gam2, 
+  dataset$OffWinProb <- round(mgcv::predict.gam(object = win.prob.model.gam2, 
                                       newdata = dataset, type = "response"), 3)
   
   dataset$DefWinProb <- 1 - dataset$OffWinProb
