@@ -1134,7 +1134,7 @@ game_play_by_play <- function(GameID) {
   
   ## Adding in Expected Points ##
   
-  #PBP <- expected_points(PBP)
+  PBP <- expected_points(PBP)
   
   ## Final OutPut ##
   PBP[,c("Date", "GameID", "Drive", "qtr", "down", "time", "TimeUnder", 
