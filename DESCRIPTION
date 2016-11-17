@@ -19,12 +19,11 @@ Imports:
     ggplot2,
     DT,
     gridExtra,
-    nnet,
-    mgcv,
-    caret
+    mgcv
 Suggests:
     testthat,
     knitr,
     rmarkdown
 RoxygenNote: 5.0.1
 VignetteBuilder: knitr
+Depends: nnet
