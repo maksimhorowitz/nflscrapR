@@ -1134,7 +1134,7 @@ game_play_by_play <- function(GameID) {
   
   ## Adding in Expected Points ##
   
-  PBP <- expected_points(PBP)
+  #PBP <- expected_points(PBP)
   
   ## Final OutPut ##
   PBP[,c("Date", "GameID", "Drive", "qtr", "down", "time", "TimeUnder", 
@@ -1150,7 +1150,7 @@ game_play_by_play <- function(GameID) {
          "Fumble", "RecFumbTeam", "RecFumbPlayer", "Sack", "Challenge.Replay",
          "ChalReplayResult", "Accepted.Penalty", "PenalizedTeam", "PenaltyType", 
          "PenalizedPlayer", "Penalty.Yards", "PosTeamScore", "DefTeamScore", 
-         "ScoreDiff", "AbsScoreDiff", "expectedpoints", "OffWinProb", 
+         "ScoreDiff", "AbsScoreDiff", "OffWinProb", 
          "DefWinProb")]
 
 }

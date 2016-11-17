@@ -41,7 +41,7 @@ expected_points <- function(dataset) {
   # Scoring matrix to weight probabilities of different score types
   scoring.weights <- matrix(c(0, -3, -2, -7, 3, 2, 7), ncol = 1)
   
-  dataset$expectedpoints <- round(predict(multi.w.time.int2, 
+  dataset$expectedpoints <- round(caret::predict(multi.w.time.int2, 
                                           newdata = dataset, 
          type = "prob") %*% scoring.weights, 2)
   
