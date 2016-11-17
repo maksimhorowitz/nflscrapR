@@ -1130,7 +1130,7 @@ game_play_by_play <- function(GameID) {
   
   ## Adding in Win Probability ##
   
-  #PBP <- win_probability(PBP)
+  PBP <- win_probability(PBP)
   
   ## Adding in Expected Points ##
   
@@ -1150,8 +1150,8 @@ game_play_by_play <- function(GameID) {
          "Fumble", "RecFumbTeam", "RecFumbPlayer", "Sack", "Challenge.Replay",
          "ChalReplayResult", "Accepted.Penalty", "PenalizedTeam", "PenaltyType", 
          "PenalizedPlayer", "Penalty.Yards", "PosTeamScore", "DefTeamScore", 
-         "ScoreDiff", "AbsScoreDiff")] #, "OffWinProb", 
-         # "DefWinProb")]
+         "ScoreDiff", "AbsScoreDiff", "expectedpoints", "OffWinProb", 
+          "DefWinProb")]
 
 }
 
