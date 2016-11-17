@@ -52,9 +52,6 @@ expected_points <- function(dataset) {
   dataset[,-remove.cols]
 }
 
-xx <- game_play_by_play(2016010310)
-
-expected_points(xx)
 ################# Win Probability Fucntion #####################
 
 #' Win probability function to add win probability columns for the offense and 
