@@ -41,9 +41,9 @@ expected_points <- function(dataset) {
   # Scoring matrix to weight probabilities of different score types
   scoring.weights <- matrix(c(0, -3, -2, -7, 3, 2, 7), ncol = 1)
   
-  dataset$expectedpoints <- round(predict(multi.w.time.int2, 
+  dataset$expectedpoints <- as.numeric(round(predict(multi.w.time.int2, 
                                           newdata = dataset, 
-         type = "prob") %*% scoring.weights, 2)
+         type = "prob") %*% scoring.weights, 2))
   
   remove.cols <- which(colnames(dataset) %in% c("begQeffect", "endQeffect"))
   
@@ -78,8 +78,8 @@ win_probability <- function(dataset) {
   ## Add inverse time variable ##
   dataset$invtime <- 1/(dataset$TimeSecs + .0000000001)
   
-  dataset$OffWinProb <- round(mgcv::predict.gam(object = win.prob.model.gam2, 
-                                      newdata = dataset, type = "response"), 3)
+  dataset$OffWinProb <- as.numeric(round(mgcv::predict.gam(object = win.prob.model.gam2, 
+                                      newdata = dataset, type = "response"), 3))
   
   dataset$DefWinProb <- 1 - dataset$OffWinProb
   
