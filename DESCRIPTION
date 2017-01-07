@@ -19,7 +19,8 @@ Imports:
     ggplot2,
     DT,
     gridExtra,
-    mgcv
+    mgcv,
+    magrittr
 Suggests:
     testthat,
     knitr,
