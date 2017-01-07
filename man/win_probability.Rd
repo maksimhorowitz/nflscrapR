@@ -12,14 +12,14 @@ win_probability(dataset)
 game_play_by_play function}
 }
 \value{
-The input dataframe with the addition of win probability columns for 
-both the offense and defense
+The input dataframe with the addition of four win probability columns 
+for the home and away
 }
 \description{
 This function takes in the output of the game level play by play
-function and returns the same dataframe with two new columns representing the
-win probability for the offensive and defensive teams.  The model used to 
-calculate win probability can be further examined by loading it into your
-workspace from this package.
+function and returns the same dataframe with six new columns representing the
+win probability for the home and away team pre and post snap and win probability
+added.  The model used to calculate win probability is a genarlized addative
+ model with three explanatory variables.
 }
 

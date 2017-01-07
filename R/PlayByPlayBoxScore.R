@@ -182,19 +182,20 @@ game_play_by_play <- function(GameID) {
                 )
   }
   
+  
   # Adjusting Possession Team
   PBP$posteam <- ifelse(PBP$posteam == "NULL", dplyr::lag(PBP$posteam),
                                               PBP$posteam)
   
   # Fixing Possession team for Kick-Offs
-  kickoff.index <- which(sapply(PBP$desc, regexpr, 
-                                pattern = 
+  kickoff.index <- which(sapply(PBP$desc, regexpr,
+                                pattern =
                                   "kicks") != -1)
   pos.teams <- unlist(unique(PBP$posteam))[1:2]
-  correct.kickoff.pos <- ifelse(PBP$posteam[kickoff.index] == pos.teams[1], 
+  correct.kickoff.pos <- ifelse(PBP$posteam[kickoff.index] == pos.teams[1],
                                 pos.teams[2], pos.teams[1])
   PBP[kickoff.index, "posteam"] <- correct.kickoff.pos
-  
+
   # Yard Line Information
   
   # In the earlier seasons when there was a dead ball (i.e. timeout)
@@ -957,58 +958,58 @@ game_play_by_play <- function(GameID) {
   
   ## Away Team ##
   # Regular offensive passing, rushing
-  team.away.score[which(PBP$Touchdown == 1 
-                        & PBP$posteam == away.team.name
-                        & !PBP$ReturnResult %in% "Touchdown"
-                        & !PBP$PlayType %in% "Kickoff"
-                        & PBP$sp == 1)] <- 6
+  team.away.score[which(PBP$Touchdown %>% dplyr::lag() == 1 
+                        & PBP$posteam %>% dplyr::lag()  == away.team.name
+                        & !PBP$ReturnResult %>% dplyr::lag()  %in% "Touchdown"
+                        & !PBP$PlayType %>% dplyr::lag()  %in% "Kickoff"
+                        & PBP$sp %>% dplyr::lag()  == 1)] <- 6
   # Give points for Kickoff TDs
-  team.away.score[which(PBP$Touchdown == 1 
-                        & PBP$posteam == away.team.name
-                        & PBP$ReturnResult %in% "Touchdown"
-                        & PBP$PlayType %in% "Kickoff",
-                        PBP$sp == 1)] <- 6
+  team.away.score[which(PBP$Touchdown  %>% dplyr::lag() == 1 
+                        & PBP$posteam  %>% dplyr::lag() == away.team.name
+                        & PBP$ReturnResult  %>% dplyr::lag() %in% "Touchdown"
+                        & PBP$PlayType  %>% dplyr::lag() %in% "Kickoff",
+                        PBP$sp %>% dplyr::lag() == 1)] <- 6
   # Give points for Punt Return TDs
-  team.away.score[which(PBP$Touchdown == 1 
-                        & PBP$posteam == home.team.name
-                        & PBP$ReturnResult %in% "Touchdown"
-                        & PBP$PlayType %in% "Punt"
-                        & PBP$sp == 1)] <- 6
+  team.away.score[which(PBP$Touchdown %>% dplyr::lag()  == 1 
+                        & PBP$posteam %>% dplyr::lag()  == home.team.name
+                        & PBP$ReturnResult %>% dplyr::lag()  %in% "Touchdown"
+                        & PBP$PlayType %>% dplyr::lag()  %in% "Punt"
+                        & PBP$sp %>% dplyr::lag()  == 1)] <- 6
   # Give points for Interceptions
-  team.away.score[which(PBP$Touchdown == 1 
-                        & PBP$posteam == home.team.name
-                        & PBP$ReturnResult %in% "Touchdown"
-                        & !is.na(PBP$Interceptor)
-                        & PBP$sp == 1)] <- 6
+  team.away.score[which(PBP$Touchdown  %>% dplyr::lag() == 1 
+                        & PBP$posteam  %>% dplyr::lag() == home.team.name
+                        & PBP$ReturnResult  %>% dplyr::lag() %in% "Touchdown"
+                        & !is.na(PBP$Interceptor %>% dplyr::lag())
+                        & PBP$sp  %>% dplyr::lag() == 1)] <- 6
   # Make sure to give away team points for fumble ret for TD
-  team.away.score[which(PBP$Touchdown == 1 
-                        & PBP$posteam == home.team.name 
-                        & PBP$ReturnResult %in% "Touchdown"
-                        & !PBP$PlayType %in% "Kickoff"
-                        & PBP$RecFumbTeam == away.team.name
-                        & PBP$sp == 1)] <- 6
+  team.away.score[which(PBP$Touchdown %>% dplyr::lag() == 1 
+                        & PBP$posteam %>% dplyr::lag()  == home.team.name 
+                        & PBP$ReturnResult %>% dplyr::lag()  %in% "Touchdown"
+                        & !PBP$PlayType %>% dplyr::lag()  %in% "Kickoff"
+                        & PBP$RecFumbTeam %>% dplyr::lag()  == away.team.name
+                        & PBP$sp %>% dplyr::lag()  == 1)] <- 6
   # Fumble and the team that fumbled recovers and scores a TD
-  team.away.score[which(PBP$Touchdown == 1 
-                        & PBP$posteam == away.team.name 
-                        & PBP$ReturnResult %in% "Touchdown"
-                        & PBP$RecFumbTeam == away.team.name
-                        & PBP$sp == 1)] <- 6
+  team.away.score[which(PBP$Touchdown %>% dplyr::lag()  == 1 
+                        & PBP$posteam %>% dplyr::lag()  == away.team.name 
+                        & PBP$ReturnResult %>% dplyr::lag()  %in% "Touchdown"
+                        & PBP$RecFumbTeam %>% dplyr::lag()  == away.team.name
+                        & PBP$sp %>% dplyr::lag()  == 1)] <- 6
   # Points for two point conversion
-  team.away.score[which(PBP$TwoPointConv == "Success" 
-                        & PBP$posteam == away.team.name
-                        & PBP$sp == 1)] <- 2
+  team.away.score[which(PBP$TwoPointConv %>% dplyr::lag()  == "Success" 
+                        & PBP$posteam %>% dplyr::lag()  == away.team.name
+                        & PBP$sp %>% dplyr::lag()  == 1)] <- 2
   # Points for safeties
-  team.away.score[which(PBP$Safety == 1 
-                        & PBP$posteam == home.team.name
-                        & PBP$sp == 1)] <- 2
+  team.away.score[which(PBP$Safety %>% dplyr::lag()  == 1 
+                        & PBP$posteam %>% dplyr::lag()  == home.team.name
+                        & PBP$sp %>% dplyr::lag()  == 1)] <- 2
   # Points for made extra point
-  team.away.score[which(PBP$ExPointResult == "Made" 
-                        & PBP$posteam == away.team.name
-                        & PBP$sp == 1)] <- 1
+  team.away.score[which(PBP$ExPointResult %>% dplyr::lag()  == "Made" 
+                        & PBP$posteam %>% dplyr::lag()  == away.team.name
+                        & PBP$sp %>% dplyr::lag()  == 1)] <- 1
   # Points for made field goal
-  team.away.score[which(PBP$FieldGoalResult == "Good" 
-                        & PBP$posteam == away.team.name
-                        & PBP$sp == 1)] <- 3
+  team.away.score[which(PBP$FieldGoalResult %>% dplyr::lag()  == "Good" 
+                        & PBP$posteam %>% dplyr::lag()  == away.team.name
+                        & PBP$sp %>% dplyr::lag()  == 1)] <- 3
   
   team.away.score <- cumsum(team.away.score)
   
@@ -1016,36 +1017,37 @@ game_play_by_play <- function(GameID) {
   away.team.def <- which(PBP$DefensiveTeam == away.team.name)
   
   ## Home Team ##
-  # Regular offensive passing, rushing, or kickoff TD
-  team.home.score[PBP$Touchdown == 1 
-                        & PBP$posteam == home.team.name 
-                        & !PBP$ReturnResult %in% "Touchdown"
-                        & !PBP$PlayType %in% "Kickoff"
-                        & PBP$sp == 1] <- 6
+  # Regular offensive passing, rushing
+  team.home.score[PBP$Touchdown %>% dplyr::lag()  == 1 
+                  & PBP$posteam %>% dplyr::lag()  == home.team.name 
+                  & !PBP$ReturnResult %>% dplyr::lag()  %in% "Touchdown"
+                  & !PBP$PlayType %>% dplyr::lag()  %in% "Kickoff"
+                  & PBP$sp %>% dplyr::lag()  == 1] <- 6
   # Give points for Kickoffs
-  team.home.score[which(PBP$Touchdown == 1 
-                        & PBP$posteam == home.team.name
-                        & PBP$ReturnResult %in% "Touchdown"
-                        & PBP$PlayType %in% "Kickoff"
-                        & PBP$sp == 1)] <- 6
+  team.home.score[which(PBP$Touchdown %>% dplyr::lag()  == 1 
+                        & PBP$posteam %>% dplyr::lag()  == home.team.name
+                        & PBP$ReturnResult %>% dplyr::lag()  %in% "Touchdown"
+                        & PBP$PlayType %>% dplyr::lag()  %in% "Kickoff"
+                        & PBP$sp %>% dplyr::lag()  == 1)] <- 6
   # Give points for Punts 
-  team.home.score[which(PBP$Touchdown == 1 
-                        & PBP$posteam == away.team.name
-                        & PBP$ReturnResult %in% "Touchdown"
-                        & PBP$PlayType %in% "Punt"
-                        & PBP$sp == 1)] <- 6
+  team.home.score[which(PBP$Touchdown %>% dplyr::lag()  == 1 
+                        & PBP$posteam %>% dplyr::lag()  == away.team.name
+                        & PBP$ReturnResult %>% dplyr::lag()  %in% "Touchdown"
+                        & PBP$PlayType %>% dplyr::lag()  %in% "Punt"
+                        & PBP$sp %>% dplyr::lag()  == 1)] <- 6
   # Give points for Interceptions
-  team.home.score[which(PBP$Touchdown == 1 
-                        & PBP$posteam == away.team.name
+  team.home.score[which(PBP$Touchdown %>% dplyr::lag()  == 1 
+                        & PBP$posteam %>% dplyr::lag()  == away.team.name
+                        & PBP$ReturnResult %>% dplyr::lag()  %in% "Touchdown"
+                        & !is.na(PBP$Interceptor %>% dplyr::lag() )
+                        & PBP$sp %>% dplyr::lag()  == 1)] <- 6
+  
+  team.home.score[which(PBP$Touchdown %>% dplyr::lag()  == 1 
+                        & PBP$posteam %>% dplyr::lag()  == away.team.name 
                         & PBP$ReturnResult %in% "Touchdown"
-                        & !is.na(PBP$Interceptor)
-                        & PBP$sp == 1)] <- 6
-  team.home.score[which(PBP$Touchdown == 1 
-                        & PBP$posteam == away.team.name 
-                        & PBP$ReturnResult %in% "Touchdown"
-                        & !PBP$PlayType %in% "Kickoff"
-                        & PBP$RecFumbTeam == home.team.name
-                        & PBP$sp == 1)] <- 6
+                        & !PBP$PlayType %>% dplyr::lag()  %in% "Kickoff"
+                        & PBP$RecFumbTeam %>% dplyr::lag()  == home.team.name
+                        & PBP$sp %>% dplyr::lag()  == 1)] <- 6
   # Fumble and the team that fumbled recovered and scored a TD
   team.home.score[which(PBP$Touchdown == 1 
                         & PBP$posteam == home.team.name 
@@ -1053,27 +1055,27 @@ game_play_by_play <- function(GameID) {
                         & PBP$RecFumbTeam == home.team.name
                         & PBP$sp == 1)] <- 6
   # Points for two point conversion
-  team.home.score[which(PBP$TwoPointConv == "Success" 
-                        & PBP$posteam == home.team.name)] <- 2
+  team.home.score[which(PBP$TwoPointConv %>% dplyr::lag()  == "Success" 
+                        & PBP$posteam %>% dplyr::lag()  == home.team.name)] <- 2
   # Points for safeties
-  team.home.score[which(PBP$Safety == 1 
-                        & PBP$posteam == away.team.name
-                        & PBP$sp == 1)] <- 2
+  team.home.score[which(PBP$Safety %>% dplyr::lag()  == 1 
+                        & PBP$posteam %>% dplyr::lag()  == away.team.name
+                        & PBP$sp %>% dplyr::lag()  == 1)] <- 2
   # Points for made extra point
-  team.home.score[which(PBP$ExPointResult == "Made" 
-                        & PBP$posteam == home.team.name
-                        & PBP$sp == 1)] <- 1
+  team.home.score[which(PBP$ExPointResult %>% dplyr::lag()  == "Made" 
+                        & PBP$posteam %>% dplyr::lag()  == home.team.name
+                        & PBP$sp %>% dplyr::lag()  == 1)] <- 1
   # Points for made field goal
-  team.home.score[which(PBP$FieldGoalResult == "Good" 
-                        & PBP$posteam == home.team.name
-                        & PBP$sp == 1)] <- 3
+  team.home.score[which(PBP$FieldGoalResult %>% dplyr::lag()  == "Good" 
+                        & PBP$posteam %>% dplyr::lag() == home.team.name
+                        & PBP$sp %>% dplyr::lag() == 1)] <- 3
   
   team.home.score <- cumsum(team.home.score)
   
   home.team.pos <- which(PBP$posteam == home.team.name)
   home.team.def <- which(PBP$DefensiveTeam == home.team.name)
   
-
+  
   ## Possesion and Defensive Team Scores
   PBP$PosTeamScore <- NA
   PBP$DefTeamScore <- NA
@@ -1086,7 +1088,15 @@ game_play_by_play <- function(GameID) {
   PBP$DefTeamScore[home.team.def] <- team.home.score[home.team.def]
   PBP$DefTeamScore[away.team.def] <- team.away.score[away.team.def]
   
-  # Score Differential and Abs Score Differential 
+  PBP$DefTeamScore[1] <- 0
+  PBP$PosTeamScore[1] <- 0 
+  
+  PBP$DefTeamScore <- ifelse(is.na(PBP$DefTeamScore), lag(PBP$DefTeamScore),
+                                    PBP$DefTeamScore)
+  PBP$PosTeamScore <- ifelse(is.na(PBP$PosTeamScore), lag(PBP$PosTeamScore),
+                                    PBP$PosTeamScore)
+  
+  # Score Differential #
   
   PBP$ScoreDiff <- PBP$PosTeamScore - PBP$DefTeamScore
   
@@ -1098,11 +1108,13 @@ game_play_by_play <- function(GameID) {
   
   ##############################################################################
   
+  # Abs Score Differential #
+  
   PBP$AbsScoreDiff <- abs(PBP$PosTeamScore - PBP$DefTeamScore)
   
   # Goal to Go
   
-  PBP$GoalToGo <- ifelse(PBP$posteam != PBP$SideofField & PBP$yrdln <= 10, 1, 0)
+  PBP$GoalToGo <- ifelse(PBP$yrdline100 <= 10, 1, 0)
   ##################
   
   ## Unlisting Listed Columns 
@@ -1128,6 +1140,12 @@ game_play_by_play <- function(GameID) {
                               dplyr::lag(PBP$DefensiveTeam),
                               PBP$DefensiveTeam)
   
+  ## Home Team ##
+  PBP$HomeTeam <- nfl.json[[1]]$home$abbr
+  
+  ## Away Team 
+  PBP$AwayTeam <- nfl.json[[1]]$away$abbr
+  
   ## Adding in Win Probability ##
   
   PBP <- win_probability(PBP)
@@ -1135,6 +1153,23 @@ game_play_by_play <- function(GameID) {
   ## Adding in Expected Points ##
   
   PBP <- expected_points(PBP)
+  
+  ##############################################################################
+  ## Adding Row for End of Game if not in the data ##
+  # if (PBP$desc[nrow(PBP)] %in% c("(END GAME)", "(End of game)")) {
+  #   
+  #   PBP[nrow(PBP)+1,] <- PBP[nrow(PBP),]
+  #   
+  #   PBP$GameID[nrow(PBP)] <- PBP$GameID[nrow(PBP)-1]
+  #   PBP$Date[nrow(PBP)] <- PBP$Date[nrow(PBP)-1]
+  #   PBP$time[nrow(PBP)] <- "00:00"
+  #   PBP$TimeUnder[nrow(PBP)] <- 0
+  #   PBP$TimeSecs[nrow(PBP)] <- 0
+  #   PBP$desc[nrow(PBP)] <- "End of Game"
+  #   PBP$PlayType[nrow(PBP)] <- "End of Game"
+  # }
+  
+  ##############################################################################
   
   ## Final OutPut ##
   PBP[,c("Date", "GameID", "Drive", "qtr", "down", "time", "TimeUnder", 
@@ -1150,8 +1185,9 @@ game_play_by_play <- function(GameID) {
          "Fumble", "RecFumbTeam", "RecFumbPlayer", "Sack", "Challenge.Replay",
          "ChalReplayResult", "Accepted.Penalty", "PenalizedTeam", "PenaltyType", 
          "PenalizedPlayer", "Penalty.Yards", "PosTeamScore", "DefTeamScore", 
-         "ScoreDiff", "AbsScoreDiff", "expectedpoints", "OffWinProb", 
-          "DefWinProb")]
+         "ScoreDiff", "AbsScoreDiff", "HomeTeam", "AwayTeam",
+         "expectedpoints", "Home.WP.pre",  "Away.WP.pre", "Home.WP.post", 
+         "Away.WP.post", "Home.WPA", "Away.WPA")]
 
 }
 
