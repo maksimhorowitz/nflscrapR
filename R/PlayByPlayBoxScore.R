@@ -1131,7 +1131,6 @@ game_play_by_play <- function(GameID) {
   
   ### Adding Posteam for final play of game ###
   ### Needed for win probability purposes #####
-  
   PBP$posteam <- ifelse(PBP$PlayType == "End of Game", dplyr::lag(PBP$posteam),
                         PBP$posteam)
   
@@ -1170,7 +1169,6 @@ game_play_by_play <- function(GameID) {
   # }
   
   ##############################################################################
-  
   ## Final OutPut ##
   PBP[,c("Date", "GameID", "Drive", "qtr", "down", "time", "TimeUnder", 
          "TimeSecs", "PlayTimeDiff", "SideofField", "yrdln", "yrdline100",
@@ -1186,7 +1184,7 @@ game_play_by_play <- function(GameID) {
          "ChalReplayResult", "Accepted.Penalty", "PenalizedTeam", "PenaltyType", 
          "PenalizedPlayer", "Penalty.Yards", "PosTeamScore", "DefTeamScore", 
          "ScoreDiff", "AbsScoreDiff", "HomeTeam", "AwayTeam",
-         "expectedpoints", "Home.WP.pre",  "Away.WP.pre", "Home.WP.post", 
+         "ExpPts", "Home.WP.pre",  "Away.WP.pre", "Home.WP.post", 
          "Away.WP.post", "Home.WPA", "Away.WPA")]
 
 }
