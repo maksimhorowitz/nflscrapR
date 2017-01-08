@@ -127,10 +127,10 @@ win_probability <- function(dataset) {
   ####### Adding Win Probability Added #######
   
   # Home
-  dataset$Home.WPA <- dataset$Home.WP.post - dataset$Home.WP.pre
+  dataset$Home.WPA <- round(dataset$Home.WP.post - dataset$Home.WP.pre, 2)
   
   # Away
-  dataset$Away.WPA <- dataset$Away.WP.post - dataset$Away.WP.pre
+  dataset$Away.WPA <- round(dataset$Away.WP.post - dataset$Away.WP.pre, 2)
   
   ### Formatting ###
   ## Change down back to numeric ##
