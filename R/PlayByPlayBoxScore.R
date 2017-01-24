@@ -168,7 +168,8 @@ game_play_by_play <- function(GameID) {
   # Converting GameID into URL string
   urlstring <- proper_jsonurl_formatting(GameID)
   
-  nfl.json <- RJSONIO::fromJSON(RCurl::getURL(urlstring))
+  nfl.json <- tryCatch(RJSONIO::fromJSON(RCurl::getURL(urlstring)),
+                       error = function(e) {e; print("Connection to API disrupted, please re-run code. If multiple failures, then there is no data available for this game yet.")}) 
   number.drives <- length(nfl.json[[1]]$drives) - 1
   PBP <- NULL
   for (ii in 1:number.drives) {
