@@ -349,11 +349,11 @@ game_play_by_play <- function(GameID) {
   penalized.player.int <- sapply(PBP$desc[ which(PBP$Accepted.Penalty == 1) ], 
                                  stringr::str_extract, 
                                  pattern = 
-  "[A-Z]{2,3}-[A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( Jr)?")
+  "[A-Z]{2,3}-[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   
   penalized.player2 <- stringr::str_extract(penalized.player.int, 
                                             pattern = 
-             "[A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( Jr)?")
+             "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   
   PBP$PenalizedPlayer[PBP$Accepted.Penalty == 1] <- penalized.player2
   
@@ -388,39 +388,39 @@ game_play_by_play <- function(GameID) {
   
   ## Passer ##
   passer.step1 <- sapply(PBP$desc, stringr::str_extract, 
-                         pattern = "[A-Z]\\.[A-Z][A-z]{1,20} pass")
+                         pattern = "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)? pass")
   PBP$Passer <- stringr::str_extract(passer.step1, 
-                                     pattern = "[A-Z]\\.[A-Z][A-z]{1,20}")
+                                     pattern = "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   
   ## Receiver ##
 
   receiver.step1 <- sapply(PBP$desc, stringr::str_extract, 
                            pattern = 
-      "pass ((incomplete )?[a-z]{4,5} [a-z]{4,6} )?to [A-Z]([a-z])?\\.[A-Z][A-z]{1,20}( (S|J)r\\.)?")
+      "pass ((incomplete )?[a-z]{4,5} [a-z]{4,6} )?to [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   
   PBP$Receiver <- stringr::str_extract(receiver.step1, 
-                              pattern = "[A-Z]([a-z])?\\.[A-Z][A-z]{1,20}")
+                              pattern = "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   
   ## Tacklers ##
   
   tacklers.step1 <- sapply(PBP$desc, stringr::str_extract, 
-                           pattern = "(yard(s?)|no gain) \\([A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( Jr.)?(;|,)?( )?([A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( Jr.)?)?\\)\\.")
+                           pattern = "(yard(s?)|no gain) \\([A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?(;|,)?( )?([A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?)?\\)\\.")
   
   # Identifying the tacklers on the play (either one or two)
   tacklers1 <- stringr::str_extract(tacklers.step1,
                            pattern = 
-                     "\\([A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( Jr.)?")
+                     "\\([A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   tacklers1 <- stringr::str_extract(tacklers1, 
                            pattern = 
-                        "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( Jr.)?")
+                        "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   
   # Pulling out tacklers names
   tacklers2 <- stringr::str_extract(tacklers.step1, 
                            pattern = 
-                    "(;|,)( )[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( Jr.)?")
+                    "(;|,)( )[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   tacklers2 <- stringr::str_extract(tacklers2,
                            pattern = 
-                        "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( Jr.)?")
+                        "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   
   PBP$Tackler1 <- tacklers1
   PBP$Tackler2 <- tacklers2
@@ -428,10 +428,10 @@ game_play_by_play <- function(GameID) {
   # Player who blocks punt or field goal or extra point
   
   player.blocking1 <- stringr::str_extract(PBP$desc, 
-                       pattern = "BLOCKED by [A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?")
+                       pattern = "BLOCKED by [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   
   player.blocking2 <- stringr::str_extract(player.blocking1, 
-                                           pattern = "[A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?")
+                                           pattern = "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
     
   PBP$BlockingPlayer <- player.blocking2
   # Timeouts
@@ -630,22 +630,22 @@ game_play_by_play <- function(GameID) {
   # Tacklers on a sack play
   
   sackers <- sapply(PBP$desc[which(PBP$Sack == 1 & is.na(PBP$Tackler1))], stringr::str_extract, 
-         pattern = "(split by [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?('o)?( Jr.)? and [A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( Jr.)?\\))|(\\([A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( Jr.)?, [A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( Jr.)?\\))|\\([A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( Jr.)?\\)|Sack by [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( Jr.)?")
+         pattern = "(split by [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)? and [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?\\))|(\\([A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?, [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?\\))|\\([A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?\\)|Sack by [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
 
   # Sack Player 1
   
   sackplayer1 <- stringr::str_extract(sackers,
                                       pattern = 
-                                        "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( Jr.)?")
+                                        "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
 
   # Sack Player 2
   sackplayer2 <- stringr::str_extract(sackers,
                                       pattern = 
-                                        "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( Jr.)?\\)")
+                                        "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?\\)")
   
   sackplayer2 <- stringr::str_extract(sackplayer2,
                                       pattern = 
-                                        "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( Jr.)?")
+                                        "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   
  # Adding them to the Tacklers Column
   
@@ -756,7 +756,11 @@ game_play_by_play <- function(GameID) {
   
   rusherStep1 <- sapply(PBP[which(PBP$PlayType == "Run"),"desc"], 
                         stringr::str_extract, 
-                        pattern = "[A-Z]\\.[A-Z][A-z]{1,20}")
+                        pattern = "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
+  # Catch the Aborted phrase:
+  rusherStep1 <- ifelse(stringr::str_detect(rusherStep1," Aborted"),
+                        gsub(" Aborted","",rusherStep1),rusherStep1)
+  
   PBP[c(running.play, running.play2),"Rusher"] <- rusherStep1
   
   # Changing to correctly reflect the rusher 
@@ -768,15 +772,15 @@ game_play_by_play <- function(GameID) {
     
   rusherStep2 <- sapply(PBP[which( (PBP$PlayType == "Run" & PBP$Accepted.Penalty == 0) | (PBP$PlayType == "Run" & PBP$Accepted.Penalty == 1 &PBP$posteam != PBP$PenalizedTeam)),"desc"], 
          stringr::str_extract, 
-         pattern = "(as eligible( receiver(s)?| for [A-Z]{2,3})?(\\.|,)?( ){1,2}(Direct snap to [A-z]{1,3}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?\\.( ){1,2})?[A-z]{1,3}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?)|(as eligible( receiver)?(\\.)?(.)+(\\.)? (\\(Shotgun\\) )?[A-z]{1,3}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?)|(\\(((Run formation)|([0-9]{1,2}:[0-9]{1,2}))\\) [A-z]{1,3}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)? (.){10,80}report(s|ed) as eligible(.){11,})")
+         pattern = "(as eligible( receiver(s)?| for [A-Z]{2,3})?(\\.|,)?( ){1,2}(Direct snap to [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?\\.( ){1,2})?[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?)|(as eligible( receiver)?(\\.)?(.)+(\\.)? (\\(Shotgun\\) )?[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?)|(\\(((Run formation)|([0-9]{1,2}:[0-9]{1,2}))\\) [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)? (.){10,80}report(s|ed) as eligible(.){11,})")
 
   rusherStep3 <- sapply(rusherStep2, 
                         stringr::str_extract, 
-                        pattern = "([A-z]{1,3}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?)$|\\(((Run formation)|([0-9]{1,2}:[0-9]{1,2})|(Shotgun))\\) [A-z]{1,3}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?") 
+                        pattern = "([A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?)$|\\(((Run formation)|([0-9]{1,2}:[0-9]{1,2})|(Shotgun))\\) [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?") 
   
   rusherStep3.1 <- sapply(rusherStep3, 
                           stringr::str_extract, 
-                          pattern = "([A-z]{1,3}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?)$") 
+                          pattern = "([A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?)$") 
   
   rusherStepfinal <- rusherStep3.1[!is.na(rusherStep3.1)]
   
@@ -856,32 +860,32 @@ game_play_by_play <- function(GameID) {
   
   # Fair Catches
   punt.returner1 <- sapply(PBP$desc[punt.play], stringr::str_extract, 
-                           pattern = "by [A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?\\.$")
+                           pattern = "by [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?\\.$")
   
   punt.returner2 <- sapply(punt.returner1, stringr::str_extract,
-                           pattern = "[A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?")
+                           pattern = "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   
   # Touchdowns or Returns
   punt.returner3 <- sapply(PBP$desc[punt.play], stringr::str_extract, 
-                           pattern = "(\\. [A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)? to [A-Z]{2,3} [0-9]{1,2})|\\. [A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)? for [0-9]{1,2} yard(s)")
+                           pattern = "(\\. [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)? to [A-Z]{2,3} [0-9]{1,2})|\\. [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)? for [0-9]{1,2} yard(s)")
   
   punt.returner4 <- sapply(punt.returner3, stringr::str_extract, 
-                           pattern = "[A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?")
+                           pattern = "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
 
   # Kickoff Returner
   # Fair Catches
   kickret1 <- sapply(PBP$desc[kickoff], stringr::str_extract, 
-                     pattern = "by [A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?\\.$")
+                     pattern = "by [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?\\.$")
   
   kickret2 <- sapply(kickret1, stringr::str_extract,
-                     pattern = "[A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?")
+                     pattern = "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   
   # Touchdowns or Returns
   kickret3 <- sapply(PBP$desc[kickoff], stringr::str_extract, 
-                     pattern = "(\\. [A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)? to [A-Z]{2,3} [0-9]{1,2})|(\\. [A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)? for [0-9]{1,2} yard(s))|(\\. [A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)? pushed)")
+                     pattern = "(\\. [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)? to [A-Z]{2,3} [0-9]{1,2})|(\\. [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)? for [0-9]{1,2} yard(s))|(\\. [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)? pushed)")
   
   kickret4 <- sapply(kickret3, stringr::str_extract, 
-                     pattern = "[A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?")
+                     pattern = "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   
   # All Returners
   all.returners <- rep(NA, time = nrow(PBP))
@@ -895,10 +899,10 @@ game_play_by_play <- function(GameID) {
   # Interceptor 
   interceptor1 <- sapply(PBP$desc[which(PBP$InterceptionThrown == 1)], 
                          stringr::str_extract, 
-                         pattern = "INTERCEPTED by [A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?")
+                         pattern = "INTERCEPTED by [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   
   interceptor2 <- sapply(interceptor1, stringr::str_extract, 
-                         pattern = "[A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?")
+                         pattern = "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   
   PBP$Interceptor <- NA
   PBP$Interceptor[which(PBP$InterceptionThrown == 1)] <- interceptor2
@@ -906,13 +910,13 @@ game_play_by_play <- function(GameID) {
   # Fumbler Recovery Team and Player
   
   recover.step1 <- sapply(PBP$desc[fumble.index], stringr::str_extract, 
-                          pattern = "[A-Z]{2,3}-[A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?")
+                          pattern = "[A-Z]{2,3}-[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   
   recover.team <- sapply(recover.step1, stringr::str_extract, 
                          pattern = "[A-Z]{2,3}")
   
   recover.player <- sapply(recover.step1, stringr::str_extract, 
-                           pattern = "[A-z]{1,3}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?")
+                           pattern = "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   
   PBP$RecFumbTeam <- NA
   PBP$RecFumbTeam[fumble.index] <-  ifelse(recover.team == "BLT", 
