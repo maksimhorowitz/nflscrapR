@@ -169,7 +169,15 @@ game_play_by_play <- function(GameID) {
   urlstring <- proper_jsonurl_formatting(GameID)
   
   nfl.json <- tryCatch(RJSONIO::fromJSON(RCurl::getURL(urlstring)),
-                       error = function(e) {e; print("Connection to API disrupted, please re-run code. If multiple failures, then there is no data available for this game yet.")}) 
+                       error=function(cond) {
+                         message("Connection to API disrupted, please re-run code. If multiple failures, then there is no data available for this game yet.")
+                         message(paste("Here is the url:", urlstring))
+                         message("Here's the original error message:")
+                         message(cond)
+                         # Choose a return value in case of error
+                         return(NA)
+                       })
+  
   number.drives <- length(nfl.json[[1]]$drives) - 1
   PBP <- NULL
   for (ii in 1:number.drives) {
@@ -1119,7 +1127,10 @@ game_play_by_play <- function(GameID) {
   
   # Goal to Go
   
-  PBP$GoalToGo <- ifelse(PBP$yrdline100 <= 10, 1, 0)
+  PBP$GoalToGo <- ifelse(PBP$SideofField != PBP$posteam & 
+                        ((PBP$ydstogo == PBP$yrdline100) |
+                        (PBP$ydstogo <= 1 & PBP$yrdline100 == 1)),
+                         1,0)
   ##################
   
   ## Unlisting Listed Columns 
