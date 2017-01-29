@@ -1119,7 +1119,10 @@ game_play_by_play <- function(GameID) {
   
   # Goal to Go
   
-  PBP$GoalToGo <- ifelse(PBP$yrdline100 <= 10, 1, 0)
+  PBP$GoalToGo <- ifelse(PBP$SideofField != PBP$posteam & 
+                        ((PBP$ydstogo == PBP$yrdline100) |
+                        (PBP$ydstogo <= 1 & PBP$yrdline100 == 1)),
+                         1,0)
   ##################
   
   ## Unlisting Listed Columns 
