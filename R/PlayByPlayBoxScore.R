@@ -765,7 +765,7 @@ game_play_by_play <- function(GameID) {
   
   rusherStep1 <- sapply(PBP[which(PBP$PlayType == "Run"),"desc"], 
                         stringr::str_extract, 
-                        pattern = "[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
+                        pattern = "[A-z]{1,4}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?")
   # Catch the Aborted phrase:
   rusherStep1 <- ifelse(stringr::str_detect(rusherStep1," Aborted"),
                         gsub(" Aborted","",rusherStep1),rusherStep1)
@@ -776,26 +776,28 @@ game_play_by_play <- function(GameID) {
 
   elidgiblePlays <- grep(PBP[which( (PBP$PlayType == "Run" & PBP$Accepted.Penalty == 0) | (PBP$PlayType == "Run" & PBP$Accepted.Penalty == 1 &PBP$posteam != PBP$PenalizedTeam)),"desc"],
                          pattern = " (report(ed|s)?)?( in )?as eligible(.){15,}")
-
+  
   if (length(elidgiblePlays) > 0) {
     
   rusherStep2 <- sapply(PBP[which( (PBP$PlayType == "Run" & PBP$Accepted.Penalty == 0) | (PBP$PlayType == "Run" & PBP$Accepted.Penalty == 1 &PBP$posteam != PBP$PenalizedTeam)),"desc"], 
          stringr::str_extract, 
-         pattern = "(as eligible( receiver(s)?| for [A-Z]{2,3})?(\\.|,)?( ){1,2}(Direct snap to [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?\\.( ){1,2})?[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?)|(as eligible( receiver)?(\\.)?(.)+(\\.)? (\\(Shotgun\\) )?[A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?)|(\\(((Run formation)|([0-9]{1,2}:[0-9]{1,2}))\\) [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)? (.){10,80}report(s|ed) as eligible(.){11,})")
+         pattern = "(as eligible( receiver(s)?| for [A-Z]{2,3})?(\\.|,)?( ){1,2}(Direct snap to [A-z]{1,4}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?\\.( ){1,2})?[A-z]{1,4}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?)|(as eligible( receiver)?(\\.)?(.)+(\\.)? (\\(Shotgun\\) )?[A-z]{1,4}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?)|(\\(((Run formation)|([0-9]{1,2}:[0-9]{1,2}))\\) [A-z]{1,4}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)? (.){10,80}report(s|ed) as eligible(.){11,})")
 
   rusherStep3 <- sapply(rusherStep2, 
                         stringr::str_extract, 
-                        pattern = "([A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?)$|\\(((Run formation)|([0-9]{1,2}:[0-9]{1,2})|(Shotgun))\\) [A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?") 
+                        pattern = "([A-z]{1,4}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?)$|\\(((Run formation)|([0-9]{1,2}:[0-9]{1,2})|(Shotgun))\\) [A-z]{1,4}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?") 
   
   rusherStep3.1 <- sapply(rusherStep3, 
                           stringr::str_extract, 
-                          pattern = "([A-z]{1,4}\\.( )?[A-Z][A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?)$") 
+                          pattern = "([A-z]{1,4}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?)$")
+                                     #([A-z]{1,4}\\.( )?[A-Z](')?[A-z]{1,20}(('|-| )?[A-Z][a-z]{1,14})?('o)?( (S|J)r\\.)?)$) 
   
   rusherStepfinal <- rusherStep3.1[!is.na(rusherStep3.1)]
   
   PBP$Rusher[which(PBP$PlayType == "Run")][elidgiblePlays] <- rusherStepfinal
   
   }
+  
   ## Punt and Kick Return Outcome ##
   
   # Punt Outcome
