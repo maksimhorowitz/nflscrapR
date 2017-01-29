@@ -83,7 +83,15 @@ player_game <- function(GameID) {
   urlstring <- proper_jsonurl_formatting(GameID)
   
   # Converting URL into readable JSON format
-  nfl.json <- RJSONIO::fromJSON(RCurl::getURL(urlstring))
+  nfl.json <- tryCatch(RJSONIO::fromJSON(RCurl::getURL(urlstring)),
+                       error=function(cond) {
+    message("Connection to API disrupted, please re-run code. If multiple failures, then there is no data available for this game yet.")
+    message(paste("Here is the url:", urlstring))
+    message("Here's the original error message:")
+    message(cond)
+    # Choose a return value in case of error
+    return(NA)
+  })
   
   # Here we build the dataframes for the rushing, passing, receving, defense,
   # and fumbling stats
