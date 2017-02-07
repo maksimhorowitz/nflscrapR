@@ -1304,8 +1304,21 @@ drive_summary <- function(GameID) {
   # Converting JSON data
   nfl.json.data <- RJSONIO::fromJSON(RCurl::getURL(urlstring))
   
-  # Creating Dataframe of Drive Outcomes
-  drive.data <- data.frame(do.call(rbind, (nfl.json.data[[1]]$drives)))
+  # Creating Dataframe of Drive Outcomes:
+  
+  # Create a warning message for  the Patriots vs. TB game
+  # that has an empty drive 3 list (GameID is 2013092206),
+  # and delete the empty drive. For all other games just
+  # rbind together.
+  
+  if (GameID == "2013092206"){
+    warning("Drive 3 is missing from game data.")
+    drive.data.fix <- nfl.json.data[[1]]$drives
+    drive.data.fix[[3]] <- NULL
+    drive.data <- data.frame(do.call(rbind,drive.data.fix))
+  } else {
+    drive.data <- data.frame(do.call(rbind, (nfl.json.data[[1]]$drives)))
+  }
   
   # Gathering Start of Drive Time, Location, and Quarter Info
   start.data <- data.frame(do.call(rbind, (drive.data$start))) 
@@ -1323,8 +1336,14 @@ drive_summary <- function(GameID) {
   drive.data.final <- cbind(drive.data[, -c(start.index,end.index)], 
                             start.data, end.data)
   drive.data.final$GameID <- GameID
-  drive.data.final$DriveNumber <- 1:nrow(drive.data.final)
   
+  # Create DriveNumber column but create a condition for 
+  # the missing drive 3 game:
+  if (GameID == "2013092206"){
+    drive.data.final$DriveNumber <- c(1,2,4:(nrow(drive.data.final)+1))
+  } else{
+    drive.data.final$DriveNumber <- 1:nrow(drive.data.final)
+  }
   # Removing last row and 4th column of irrelevant information
   drive.data.final <- drive.data.final[-nrow(drive.data),-c(3,4)]
   
