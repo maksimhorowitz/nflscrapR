@@ -2,7 +2,7 @@
 Introducing the nflscrapR Package
 =================================
 
-This package was built to allow R users to utilize and analyze data from the National Football League (NFL) API. The functions in this package allow users to perform analysis at the play and game levels on single games and entire seasons. By parsing the play-by-play data recorded by the NFL, this function allows NFL data enthusaists to examaine each facet of the game at a more insightful level. The creation of this package puts granular data into the hands of the any R user with an interest in performing analysis and digging up insights about the game of American Football. With this data, the development of advanced NFL metrics can occur at a more rapid pace helping influence NFL teams to use data driven insights within player operations.
+This package was built to allow R users to utilize and analyze data from the National Football League (NFL) API. The functions in this package allow users to perform analysis at the play and game levels on single games and entire seasons. By parsing the play-by-play data recorded by the NFL, this function allows NFL data enthusiasts to examine each facet of the game at a more insightful level. The creation of this package puts granular data into the hands of the any R user with an interest in performing analysis and digging up insights about the game of American Football. With this data, the development of advanced NFL metrics can occur at a more rapid pace helping influence NFL teams to use data driven insights within player operations.
 
 *Note: Data is only available after 2009*
 
