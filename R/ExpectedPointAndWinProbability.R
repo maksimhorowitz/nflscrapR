@@ -56,13 +56,93 @@ expected_points <- function(dataset) {
   
   ### Adding Expected Points Added (EPA) Column ###
   
+  # Create multiple types of EPA columns
+  # for each of the possible cases,
+  # grouping by GameID (will then just use
+  # an ifelse statement to decide which one 
+  # to use as the final EPA):
+  dataset <- dplyr::group_by(dataset,GameID)
+  dataset <- dplyr::mutate(dataset,
+                           # Team keeps possession (most general case):
+                           EPA_base = dplyr::lead(ExpPts) - ExpPts,
+                           # Team keeps possession but either Timeout, Two Minute Warning,
+                           # Quarter End is the following row:
+                           EPA_base_nxt = dplyr::lead(ExpPts,2) - ExpPts,
+                           # Change of possession without defense scoring
+                           # and no timeout, two minute warning, or quarter end follows:
+                           EPA_change_no_score = -dplyr::lead(ExpPts) - ExpPts,
+                           # Change of possession without defense scoring
+                           # but either Timeout, Two Minute Warning,
+                           # Quarter End is the following row:
+                           EPA_change_no_score_nxt = -dplyr::lead(ExpPts,2) - ExpPts,
+                           # Change of possession with defense scoring touchdown:
+                           EPA_change_score = -6 - ExpPts,
+                           # Offense touchdown:
+                           EPA_off_td = 6 - ExpPts,
+                           # Offense fieldgoal:
+                           EPA_off_fg = 3 - ExpPts,
+                           # Offense extra-point conversion:
+                           EPA_off_ep = 1 - ExpPts,
+                           # Offense two-point conversion:
+                           EPA_off_tp = 2 - ExpPts,
+                           # Safety:
+                           EPA_safety = -2 - ExpPts)
   
+  # Now make the if-else statements to decide which column to use,
+  # need to make indicator columns first due to missing values
+  # that cause errors with the extra points and two point conversions:
+  dataset$EPA_base_ind <- with(dataset, ifelse(PlayType != "No Play" & GameID == dplyr::lead(GameID) & Drive == dplyr::lead(Drive) & sp == 0 & dplyr::lead(PlayType) %in% c("Pass","Run","Punt","Sack","Field Goal","No Play","QB Kneel","Spike"),1,0))
+  dataset$EPA_base_nxt_ind <- with(dataset, ifelse(PlayType != "No Play" & GameID == dplyr::lead(GameID) & Drive == dplyr::lead(Drive) & sp == 0 & dplyr::lead(PlayType) %in% c("Quarter End","Two Minute Warning","Timeout"),1,0))
+  dataset$EPA_change_no_score_nxt_ind <- with(dataset, ifelse(PlayType != "No Play" & GameID == dplyr::lead(GameID) & sp == 0  & (Drive != dplyr::lead(Drive) | Drive != dplyr::lead(Drive,2)) & dplyr::lead(PlayType) %in% c("Quarter End","Two Minute Warning","Timeout"),1,0))
+  dataset$EPA_change_no_score_ind <- with(dataset,ifelse(PlayType != "No Play" & GameID == dplyr::lead(GameID) & sp == 0 & Drive != dplyr::lead(Drive) & dplyr::lead(PlayType) %in% c("Pass","Run","Punt","Sack","Field Goal","No Play","QB Kneel","Spike"),1,0))
+  dataset$EPA_change_score_ind <- with(dataset, ifelse(PlayType != "No Play" & Touchdown == 1 & (InterceptionThrown == 1 | (Fumble == 1 & RecFumbTeam != posteam)),1,0))
+  dataset$EPA_off_td_ind <- with(dataset, ifelse(PlayType != "No Play" & Touchdown == 1 & (InterceptionThrown != 1 & Fumble != 1), 1,0))
+  dataset$EPA_off_fg_ind <- with(dataset, ifelse(PlayType != "No Play" & FieldGoalResult == "Good",1,0))
+  dataset$EPA_off_ep_ind <- with(dataset, ifelse(PlayType != "No Play" & ExPointResult == "Made",1,0))
+  dataset$EPA_off_tp_ind <- with(dataset, ifelse(PlayType != "No Play" & TwoPointConv == "Success", 1,0))
+  dataset$EPA_safety_ind <- with(dataset, ifelse(PlayType != "No Play" & Safety == 1,1,0))
   
-  remove.cols <- which(colnames(dataset) %in% c("begQeffect", "endQeffect"))
+  # Replace the missings with 0 due to how ifelse treats missings
+  dataset$EPA_base_ind[is.na(dataset$EPA_base_ind)] <- 0 
+  dataset$EPA_base_nxt_ind[is.na(dataset$EPA_base_nxt_ind)] <- 0
+  dataset$EPA_change_no_score_nxt_ind[is.na(dataset$EPA_change_no_score_nxt_ind)] <- 0
+  dataset$EPA_change_no_score_ind[is.na(dataset$EPA_change_no_score_ind)] <- 0 
+  dataset$EPA_change_score_ind[is.na(dataset$EPA_change_score_ind)] <- 0
+  dataset$EPA_off_td_ind[is.na(dataset$EPA_off_td_ind)] <- 0
+  dataset$EPA_off_fg_ind[is.na(dataset$EPA_off_fg_ind)] <- 0
+  dataset$EPA_off_ep_ind[is.na(dataset$EPA_off_ep_ind)] <- 0
+  dataset$EPA_off_tp_ind[is.na(dataset$EPA_off_tp_ind)] <- 0
+  dataset$EPA_safety_ind[is.na(dataset$EPA_safety_ind)] <- 0
+  
+  # Assign EPA using these indicator columns: 
+  dataset$EPA <- with(dataset, ifelse(EPA_base_ind == 1,EPA_base,
+                                      ifelse(EPA_base_nxt_ind == 1,EPA_base_nxt,
+                                             ifelse(EPA_change_no_score_nxt_ind == 1,EPA_change_no_score_nxt,
+                                                    ifelse(EPA_change_no_score_ind == 1,EPA_change_no_score,
+                                                           ifelse(EPA_change_score_ind == 1,EPA_change_score,
+                                                                  ifelse(EPA_off_td_ind == 1,EPA_off_td,
+                                                                         ifelse(EPA_off_fg_ind == 1,EPA_off_fg,
+                                                                                ifelse(EPA_off_ep_ind == 1,EPA_off_ep,
+                                                                                       ifelse(EPA_off_tp_ind == 1,EPA_off_tp,
+                                                                                              ifelse(EPA_safety_ind==1,EPA_safety,NA)))))))))))
+  
+  # Now drop the unnecessary columns
+  dataset <- dplyr::select(dataset, -c(EPA_base,EPA_base_nxt,
+                                       EPA_change_no_score,EPA_change_no_score_nxt,
+                                       EPA_change_score,EPA_off_td,EPA_off_fg,EPA_off_ep,
+                                       EPA_off_tp,EPA_safety,EPA_base_ind,EPA_base_nxt_ind,
+                                       EPA_change_no_score_ind,EPA_change_no_score_nxt_ind,
+                                       EPA_change_score_ind,EPA_off_td_ind,EPA_off_fg_ind,EPA_off_ep_ind,
+                                       EPA_off_tp_ind,EPA_safety_ind,begQeffect,endQeffect))
+  
+  # Drop the factor unused levels from down
   
   dataset$down <- droplevels(dataset$down, levels = "NA")
   
-  dataset[,-remove.cols]
+  # Return the dataset
+  
+  return(dplyr::ungroup(dataset))
+  
 }
 
 ################# Win Probability Fucntion #####################
@@ -131,6 +211,9 @@ win_probability <- function(dataset) {
   
   # Away
   dataset$Away.WPA <- round(dataset$Away.WP.post - dataset$Away.WP.pre, 2)
+  
+  # WPA for the play
+  dataset$WPA <- ifelse(dataset$posteam == dataset$HomeTeam,dataset$Home.WPA,dataset$Away.WPA)
   
   ### Formatting ###
   ## Change down back to numeric ##
