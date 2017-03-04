@@ -1203,7 +1203,7 @@ game_play_by_play <- function(GameID) {
          "PenalizedPlayer", "Penalty.Yards", "PosTeamScore", "DefTeamScore", 
          "ScoreDiff", "AbsScoreDiff", "HomeTeam", "AwayTeam",
          "ExpPts", "Home.WP.pre",  "Away.WP.pre", "Home.WP.post", 
-         "Away.WP.post", "Home.WPA", "Away.WPA")]
+         "Away.WP.post", "Home.WPA", "Away.WPA","EPA","WPA")]
 
 }
 
