@@ -8,9 +8,12 @@
 #' Game Information for All Games in a Season
 #' @description This function intakes a year associated with a given season
 #' and outputs all the game matchups for all 17 weeks of the regular season
-#' @param Season (numeric) A 4-digit year associated with a given NFL season
+#' @param Season (numeric): A 4-digit year associated with a given NFL season
 #' @param Week (numeric): A number corresponding to the number of weeks of data
 #' you want to be scraped and included in the output.
+#' @param sleep.seconds (numeric): Allows the user to tell the function to sleep
+#' between calls to the API to avoid disrupting the connection. Note, this 
+#' will make the function take much longer.
 #' @return A dataframe with the gameID, the game date, 
 #' the home team abbreviation, and away team abbreviation 
 #' @details Reference the stored dataframe nflteams to match team abbreviations
@@ -19,9 +22,9 @@
 #' # All games in 2015 Season
 #' season_games(2015) # Will output a dataframe
 #' @export
-season_games <- function(Season, Weeks = 16) {
+season_games <- function(Season, Weeks = 16, sleep.seconds = 0) {
   
-  game_ids <- extracting_gameids(Season)
+  game_ids <- extracting_gameids(2016)
   
   # If statement to specify the week variable
   if (Weeks %in% 4:13) {
@@ -40,35 +43,34 @@ season_games <- function(Season, Weeks = 16) {
   
   # Home and Away Teams
   
-  teams.unformatted <- lapply(game_urls, 
+  games.unformatted <- lapply(game_urls, 
                               FUN = function(x) {
-                                cbind(t(sapply(RJSONIO::fromJSON(RCurl::getURL(x))[[1]]$home[2]$abbr,
+                                Sys.sleep(sleep.seconds)
+                                games.df <- cbind(t(sapply(RJSONIO::fromJSON(RCurl::getURL(x))[[1]]$home[2]$abbr,
                                                c)),
                                       t(sapply(RJSONIO::fromJSON(RCurl::getURL(x))[[1]]$away[2]$abbr,
+                                               c)),
+                                      t(sapply(max(RJSONIO::fromJSON(RCurl::getURL(x))[[1]]$home$score),
+                                               c)),
+                                      t(sapply(max(RJSONIO::fromJSON(RCurl::getURL(x))[[1]]$away$score),
                                                c)))
+                                
+                                data.frame(home = games.df[1],
+                                           away = games.df[2],
+                                           homescore = games.df[3] %>% as.numeric(),
+                                           awayscore = games.df[4] %>% as.numeric())
                               })
   
-  teams <- do.call(rbind, teams.unformatted)
-  
-  # Home and Away Team Scores 
-  
-  scores.unformatted <- lapply(game_urls, 
-                               FUN = function(x) {
-                                 cbind(t(sapply(max(RJSONIO::fromJSON(RCurl::getURL(x))[[1]]$home$score),
-                                                c)),
-                                       
-                                       t(sapply(max(RJSONIO::fromJSON(RCurl::getURL(x))[[1]]$away$score),
-                                                c)))
-                               })
-  
-  score <- do.call(rbind, scores.unformatted)
+  games <- suppressWarnings(dplyr::bind_rows(games.unformatted) %>% 
+            dplyr::mutate(GameID = game_ids, 
+                   date = date))
 
   # Output Dataframe
   
-  data.frame(GameID = game_ids, date = date, home = teams[,1], away = teams[,2],
-             homescore = score[,1], awayscore = score[,2])
+  games %>% dplyr::select(GameID, date, 
+                          home, away, homescore, awayscore)
+  
 }
-
 
 ################################################################## 
 #' Season Rosters for Teams

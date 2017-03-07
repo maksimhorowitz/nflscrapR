@@ -4,10 +4,14 @@
 \alias{season_games}
 \title{Game Information for All Games in a Season}
 \usage{
-season_games(Season, Weeks = 16)
+season_games(Season, Weeks = 16, sleep.seconds = 0)
 }
 \arguments{
-\item{Season}{(numeric) A 4-digit year associated with a given NFL season}
+\item{Season}{(numeric): A 4-digit year associated with a given NFL season}
+
+\item{sleep.seconds}{(numeric): Allows the user to tell the function to sleep
+between calls to the API to avoid disrupting the connection. Note, this 
+will make the function take much longer.}
 
 \item{Week}{(numeric): A number corresponding to the number of weeks of data
 you want to be scraped and included in the output.}
