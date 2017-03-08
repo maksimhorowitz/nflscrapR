@@ -1249,8 +1249,10 @@ season_play_by_play <- function(Season, Weeks = 16) {
   
   pbp_data_unformatted <- lapply(game_ids, FUN = game_play_by_play)
   
-  df_pbp_data <- do.call(rbind, pbp_data_unformatted)
-  df_pbp_data$Season <- Season
+  df_pbp_data <- dplyr::bind_rows( pbp_data_unformatted) %>%
+                  dplyr::mutate(Season = Season)
+  
+  # Output #
   df_pbp_data
 }
 
