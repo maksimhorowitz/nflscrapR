@@ -100,8 +100,9 @@ season_rosters <- function(Season, TeamInt) {
   
   rosters <- positions %>% purrr::map_df(getPlayers, season=Season) %>%
     dplyr::filter(Team == TeamInt) %>% dplyr::group_by(Player, Team, Pos) %>% 
-    dplyr::slice(n= 1) %>% mutate(Season = Season) %>% select(Season, Player,
-                                                              Team, Pos, name)
+    dplyr::slice(n= 1) %>% 
+    dplyr::mutate(Season = Season) %>% 
+    dplyr::select(Season, Player, Team, Pos, name)
   
   ## Return the rosters DF ##
   rosters 
