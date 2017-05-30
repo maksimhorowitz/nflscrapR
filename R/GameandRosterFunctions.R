@@ -79,29 +79,131 @@ season_games <- function(Season, Weeks = 16, sleep.seconds = 0) {
 #' recorded a measurable statistic
 #' @param Season: A 4-digit year associated with a given NFL season
 #' @param TeamInt: A string containing the abbreviations for an NFL Team
-#' @param Week (numeric): A number corresponding to the number of weeks of data
-#' you want to be scraped and included in the output.
 #' @details To find team associated abbrevations use the nflteams dataframe 
 #' stored in this package!
-#' @return A dataframe with columns associated with season/year, team, playerID,
+#' @return A dataframe with columns associated with season/year, full player name,
+#' team initial, position, and formated player name.
 #' players who played and recorded some measurable statistic, and the 
 #' last column specifyng the number of games they played in.
 #' @examples
 #' # Roster for Baltimore Ravens in 2013
 #' season_rosters(2013, TeamInt = "BAL") 
 #' @export
-season_rosters <- function(Season, Weeks = 16, TeamInt) {
+season_rosters <- function(Season, TeamInt) {
   
-  # Use the season_playergame to gather all names of players on a given team
-  team.roster.s1 <- subset(season_player_game(Season, Weeks = Weeks), 
-                           Team == TeamInt)
+  positions <- c("QUARTERBACK","RUNNING_BACK" ,   
+                 "WIDE_RECEIVER", "TIGHT_END"  ,      
+                 "DEFENSIVE_LINEMAN", "LINEBACKER" ,      
+                 "DEFENSIVE_BACK", "KICKOFF_KICKER",   
+                 "KICK_RETURNER", "PUNTER",           
+                 "PUNT_RETURNER", "FIELD_GOAL_KICKER")
   
-  # Use dplyr to subset the data and gather games played
-  team.roster <- dplyr::group_by(team.roster.s1, Season, Team, playerID, name)
-  team.roster <- dplyr::summarize(team.roster, length(playerID))
+  rosters <- positions %>% purrr::map_df(getPlayers, season=Season) %>%
+    dplyr::filter(Team == TeamInt) %>% dplyr::group_by(Player, Team, Pos) %>% 
+    dplyr::slice(n= 1) %>% mutate(Season = Season) %>% select(Season, Player,
+                                                              Team, Pos, name)
   
-  colnames(team.roster)[ncol(team.roster)] <- "gamesplayed"
+  ## Return the rosters DF ##
+  rosters 
+}
+
+################################################################## 
+# Do not export
+#' Building URL to scrape player season stat pages
+#' @description This is a sub-function for the season_rosters
+#' function.
+#' @param position: (character string) Specifies a player position page for the URL
+#' @param season: 4-digit year associated with a given NFL season
+#' @param page: 1-digit page number to look into
+#' @param type: A three character string specifying the season type
+buildURL <- function(position, season=2016, page=1, 
+                     type=c('REG', 'POST', 'PRE'))
+{
+  type <- match.arg(type)
   
-  # Output Dataframe
-  team.roster
+  # season, type, page, position
+  baseString <- 'http://www.nfl.com/stats/categorystats?tabSeq=1&season=%s&seasonType=%s&d-447263-p=%s&conference=null&statisticPositionCategory=%s'
+  sprintf(baseString, 
+          season, type, page, position)
+  
+}
+
+################################################################## 
+# Do not export
+#' Get Number of Player Position Pages 
+#' @description For each position, this function extracts the number of pages 
+#' there are to scrape. This is a sub-function for the season_rosters function
+getPageNumbers <- . %>% 
+  # get list of pages if it exists
+  rvest::html_node('.linkNavigation') %>% 
+  # extract text
+  rvest::html_text() %>%
+  # break it up by |
+  stringr::str_split('|') %>%
+  # this gives a list, get the first element
+  magrittr::extract2(1) %>% 
+  # keep just numbers
+  stringr::str_extract('\\d+') %>% 
+  # convert to integer
+  as.integer() %>% 
+  # replace NAs with 1
+  replace(., is.na(.), 1) %>%
+  # find unique and sort
+  unique %>% sort
+
+################################################################## 
+# Do not export
+#' Build formatted player name from full player name
+#' @description This sub-function, called in the season_rosters function,
+#' takes the full name of each player and formats it into the first initial of 
+#' their first name and last initial of their last name.
+buildNameAbbr <- . %>% 
+  # get the result table node
+  rvest::html_node('#result') %>% 
+  # extract the table
+  rvest::html_table() %>% 
+  # get columns 2, 3, 4
+  magrittr::extract(2:4) %>% 
+  # make sure names are what we want
+  setNames(nm=c('Player', 'Team', 'Pos')) %>% 
+  # get rid of a row if the player is player
+  dplyr::filter(Player != 'Player') %>% 
+  # get the first initial and last name
+  dplyr::mutate(First=stringr::str_sub(Player, 1, 1),
+                Last=stringr::str_extract(Player, ' [^ ]+$')) %>% 
+  # remove space before last name
+  dplyr::mutate(Last=stringr::str_trim(Last)) %>% 
+  # combine them into one column
+  tidyr::unite(name, First, Last, sep='.', remove=TRUE)
+
+################################################################## 
+# Do not export
+#' Scrape Player Names and Positions
+#' @description This sub-function, calls buildNameAbbr and getPageNumbers to
+#' scrape player positions by season.
+getPlayers <- function(position, season, 
+                       type=c('REG', 'POST', 'PRE'))
+{
+  # Give position name
+  message(sprintf('Extracting %s', position))
+  
+  type <- match.arg(arg = type)
+  
+  ## get first page
+  firstUrl <- buildURL(position=position, season=season, page=1, type=type)
+  firstPage <- xml2::read_html(firstUrl)
+  
+  # get number of pages
+  pageSeq <- getPageNumbers(firstPage)
+  
+  # build urls
+  pageUrls <- buildURL(position=position, 
+                       season=season, page=pageSeq, type=type)
+  
+  # read the pages and extract info
+  pageUrls %>% 
+    # read each URL
+    purrr::map(., .f = function(x) xml2::read_html(x)) %>% 
+    # get the name and position, combine everything into a data.frame
+    purrr::map_df(buildNameAbbr)
 }

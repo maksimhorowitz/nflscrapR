@@ -1,3 +1,9 @@
+################################################################## 
+###               Player Game Functions                        ###
+# Author: Maksim Horowitz                                        #
+# Code Style Guide: Google R Format                              #
+##################################################################
+
 ### Player Games Functions ###
 
 #' Detailed Boxscore for Single NFL Game
