@@ -21,7 +21,10 @@ Imports:
     ggplot2,
     DT,
     gridExtra,
-    mgcv
+    mgcv,
+    rvest,
+    purrr,
+    xml2
 Suggests:
     testthat,
     knitr,

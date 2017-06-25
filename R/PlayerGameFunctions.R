@@ -1,3 +1,9 @@
+################################################################## 
+###               Player Game Functions                        ###
+# Author: Maksim Horowitz                                        #
+# Code Style Guide: Google R Format                              #
+##################################################################
+
 ### Player Games Functions ###
 
 #' Detailed Boxscore for Single NFL Game
@@ -358,7 +364,8 @@ player_game <- function(GameID) {
   # Counter for games
   final.df2$games <- 1
   
-  final.df2[order(final.df2$date, final.df2$Team),]
+  # Output dataframe arranged by date and Team name
+  final.df2 %>% dplyr::arrange(date, Team)
 }
 
 # Everygame in a Given Season
@@ -398,7 +405,7 @@ season_player_game <- function(Season, Weeks = 16) {
   
   # Rowbinding all the games from the specified season
   
-  playergame.season <- do.call(rbind, playergame.season.unformatted)
+  suppressWarnings(playergame.season <- dplyr::bind_rows(playergame.season.unformatted))
   
   # Final output dataframe
   data.frame(Season = Season, playergame.season)

@@ -4,18 +4,16 @@
 \alias{season_rosters}
 \title{Season Rosters for Teams}
 \usage{
-season_rosters(Season, Weeks = 16, TeamInt)
+season_rosters(Season, TeamInt)
 }
 \arguments{
 \item{Season:}{A 4-digit year associated with a given NFL season}
 
 \item{TeamInt:}{A string containing the abbreviations for an NFL Team}
-
-\item{Week}{(numeric): A number corresponding to the number of weeks of data
-you want to be scraped and included in the output.}
 }
 \value{
-A dataframe with columns associated with season/year, team, playerID,
+A dataframe with columns associated with season/year, full player name,
+team initial, position, and formated player name.
 players who played and recorded some measurable statistic, and the 
 last column specifyng the number of games they played in.
 }
