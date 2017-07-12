@@ -1202,8 +1202,11 @@ game_play_by_play <- function(GameID) {
          "ChalReplayResult", "Accepted.Penalty", "PenalizedTeam", "PenaltyType", 
          "PenalizedPlayer", "Penalty.Yards", "PosTeamScore", "DefTeamScore", 
          "ScoreDiff", "AbsScoreDiff", "HomeTeam", "AwayTeam",
-         "ExpPts", "Home.WP.pre",  "Away.WP.pre", "Home.WP.post", 
-         "Away.WP.post", "Home.WPA", "Away.WPA","EPA","WPA")]
+         "No_Score_Prob","Opp_Field_Goal_Prob","Opp_Safety_Prob",
+         "Opp_Touchdown_Prob","Field_Goal_Prob","Safety_Prob",
+         "Touchdown_Prob","ExPoint_Prob","TwoPoint_Prob",
+         "ExpPts","EPA","Home.WP.pre",  "Away.WP.pre", "Home.WP.post", 
+         "Away.WP.post", "Home.WPA", "Away.WPA","WPA")]
 
 }
 
@@ -1249,7 +1252,7 @@ season_play_by_play <- function(Season, Weeks = 16) {
   
   pbp_data_unformatted <- lapply(game_ids, FUN = game_play_by_play)
   
-  df_pbp_data <- dplyr::bind_rows( pbp_data_unformatted) %>%
+  df_pbp_data <- dplyr::bind_rows(pbp_data_unformatted) %>%
                   dplyr::mutate(Season = Season)
   
   # Output #
