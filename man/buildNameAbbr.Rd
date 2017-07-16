@@ -11,4 +11,3 @@ This sub-function, called in the season_rosters function,
 takes the full name of each player and formats it into the first initial of 
 their first name and last initial of their last name.
 }
-

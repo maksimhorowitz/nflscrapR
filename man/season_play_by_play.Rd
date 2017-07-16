@@ -16,9 +16,9 @@ three weeks of play-by-play will be scraped from the associated season.}
 }
 \value{
 A dataframe contains all the play-by-play information for a single
-     season.  This includes all the 62 variables collected in our 
+     season.  This includes all the 88 variables collected in our 
      game_play_by_play function (see documentation for game_play_by_play for
-     details)
+     details) and a column for the Season.
 }
 \description{
 This function outputs all plays of an entire season in one dataframe.  
@@ -32,10 +32,9 @@ from a given season.  This dataframe is prime for use with the dplyr and
 plyr packages.
 }
 \examples{
-# Play-by-Play Data from All games in 2010
+# Play-by-play data from all games in 2010
 pbp.data.2010 <- season_play_by_play(2010)
 
-# Looking at all Baltimore Ravens Offensive Plays 
-subset(pbp.data.2010, posteam = "BAL")
+# Looking at all Pittsburgh Steelers offensive plays 
+subset(pbp.data.2010, posteam = "PIT")
 }
-

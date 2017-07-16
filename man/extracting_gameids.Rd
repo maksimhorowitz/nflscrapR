@@ -24,4 +24,3 @@ to create the URLs for each NFL game in a specified season
 # Scraping all game IDs from 2010 Season
 extracting_gameids(2010) 
 }
-

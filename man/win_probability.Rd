@@ -22,4 +22,3 @@ win probability for the home and away team pre and post snap and win probability
 added.  The model used to calculate win probability is a genarlized addative
  model with three explanatory variables.
 }
-

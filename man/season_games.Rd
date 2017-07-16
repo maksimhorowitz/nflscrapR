@@ -32,4 +32,3 @@ with the full team names
 # All games in 2015 Season
 season_games(2015) # Will output a dataframe
 }
-

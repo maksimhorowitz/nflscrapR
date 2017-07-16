@@ -11,7 +11,7 @@ game_play_by_play(GameID)
 given NFL game.}
 }
 \value{
-A dataframe with 68 columns specifying various statistics and 
+A dataframe with 88 columns specifying various statistics and 
 outcomes associated with each play of the specified NFL game.
 }
 \description{
@@ -27,19 +27,25 @@ Through list manipulation using the do.call and rbind functions
 \itemize{
  \item{"Drive"} - Drive number
  \item{"sp"} - Whether the play resulted in a score (any kind of score)
- \item{"qrt"} - Quarter of Game
+ \item{"qtr"} - Quarter of Game
  \item{"down"} - Down of the given play
  \item{"time"} - Time at start of play
  \item{"yrdln"} - Between 0 and 50
- \item{"ydstogo"} - For a first down
+ \item{"ydstogo"} - Yards to go for a first down
  \item{"ydsnet"} - Total yards gained on a given drive
- \item{"posteam"} - The offensive team
+ \item{"posteam"} - The team on offense
+ \item{"AirYards"} - Number of yards the ball was thrown in the air for both
+ complete and incomplete pass attempts (negative means behind line of scrimmage)
+ \item{"YardsAfterCatch"} - Number of yards receiver gained after catch
+ \item{"QBHit"} -  Binary: 1 if the QB was knocked to the ground else 0
  \item{"desc"} - A detailed description of what occured during the play
 }
 
-Through string manipulation and parsing of the description column using the 
-base R and stringR, 51 columns were added to the original dataframe allowing 
-the user to have a detailed breakdown of the events of each play.  
+Through string manipulation and parsing of the description column using  
+base R and stringR, columns were added to the original dataframe allowing 
+the user to have a detailed breakdown of the events of each play. Also
+provided are calculations for the expected points and win probability
+for each play using models built entirely on nflscrapR data. 
 The added variables are specified below:
 \itemize{
  \item{"Date"} - Date of game
@@ -48,82 +54,74 @@ The added variables are specified below:
  \item{"PlayTimeDiff"} - The time difference between plays in seconds
  \item{"DefensiveTeam"} - The defensive team on the play (for punts the 
  receiving team is on defense, for kickoffs the receiving team is on offense)
- \item{"TimeUnder"} - 
+ \item{"TimeUnder"} - Minutes remaining in half
  \item{"SideofField"} - The side of the field that the line of scrimmage 
  is on
- \item{yrdline100} - Distance to opponents enzone, ranges from 1-99.
+ \item{yrdline100} - Distance to opponents endzone, ranges from 1-99
  situation
- \item{GoalToGo} - Binary variable indicting if the play is in a goal-to-go
- situation
- \item{"FirstDown"} - Binary: 0 if the play did not result in a first down 
- and 1 if it did
- \item{"PlayAttempted"} - A variabled used to count the number of plays in a 
+ \item{GoalToGo} - Binary: 1 if the play is in a goal down situation else 0
+ \item{"FirstDown"} - Binary: 1if the play resulted in a first down conversion
+ else 0
+ \item{"PlayAttempted"} - A variable used to count the number of plays in a 
  game (should always be equal to 1)
  \item{"Yards.Gained"} - Amount of yards gained on the play
  \item{"Touchdown"} - Binary: 1 if the play resulted in a TD else 0
- \item{"ExPointResult"} - Result of the extra-point: Made, Missed, Blocked
- \item{"TwoPointConv"} - Result of two-point conversion: Success of Failure
- \item{"DefTwoPoint"} - Result of defesnive two-point conversion: Success of Failure
+ \item{"ExPointResult"} - Result of the extra-point: Made, Missed, Blocked, 
+ Aborted
+ \item{"TwoPointConv"} - Result of two-point conversion: Success or Failure
+ \item{"DefTwoPoint"} - Result of defensive two-point conversion: Success or Failure
  \item{"Safety"} - Binary: 1 if safety was recorded else 0
- \item{"Onsidekick"} - Binary: 1 if the Kickoff was an onside kick
- \item{"PuntResult} - The resulting action of a punt.  Either a clean punt or a blocked punt
- \item{"PlayType"} - The type of play that occured. Potential values are:
+ \item{"Onsidekick"} - Binary: 1 if the kickoff was an onside kick
+ \item{"PuntResult} - Result of punt: Clean or Blocked
+ \item{"PlayType"} - The type of play that occured, potential values are:
        \itemize{
-                 \item{Kickoff, Punt, Onside Kick}
-                 \item{Passs, Run}
-                 \item{Sack}
+                 \item{Kickoff, Punt}
+                 \item{Pass, Sack, Run}
                  \item{Field Goal, Extra Point}
-                 \item{Quarter End, Two Minute Warning, End of Game}
+                 \item{Quarter End, Two Minute Warning, Half End, End of Game}
                  \item{No Play, QB Kneel, Spike, Timeout}
          }  
  \item{"Passer"} - The passer on the play if it was a pass play
- \item{"PassAttempt"} - Binary variable indicating whether a pass was attempted
- or not
- \item{"PassOutcome"} - Pass Result: Complete or Incomplete    
+ \item{"PassAttempt"} - Binary: 1 if a pass was attempted else 0
+ \item{"PassOutcome"} - Pass Result: Complete or Incomplete Pass  
  \item{"PassLength"} - Categorical variable indicating the length of the pass:
  Short or Deep
- \item{"PassLocation"} - Categorical variable: left, middle, right
- \item{"InterceptionThrown"} - Binary variable indicating whether an 
- interception was thrown
+ \item{"PassLocation"} - Location of the pass: left, middle, right
+ \item{"InterceptionThrown"} - Binary: 1 if an interception else 0
  \item{"Interceptor"} - The player who intercepted the ball
  \item{"Rusher"} - The runner on the play if it was a running play
- \item{"RushAttempt"} - Binary variable indicating whether or not a run was 
- attempted.
- \item{"RunLocation"} - The location of the run - left, middle, right
- \item{"RunGap"} - The gap that the running back ran through
- \item{"Receiver"} - The player who recorded the reception on a complete pass
- \item{"Reception"} - Binary Variable indicating a reception on a completed 
- pass: 1 if a reception was recorded else 0
+ \item{"RushAttempt"} - Binary: 1 if a run was attempted else 0
+ \item{"RunLocation"} - Location of the run: left, middle, right
+ \item{"RunGap"} - Gap of the run: guard, tackle, end 
+ \item{"Receiver"} - The targeted receiver of a play
+ \item{"Reception"} - Binary: 1 if a reception was recorded else 0
  \item{"ReturnResult"} - Result of a punt, kickoff, interception, or 
- fumble return
+ fumble return: Fair Catch, Touchback, Touchdown
  \item{"Returner"} - The punt or kickoff returner
  \item{"BlockingPlayer"} - The player who blocked the extra point, 
  field goal, or punt
  \item{"Tackler1"} - The primary tackler on the play
  \item{"Tackler2"} - The secondary tackler on the play
- \item{"FieldGoalResult"} - Outcome of a fieldgoal: made, missed, blocked
+ \item{"FieldGoalResult"} - Outcome of a fieldgoal: No Good, Good, Blocked
  \item{"FieldGoalDistance"} - Field goal length in yards
- \item{"Fumble"} - Binary variable indicating whether a fumble occured or not:
- 1 if a fumble occured else no 
+ \item{"Fumble"} - Binary: 1 if a fumble occured else no 
  \item{"RecFumbTeam"} - Team that recovered the fumble
  \item{"RecFumbPlayer"} - Player that recovered the fumble
- \item{"Sack"} - Binary variable indicating whether a sack was recorded: 1 if
- a sack was recorded else 0
- \item{"Challenge.Replay"} - Binary variable indicating whether or not the 
- play was reviewed by the replay offical on challenges or replay reviews
- \item{"ChalReplayResult"} - Result of the replay review: Upheld or Overturned
- \item{"Accepted.Penalty"} - Binary variable indicating whether a penalty was 
- accpeted on the play
- \item{"PenalizedTeam"} - The team who was penalized on the play
- \item{"PenaltyType"} - Type of penalty on the play. Values include:
+ \item{"Sack"} - Binary: 1 if a sack was recorded else 0
+ \item{"Challenge.Replay"} - Binary: 1 if play was reviewed by the replay official
+ else 0
+ \item{"ChalReplayResult"} - Result of the replay review: Upheld or Reversed
+ \item{"Accepted.Penalty"} - Binary: 1 if penalty was accepted else 0
+ \item{"PenalizedTeam"} - The penalized team on the play
+ \item{"PenaltyType"} - Type of penalty on the play, alues include:
        \itemize{    
                  \item{Unnecessary Roughness, Roughing the Passer}
                  \item{Illegal Formation, Defensive Offside}
                  \item{Delay of Game, False Start, Illegal Shift}
                  \item{Illegal Block Above the Waist, Personal Foul}
-                 \item{Unnecessary Roughness, Illegal Blindside Bloc}
+                 \item{Unnecessary Roughness, Illegal Blindside Block}
                  \item{Defensive Pass Interference, Offensive Pass Interference}
-                 \item{Fair Catch Interferenc, Unsportsmanlike Conduct}
+                 \item{Fair Catch Interference, Unsportsmanlike Conduct}
                  \item{Running Into the Kicker, Illegal Kick}
                  \item{Illegal Contact, Defensive Holding}
                  \item{Illegal Motion, Low Block}
@@ -144,11 +142,42 @@ The added variables are specified below:
  \item{"PosTeamScore"} - The score of the possession team (offensive team)
  \item{"DefTeamScore"} - The score of the defensive team
  \item{"ScoreDiff"} - The difference in score between the offensive and 
- defensive teams (offensive.score - def.score)   
- \item{"expectedpoints"} - The expected point value of the play before 
- the snap      
- \item{"OffWinProb"} - The win probability of the offensive team
- \item{"DefWinProb"} - The win probability of the defensive team
+ defensive teams (offensive.score - def.score)
+ \item{"AbsScoreDiff"} - Absolute value of the score differential
+ \item{"HomeTeam"} - The home team
+ \item{"AwayTeam"} - The away team
+ \item{"No_Score_Prob"} - Probability of no score occurring within the half
+ \item{"Opp_Field_Goal_Prob"} - Probability of the defensive team scoring a
+ field goal next
+ \item{"Opp_Safety_Prob"} - Probability of the defensive team scoring a 
+ safety next
+ \item{"Opp_Touchdown_Prob"} - Probability of the defensive team scoring a 
+ touchdown next
+ \item{"Field_Goal_Prob"} - Probability of the possession team scoring a 
+ field goal next
+ \item{"Safety_Prob"} - Probability of the possession team scoring a safety
+ next
+ \item{"Touchdown_Prob"} - Probability of the possession team scoring a 
+ touchdown next
+ \item{"ExPoint_Prob"} - Probability of the possession team making the PAT
+ \item{"TwoPoint_Prob"} - Probability of the possession team converting 
+ the two-point conversion
+ \item{"ExpPts"} - The expected points for the possession team at the
+ start of the play
+ \item{"EPA"} - Expected points added with respect to the possession
+ team considering the result of the play
+ \item{"Home.WP.pre"} - The win probability for the home team at the start
+ of the play
+ \item{"Away.WP.pre"} - The win probability for the away team at the start
+ of the play
+ \item{"Home.WP.post"} - The win probability for the home team at the
+ end of the play
+ \item{"Away.WP.post"} - The win probability for the away team at the
+ end of the play
+ \item{"Home.WPA"} - The win probability added for the home team
+ \item{"Away.WPA"} - The win probability added for the away team
+ \item{"WPA"} - The win probability added with respect to the
+ possession team
  
  }
 }
@@ -164,4 +193,3 @@ finalgame2015.pbp <- game_play_by_play(nfl2015.finalregseasongame.gameID)
 # Subset the dataframe based on passing plays
 subset(finalgame2015.pbp, PlayType == "Pass")
 }
-

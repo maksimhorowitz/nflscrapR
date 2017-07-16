@@ -28,4 +28,3 @@ across an entire season to gather season totals and season max statistics
 # Returns the Season-Total Statistics for Each Player in the 2015 Season
 agg_player_season(2015)
 }
-

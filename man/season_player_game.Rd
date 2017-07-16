@@ -33,4 +33,3 @@ head(playerstats.2010)
 library(ggplot2)
 ggplot(playerstats.2010, aes(x = PlayType)) + geom_bar()
 }
-

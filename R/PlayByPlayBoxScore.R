@@ -1,6 +1,6 @@
 ################################################################## 
 ### Play-by-play, Drive Summary, and Simple Box Score Function ###
-# Author: Maksim Horowitz                                        #
+# Authors: Maksim Horowitz, Ron Yurko                            #
 # Code Style Guide: Google R Format                              #
 ################################################################## 
 
@@ -18,19 +18,25 @@
 #' \itemize{
 #'  \item{"Drive"} - Drive number
 #'  \item{"sp"} - Whether the play resulted in a score (any kind of score)
-#'  \item{"qrt"} - Quarter of Game
+#'  \item{"qtr"} - Quarter of Game
 #'  \item{"down"} - Down of the given play
 #'  \item{"time"} - Time at start of play
 #'  \item{"yrdln"} - Between 0 and 50
-#'  \item{"ydstogo"} - For a first down
+#'  \item{"ydstogo"} - Yards to go for a first down
 #'  \item{"ydsnet"} - Total yards gained on a given drive
-#'  \item{"posteam"} - The offensive team
+#'  \item{"posteam"} - The team on offense
+#'  \item{"AirYards"} - Number of yards the ball was thrown in the air for both
+#'  complete and incomplete pass attempts (negative means behind line of scrimmage)
+#'  \item{"YardsAfterCatch"} - Number of yards receiver gained after catch
+#'  \item{"QBHit"} -  Binary: 1 if the QB was knocked to the ground else 0
 #'  \item{"desc"} - A detailed description of what occured during the play
 #' }
 #' 
-#' Through string manipulation and parsing of the description column using the 
-#' base R and stringR, 51 columns were added to the original dataframe allowing 
-#' the user to have a detailed breakdown of the events of each play.  
+#' Through string manipulation and parsing of the description column using  
+#' base R and stringR, columns were added to the original dataframe allowing 
+#' the user to have a detailed breakdown of the events of each play. Also
+#' provided are calculations for the expected points and win probability
+#' for each play using models built entirely on nflscrapR data. 
 #' The added variables are specified below:
 #' \itemize{
 #'  \item{"Date"} - Date of game
@@ -39,82 +45,74 @@
 #'  \item{"PlayTimeDiff"} - The time difference between plays in seconds
 #'  \item{"DefensiveTeam"} - The defensive team on the play (for punts the 
 #'  receiving team is on defense, for kickoffs the receiving team is on offense)
-#'  \item{"TimeUnder"} - 
+#'  \item{"TimeUnder"} - Minutes remaining in half
 #'  \item{"SideofField"} - The side of the field that the line of scrimmage 
 #'  is on
-#'  \item{yrdline100} - Distance to opponents enzone, ranges from 1-99.
+#'  \item{yrdline100} - Distance to opponents endzone, ranges from 1-99
 #'  situation
-#'  \item{GoalToGo} - Binary variable indicting if the play is in a goal-to-go
-#'  situation
-#'  \item{"FirstDown"} - Binary: 0 if the play did not result in a first down 
-#'  and 1 if it did
-#'  \item{"PlayAttempted"} - A variabled used to count the number of plays in a 
+#'  \item{GoalToGo} - Binary: 1 if the play is in a goal down situation else 0
+#'  \item{"FirstDown"} - Binary: 1if the play resulted in a first down conversion
+#'  else 0
+#'  \item{"PlayAttempted"} - A variable used to count the number of plays in a 
 #'  game (should always be equal to 1)
 #'  \item{"Yards.Gained"} - Amount of yards gained on the play
 #'  \item{"Touchdown"} - Binary: 1 if the play resulted in a TD else 0
-#'  \item{"ExPointResult"} - Result of the extra-point: Made, Missed, Blocked
-#'  \item{"TwoPointConv"} - Result of two-point conversion: Success of Failure
-#'  \item{"DefTwoPoint"} - Result of defesnive two-point conversion: Success of Failure
+#'  \item{"ExPointResult"} - Result of the extra-point: Made, Missed, Blocked, 
+#'  Aborted
+#'  \item{"TwoPointConv"} - Result of two-point conversion: Success or Failure
+#'  \item{"DefTwoPoint"} - Result of defensive two-point conversion: Success or Failure
 #'  \item{"Safety"} - Binary: 1 if safety was recorded else 0
-#'  \item{"Onsidekick"} - Binary: 1 if the Kickoff was an onside kick
-#'  \item{"PuntResult} - The resulting action of a punt.  Either a clean punt or a blocked punt
-#'  \item{"PlayType"} - The type of play that occured. Potential values are:
+#'  \item{"Onsidekick"} - Binary: 1 if the kickoff was an onside kick
+#'  \item{"PuntResult} - Result of punt: Clean or Blocked
+#'  \item{"PlayType"} - The type of play that occured, potential values are:
 #'        \itemize{
-#'                  \item{Kickoff, Punt, Onside Kick}
-#'                  \item{Passs, Run}
-#'                  \item{Sack}
+#'                  \item{Kickoff, Punt}
+#'                  \item{Pass, Sack, Run}
 #'                  \item{Field Goal, Extra Point}
-#'                  \item{Quarter End, Two Minute Warning, End of Game}
+#'                  \item{Quarter End, Two Minute Warning, Half End, End of Game}
 #'                  \item{No Play, QB Kneel, Spike, Timeout}
 #'          }  
 #'  \item{"Passer"} - The passer on the play if it was a pass play
-#'  \item{"PassAttempt"} - Binary variable indicating whether a pass was attempted
-#'  or not
-#'  \item{"PassOutcome"} - Pass Result: Complete or Incomplete    
+#'  \item{"PassAttempt"} - Binary: 1 if a pass was attempted else 0
+#'  \item{"PassOutcome"} - Pass Result: Complete or Incomplete Pass  
 #'  \item{"PassLength"} - Categorical variable indicating the length of the pass:
 #'  Short or Deep
-#'  \item{"PassLocation"} - Categorical variable: left, middle, right
-#'  \item{"InterceptionThrown"} - Binary variable indicating whether an 
-#'  interception was thrown
+#'  \item{"PassLocation"} - Location of the pass: left, middle, right
+#'  \item{"InterceptionThrown"} - Binary: 1 if an interception else 0
 #'  \item{"Interceptor"} - The player who intercepted the ball
 #'  \item{"Rusher"} - The runner on the play if it was a running play
-#'  \item{"RushAttempt"} - Binary variable indicating whether or not a run was 
-#'  attempted.
-#'  \item{"RunLocation"} - The location of the run - left, middle, right
-#'  \item{"RunGap"} - The gap that the running back ran through
-#'  \item{"Receiver"} - The player who recorded the reception on a complete pass
-#'  \item{"Reception"} - Binary Variable indicating a reception on a completed 
-#'  pass: 1 if a reception was recorded else 0
+#'  \item{"RushAttempt"} - Binary: 1 if a run was attempted else 0
+#'  \item{"RunLocation"} - Location of the run: left, middle, right
+#'  \item{"RunGap"} - Gap of the run: guard, tackle, end 
+#'  \item{"Receiver"} - The targeted receiver of a play
+#'  \item{"Reception"} - Binary: 1 if a reception was recorded else 0
 #'  \item{"ReturnResult"} - Result of a punt, kickoff, interception, or 
-#'  fumble return
+#'  fumble return: Fair Catch, Touchback, Touchdown
 #'  \item{"Returner"} - The punt or kickoff returner
 #'  \item{"BlockingPlayer"} - The player who blocked the extra point, 
 #'  field goal, or punt
 #'  \item{"Tackler1"} - The primary tackler on the play
 #'  \item{"Tackler2"} - The secondary tackler on the play
-#'  \item{"FieldGoalResult"} - Outcome of a fieldgoal: made, missed, blocked
+#'  \item{"FieldGoalResult"} - Outcome of a fieldgoal: No Good, Good, Blocked
 #'  \item{"FieldGoalDistance"} - Field goal length in yards
-#'  \item{"Fumble"} - Binary variable indicating whether a fumble occured or not:
-#'  1 if a fumble occured else no 
+#'  \item{"Fumble"} - Binary: 1 if a fumble occured else no 
 #'  \item{"RecFumbTeam"} - Team that recovered the fumble
 #'  \item{"RecFumbPlayer"} - Player that recovered the fumble
-#'  \item{"Sack"} - Binary variable indicating whether a sack was recorded: 1 if
-#'  a sack was recorded else 0
-#'  \item{"Challenge.Replay"} - Binary variable indicating whether or not the 
-#'  play was reviewed by the replay offical on challenges or replay reviews
-#'  \item{"ChalReplayResult"} - Result of the replay review: Upheld or Overturned
-#'  \item{"Accepted.Penalty"} - Binary variable indicating whether a penalty was 
-#'  accpeted on the play
-#'  \item{"PenalizedTeam"} - The team who was penalized on the play
-#'  \item{"PenaltyType"} - Type of penalty on the play. Values include:
+#'  \item{"Sack"} - Binary: 1 if a sack was recorded else 0
+#'  \item{"Challenge.Replay"} - Binary: 1 if play was reviewed by the replay official
+#'  else 0
+#'  \item{"ChalReplayResult"} - Result of the replay review: Upheld or Reversed
+#'  \item{"Accepted.Penalty"} - Binary: 1 if penalty was accepted else 0
+#'  \item{"PenalizedTeam"} - The penalized team on the play
+#'  \item{"PenaltyType"} - Type of penalty on the play, alues include:
 #'        \itemize{    
 #'                  \item{Unnecessary Roughness, Roughing the Passer}
 #'                  \item{Illegal Formation, Defensive Offside}
 #'                  \item{Delay of Game, False Start, Illegal Shift}
 #'                  \item{Illegal Block Above the Waist, Personal Foul}
-#'                  \item{Unnecessary Roughness, Illegal Blindside Bloc}
+#'                  \item{Unnecessary Roughness, Illegal Blindside Block}
 #'                  \item{Defensive Pass Interference, Offensive Pass Interference}
-#'                  \item{Fair Catch Interferenc, Unsportsmanlike Conduct}
+#'                  \item{Fair Catch Interference, Unsportsmanlike Conduct}
 #'                  \item{Running Into the Kicker, Illegal Kick}
 #'                  \item{Illegal Contact, Defensive Holding}
 #'                  \item{Illegal Motion, Low Block}
@@ -135,15 +133,46 @@
 #'  \item{"PosTeamScore"} - The score of the possession team (offensive team)
 #'  \item{"DefTeamScore"} - The score of the defensive team
 #'  \item{"ScoreDiff"} - The difference in score between the offensive and 
-#'  defensive teams (offensive.score - def.score)   
-#'  \item{"expectedpoints"} - The expected point value of the play before 
-#'  the snap      
-#'  \item{"OffWinProb"} - The win probability of the offensive team
-#'  \item{"DefWinProb"} - The win probability of the defensive team
+#'  defensive teams (offensive.score - def.score)
+#'  \item{"AbsScoreDiff"} - Absolute value of the score differential
+#'  \item{"HomeTeam"} - The home team
+#'  \item{"AwayTeam"} - The away team
+#'  \item{"No_Score_Prob"} - Probability of no score occurring within the half
+#'  \item{"Opp_Field_Goal_Prob"} - Probability of the defensive team scoring a
+#'  field goal next
+#'  \item{"Opp_Safety_Prob"} - Probability of the defensive team scoring a 
+#'  safety next
+#'  \item{"Opp_Touchdown_Prob"} - Probability of the defensive team scoring a 
+#'  touchdown next
+#'  \item{"Field_Goal_Prob"} - Probability of the possession team scoring a 
+#'  field goal next
+#'  \item{"Safety_Prob"} - Probability of the possession team scoring a safety
+#'  next
+#'  \item{"Touchdown_Prob"} - Probability of the possession team scoring a 
+#'  touchdown next
+#'  \item{"ExPoint_Prob"} - Probability of the possession team making the PAT
+#'  \item{"TwoPoint_Prob"} - Probability of the possession team converting 
+#'  the two-point conversion
+#'  \item{"ExpPts"} - The expected points for the possession team at the
+#'  start of the play
+#'  \item{"EPA"} - Expected points added with respect to the possession
+#'  team considering the result of the play
+#'  \item{"Home.WP.pre"} - The win probability for the home team at the start
+#'  of the play
+#'  \item{"Away.WP.pre"} - The win probability for the away team at the start
+#'  of the play
+#'  \item{"Home.WP.post"} - The win probability for the home team at the
+#'  end of the play
+#'  \item{"Away.WP.post"} - The win probability for the away team at the
+#'  end of the play
+#'  \item{"Home.WPA"} - The win probability added for the home team
+#'  \item{"Away.WPA"} - The win probability added for the away team
+#'  \item{"WPA"} - The win probability added with respect to the
+#'  possession team
 #'  
 #'  }
 #'  
-#' @return A dataframe with 68 columns specifying various statistics and 
+#' @return A dataframe with 88 columns specifying various statistics and 
 #' outcomes associated with each play of the specified NFL game.
 #' @examples
 #' # Parsed play-by-play of the final game in the 2015 NFL season 
@@ -179,17 +208,127 @@ game_play_by_play <- function(GameID) {
                        })
   
   number.drives <- length(nfl.json[[1]]$drives) - 1
-  PBP <- NULL
-  for (ii in 1:number.drives) {
-   # For now hard coded a fix for the drive in the Patriots vs. TB game
-   # that has an empty drive 3 list
-   if (GameID == 2013092206 & ii == 3) {next}
-   PBP <- rbind(PBP, cbind("Drive" = ii,
-                           data.frame(do.call(rbind, 
-                                     (nfl.json[[1]]$drives[[ii]]$plays))
-                                     )[,c(1:9)])
-                )
+  
+  # For now hard coded a fix for the drive in the Patriots vs. TB game
+  # that has an empty drive 3 list:
+  
+  if (GameID == 2013092206){
+    PBP <- lapply(c(1,2,4:number.drives),
+                  function(x) cbind("Drive"=x,data.frame(do.call(rbind,nfl.json[[1]]$drives[[x]]$plays))[,c(1:9)])) %>%
+      dplyr::bind_rows()
+  } else {
+    PBP <- lapply(c(1:number.drives),
+                  function(x) cbind("Drive"=x,data.frame(do.call(rbind,nfl.json[[1]]$drives[[x]]$plays))[,c(1:9)])) %>%
+      dplyr::bind_rows()
   }
+  
+  # Search through the 'players' lists for each play (the 'plays' list within
+  # each drive) to find the air yards, yards after catch, and if the QB was hit
+  
+  # Define the get_play_stats function which takes in a game's drive list and
+  # returns a dataframe with a row for each play and columns for the AirYards,
+  # YardsAfterCatch, and QBHit indicator column:
+  get_play_stats <- function(drive_plays_list){
+    result <- lapply(c(1:length(drive_plays_list$plays)),
+                     function(x) suppressWarnings(find_extra_stats(drive_plays_list$plays[[x]]))) %>% 
+      dplyr::bind_rows()
+    return(result)
+  }
+  
+  # Define a function that takes in the players part of a play
+  # and returns a dataframe of the stats with IDs:
+  
+  return_play_stat_df <- function(players_list){
+    # Check the number of players in the play,
+    # if empty return "None":
+    if (length(players_list$players) == 0){
+      result <- as.data.frame(list("statId"="None"))
+    } else{
+      # Return the dataframe
+      result <- lapply(c(1:length(players_list$players)),
+                       function(x) as.data.frame(do.call(rbind,players_list$players[[x]]))) %>% dplyr::bind_rows()
+    }
+    return(result)
+  }
+  
+  
+  # Define a fuction that returns as a dataframe the AirYards, YardsAfterCatch, and QBHit:
+  
+  find_extra_stats <- function(play_list){
+    play_stat_df <- return_play_stat_df(play_list)
+    # If play_stat_df equals None, then return NA for each:
+    if (play_stat_df$statId == "None"){
+      result <- as.data.frame(list("AirYards"=0,
+                                   "YardsAfterCatch"= 0,
+                                   "QBHit"=0))
+    } else{
+      # Find AirYards:
+      if (111 %in% play_stat_df$statId){
+        airyards <- play_stat_df$yards[which(play_stat_df$statId==111)]
+        # Check to see if it's a list
+        if (typeof(airyards)=="list"){
+          airyards <- unlist(airyards)
+        }
+        # Only the first one
+        airyards <- airyards[1]
+        # If NULL then make it 0:
+        airyards <- ifelse(is.null(airyards),0,airyards)
+      } else if (112 %in% play_stat_df$statId){
+        airyards <- play_stat_df$yards[which(play_stat_df$statId==112)]
+        # Check to see if it's a list
+        if (typeof(airyards)=="list"){
+          airyards <- unlist(airyards)
+        }
+        # Only the first one
+        airyards <- airyards[1]
+        # If NULL then make it 0:
+        airyards <- ifelse(is.null(airyards),0,airyards)
+      } else {
+        airyards <- 0
+      }
+      # YardsAfterCatch:
+      if (113 %in% play_stat_df$statId){
+        yac <- play_stat_df$yards[which(play_stat_df$statId==113)]
+        # Check to see if it's a list
+        if (typeof(yac)=="list"){
+          yac <- unlist(yac)
+        }
+        # Only the first one
+        yac <- yac[1]
+        # If NULL then make it 0:
+        yac <- ifelse(is.null(yac),0,yac)
+      } else{
+        yac <- 0
+      }
+      # QBHit:
+      if (110 %in% play_stat_df$statId){
+        qbhit <- 1
+      } else {
+        qbhit <- 0
+      }
+      # Return as a dataframe:
+      result <- as.data.frame(list("AirYards"=airyards,
+                                   "YardsAfterCatch"=yac,
+                                   "QBHit"=qbhit))
+    }
+    colnames(result) <- c("AirYards","YardsAfterCatch","QBHit")
+    return(result)
+  }
+  
+  
+  # Generate the dataframe with the three stats:
+  # Catch the situation with GameID == 2013092206 and drive == 3
+  if (GameID == 2013092206){
+    pbp_extrastats <- lapply(c(1,2,4:number.drives),function(x) get_play_stats(nfl.json[[1]]$drives[[x]])) %>% 
+      dplyr::bind_rows()
+  } else {
+    pbp_extrastats <- lapply(c(1:number.drives),function(x) get_play_stats(nfl.json[[1]]$drives[[x]])) %>% 
+      dplyr::bind_rows()
+  }
+  
+  # Add to the PBP dataset:
+  
+  PBP <- cbind(PBP,pbp_extrastats)
   
   
   # Adjusting Possession Team
@@ -570,7 +709,7 @@ game_play_by_play <- function(GameID) {
   PBP$ExPointResult[extrapoint.good] <- "Made"
   PBP$ExPointResult[extrapoint.nogood] <- "Missed"
   PBP$ExPointResult[extrapoint.blocked] <- "Blocked"
-  PBP$ExPointResult[extrapoint.blocked] <- "Aborted"
+  PBP$ExPointResult[extrapoint.aborted] <- "Aborted"
   
   # Touchdown Play 
   
@@ -1194,7 +1333,7 @@ game_play_by_play <- function(GameID) {
          "posteam", "DefensiveTeam", "desc", "PlayAttempted", "Yards.Gained", 
          "sp", "Touchdown", "ExPointResult", "TwoPointConv", "DefTwoPoint", 
          "Safety", "Onsidekick", "PuntResult", "PlayType", "Passer", "PassAttempt", "PassOutcome", 
-         "PassLength", "PassLocation", "InterceptionThrown", "Interceptor",
+         "PassLength","AirYards","YardsAfterCatch","QBHit", "PassLocation", "InterceptionThrown", "Interceptor",
          "Rusher", "RushAttempt", "RunLocation", "RunGap",  "Receiver", 
          "Reception", "ReturnResult", "Returner", "BlockingPlayer","Tackler1", "Tackler2", 
          "FieldGoalResult", "FieldGoalDistance", 
@@ -1227,18 +1366,18 @@ game_play_by_play <- function(GameID) {
 #' from a given season.  This dataframe is prime for use with the dplyr and 
 #' plyr packages.
 #' @return A dataframe contains all the play-by-play information for a single
-#'      season.  This includes all the 62 variables collected in our 
+#'      season.  This includes all the 88 variables collected in our 
 #'      game_play_by_play function (see documentation for game_play_by_play for
-#'      details)
+#'      details) and a column for the Season.
 #' @examples
-#' # Play-by-Play Data from All games in 2010
+#' # Play-by-play data from all games in 2010
 #' pbp.data.2010 <- season_play_by_play(2010)
 #' 
-#' # Looking at all Baltimore Ravens Offensive Plays 
-#' subset(pbp.data.2010, posteam = "BAL")
+#' # Looking at all Pittsburgh Steelers offensive plays 
+#' subset(pbp.data.2010, posteam = "PIT")
 #' @export
 season_play_by_play <- function(Season, Weeks = 16) {
-  # Google R stlye format
+  # Google R style format
   
   # Below the function put together the proper URLs for each game in each 
   # season and runs the game_play_by_play function across the entire season
@@ -1267,32 +1406,36 @@ season_play_by_play <- function(Season, Weeks = 16) {
 #' given game
 #' @param GameID (character or numeric) A 10 digit game ID associated with a 
 #' given NFL game.
-#' @details The outputted dataframe has 16 variables associated with a specific 
+#' @details The resulting dataframe has 16 variables associated with a specific 
 #' aspect of a drive including the scoring result, number of plays, the duration 
-#' of the drive, and the offensive and defensive teams.  All 16 variable are
+#' of the drive, and the offensive and defensive teams.  All 16 variables are
 #' explained in more detail below:
 #' \itemize{
 #'  \item{"GameID"} - The ID of the given Game
 #'  \item{DriveNumber"} - The respective drive number in the game
 #'  \item{"posteam"} - The offensive team on the drive
-#'  \item{"qrt"} - The quarter at the end of the drive
-#'  \item{"fs"} - Number of first downs in the drive
+#'  \item{"qtr"} - The quarter at the end of the drive
+#'  \item{"fds"} - Number of first downs in the drive
 #'  \item{"result"} - End result of the drive
 #'  \item{"penyds"} - Net penalty yards of the drive for the offensive team
 #'  \item{"ydsgained"} - Number of yards gained on the drive
-#'  \item{"numplaus"} - Number of plays on the drive
-#'  \item{"postime"} - The duration of the 
-#'  \item{"Startqrt"} - The quarter at the beginning of the drive
+#'  \item{"numplays"} - Number of plays on the drive
+#'  \item{"postime"} - The duration of the drive
+#'  \item{"StartQrt"} - The quarter at the beginning of the drive
 #'  \item{"StartTime} - The time left in the quarter at the start of the drive
 #'  \item{"StartYardln"} - Yardline at the start of the drive
 #'  \item{"StartTeam"} - The offensive team on the drive 
+#'  \item{"EndQrt"} - The quarter at the end of the drive
+#'  \item{"EndTime} - The time left in the quarter at the end of the drive
+#'  \item{"EndYardln"} - Yardline at the end of the drive
+#'  \item{"EndTeam"} - The offensive team on the drive
 #'  }
 #' @return A dataframe that has the summary statistics for each drive
 #'      final output includes first downs, drive result, penalty yards, 
 #'      of plays, time of possession, quarter at the start of the drive, 
-#'      Time at Start of Drive, yardline at start of drive, 
+#'      time at start of drive, yardline at start of drive, 
 #'      team with possession at start, end of drive quarter, end of drive time, 
-#'      end of drive Yard line, end of drive team with possession
+#'      end of drive yard line, end of drive team with possession
 #' @examples
 #' # Parsed drive Summarize of final game in 2015 NFL Season
 #' nfl2015.finalregseasongame.gameID <- "2016010310"
@@ -1311,7 +1454,7 @@ drive_summary <- function(GameID) {
   
   # Creating Dataframe of Drive Outcomes:
   
-  # Create a warning message for  the Patriots vs. TB game
+  # Create a warning message for the Patriots vs. TB game
   # that has an empty drive 3 list (GameID is 2013092206),
   # and delete the empty drive. For all other games just
   # rbind together.
@@ -1369,11 +1512,11 @@ drive_summary <- function(GameID) {
 #' given NFL game.
 #' @param home (boolean): home = TRUE will pull home stats, 
 #'                  home = FALSE pulls away stats
-#' @return A list of playerstatistics including passing, rushing, receiving, 
+#' @return A list of player statistics including passing, rushing, receiving, 
 #' defense, kicking, kick return, and punt return statistics for the specified 
 #' game.
 #' @examples
-#' # Parsed drive Summarize of final game in 2015 NFL Season
+#' # Parsed drive summaries of final game in 2015 NFL season
 #' nfl2015.finalregseasongame.gameID <- "2016010310"
 #' simple_boxscore(nfl2015.finalregseasongame.gameID, home = TRUE) 
 #' @export
