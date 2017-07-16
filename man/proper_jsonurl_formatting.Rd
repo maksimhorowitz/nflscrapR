@@ -25,4 +25,3 @@ nfl2015.finalregseasongame.gameID <- "2016010310"
 # Putting all game IDs in to proper URL format
 proper_jsonurl_formatting(nfl2015.finalregseasongame.gameID) 
 }
-

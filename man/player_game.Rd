@@ -89,4 +89,3 @@ nfl.data.gameID <- "2013090800"
 PlayerGameData <- player_game(nfl.data.gameID)
 head(PlayerGameData)
 }
-

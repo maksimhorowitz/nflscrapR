@@ -20,4 +20,3 @@ buildURL(position, season = 2016, page = 1, type = c("REG", "POST",
 This is a sub-function for the season_rosters
 function.
 }
-

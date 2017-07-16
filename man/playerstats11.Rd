@@ -13,4 +13,3 @@ playerstats11
 NFL Team Names and Abbreviations
 }
 \keyword{datasets}
-

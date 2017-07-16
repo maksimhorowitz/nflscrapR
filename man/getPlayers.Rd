@@ -10,4 +10,3 @@ getPlayers(position, season, type = c("REG", "POST", "PRE"))
 This sub-function, calls buildNameAbbr and getPageNumbers to
 scrape player positions by season.
 }
-

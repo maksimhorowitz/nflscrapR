@@ -14,34 +14,38 @@ given NFL game.}
 A dataframe that has the summary statistics for each drive
      final output includes first downs, drive result, penalty yards, 
      of plays, time of possession, quarter at the start of the drive, 
-     Time at Start of Drive, yardline at start of drive, 
+     time at start of drive, yardline at start of drive, 
      team with possession at start, end of drive quarter, end of drive time, 
-     end of drive Yard line, end of drive team with possession
+     end of drive yard line, end of drive team with possession
 }
 \description{
 This function outputs the results dataframe of each drive of a 
 given game
 }
 \details{
-The outputted dataframe has 16 variables associated with a specific 
+The resulting dataframe has 16 variables associated with a specific 
 aspect of a drive including the scoring result, number of plays, the duration 
-of the drive, and the offensive and defensive teams.  All 16 variable are
+of the drive, and the offensive and defensive teams.  All 16 variables are
 explained in more detail below:
 \itemize{
  \item{"GameID"} - The ID of the given Game
  \item{DriveNumber"} - The respective drive number in the game
  \item{"posteam"} - The offensive team on the drive
- \item{"qrt"} - The quarter at the end of the drive
- \item{"fs"} - Number of first downs in the drive
+ \item{"qtr"} - The quarter at the end of the drive
+ \item{"fds"} - Number of first downs in the drive
  \item{"result"} - End result of the drive
  \item{"penyds"} - Net penalty yards of the drive for the offensive team
  \item{"ydsgained"} - Number of yards gained on the drive
- \item{"numplaus"} - Number of plays on the drive
- \item{"postime"} - The duration of the 
- \item{"Startqrt"} - The quarter at the beginning of the drive
+ \item{"numplays"} - Number of plays on the drive
+ \item{"postime"} - The duration of the drive
+ \item{"StartQrt"} - The quarter at the beginning of the drive
  \item{"StartTime} - The time left in the quarter at the start of the drive
  \item{"StartYardln"} - Yardline at the start of the drive
  \item{"StartTeam"} - The offensive team on the drive 
+ \item{"EndQrt"} - The quarter at the end of the drive
+ \item{"EndTime} - The time left in the quarter at the end of the drive
+ \item{"EndYardln"} - Yardline at the end of the drive
+ \item{"EndTeam"} - The offensive team on the drive
  }
 }
 \examples{
@@ -49,4 +53,3 @@ explained in more detail below:
 nfl2015.finalregseasongame.gameID <- "2016010310"
 drive_summary(nfl2015.finalregseasongame.gameID) 
 }
-

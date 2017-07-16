@@ -14,7 +14,7 @@ given NFL game.}
 home = FALSE pulls away stats}
 }
 \value{
-A list of playerstatistics including passing, rushing, receiving, 
+A list of player statistics including passing, rushing, receiving, 
 defense, kicking, kick return, and punt return statistics for the specified 
 game.
 }
@@ -23,8 +23,7 @@ This function pulls data from an NFL url and contructs it into a formatted
 boxscore.
 }
 \examples{
-# Parsed drive Summarize of final game in 2015 NFL Season
+# Parsed drive summaries of final game in 2015 NFL season
 nfl2015.finalregseasongame.gameID <- "2016010310"
 simple_boxscore(nfl2015.finalregseasongame.gameID, home = TRUE) 
 }
-
