@@ -30,4 +30,3 @@ stored in this package!
 # Roster for Baltimore Ravens in 2013
 season_rosters(2013, TeamInt = "BAL") 
 }
-

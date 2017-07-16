@@ -10,4 +10,3 @@ getPageNumbers(value)
 For each position, this function extracts the number of pages 
 there are to scrape. This is a sub-function for the season_rosters function
 }
-

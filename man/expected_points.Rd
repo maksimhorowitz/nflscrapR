@@ -20,4 +20,3 @@ function and returns the same dataframe with a new column added for expected
 points for each valid play.  The expected point model can loaded in the same 
 way that datasets can be loaded for this package
 }
-

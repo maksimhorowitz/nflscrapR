@@ -13,4 +13,3 @@ nflteams
 NFL Team Names and Abbreviations
 }
 \keyword{datasets}
-
