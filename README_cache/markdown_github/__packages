@@ -5,3 +5,13 @@ XML
 bitops
 RCurl
 ggplot2
+nnet
+magrittr
+bindrcpp
+tidyverse
+tibble
+tidyr
+readr
+purrr
+dplyr
+ggjoy
