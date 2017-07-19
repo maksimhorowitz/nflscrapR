@@ -24,7 +24,7 @@
 #' @export
 season_games <- function(Season, Weeks = 16, sleep.seconds = 0) {
   
-  game_ids <- extracting_gameids(2016)
+  game_ids <- extracting_gameids(Season)
   
   # If statement to specify the week variable
   if (Weeks %in% 4:13) {
