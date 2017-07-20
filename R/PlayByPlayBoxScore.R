@@ -137,6 +137,18 @@
 #'  \item{"AbsScoreDiff"} - Absolute value of the score differential
 #'  \item{"HomeTeam"} - The home team
 #'  \item{"AwayTeam"} - The away team
+#'  \item{"Timeout_Indicator"} - Binary: 1 if a timeout was charge else 0
+#'  \item{"Timeout_Team"} - Team charged with penalty (None if no timeout)
+#'  \item{"posteam_timeouts_pre"} - Number of timeouts remaining for possession
+#'  team at the start of the play
+#'  \item{"HomeTimeouts_Remaining_Pre"} - Number of timeouts remaining for home
+#'  team at the start of the play
+#'  \item{"AwayTimeouts_Remaining_Pre"} - Number of timeouts remaining for away
+#'  team at the start of the play
+#'  \item{"HomeTimeouts_Remaining_Post"} - Number of timeouts remaining for home
+#'  team at the end of the play (handles loss of timeout from lost challenge)
+#'  \item{"AwayTimeouts_Remaining_Post"} - Number of timeouts remaining for away
+#'  team at the end of the play (handles loss of timeout from lost challenge)
 #'  \item{"No_Score_Prob"} - Probability of no score occurring within the half
 #'  \item{"Opp_Field_Goal_Prob"} - Probability of the defensive team scoring a
 #'  field goal next
@@ -260,7 +272,9 @@ game_play_by_play <- function(GameID) {
     if (play_stat_df$statId == "None"){
       result <- as.data.frame(list("AirYards"=0,
                                    "YardsAfterCatch"= 0,
-                                   "QBHit"=0))
+                                   "QBHit"=0,
+                                   "Timeout_Indicator"=0,
+                                   "Timeout_Team"=as.character("None")))
     } else{
       # Find AirYards:
       if (111 %in% play_stat_df$statId){
@@ -306,12 +320,25 @@ game_play_by_play <- function(GameID) {
       } else {
         qbhit <- 0
       }
+      # Timeout:
+      if (68 %in% play_stat_df$statId){
+        to <- 1
+        to_team <- as.character(play_stat_df$clubcode[which(play_stat_df$statId == 68)])
+        # Only the first one
+        to_team <- to_team[1]
+      } else {
+        to <- 0
+        to_team <- as.character("None")
+      }
       # Return as a dataframe:
       result <- as.data.frame(list("AirYards"=airyards,
                                    "YardsAfterCatch"=yac,
-                                   "QBHit"=qbhit))
+                                   "QBHit"=qbhit,
+                                   "Timeout_Indicator"=to,
+                                   "Timeout_Team"=to_team))
     }
-    colnames(result) <- c("AirYards","YardsAfterCatch","QBHit")
+    colnames(result) <- c("AirYards","YardsAfterCatch","QBHit","Timeout_Indicator","Timeout_Team")
+    result$Timeout_Team <- as.character(result$Timeout_Team)
     return(result)
   }
   
@@ -319,17 +346,18 @@ game_play_by_play <- function(GameID) {
   # Generate the dataframe with the three stats:
   # Catch the situation with GameID == 2013092206 and drive == 3
   if (GameID == 2013092206){
-    pbp_extrastats <- lapply(c(1,2,4:number.drives),function(x) get_play_stats(nfl.json[[1]]$drives[[x]])) %>% 
+    pbp_extrastats <- lapply(c(1,2,4:number.drives),
+                             function(x) suppressWarnings(get_play_stats(nfl.json[[1]]$drives[[x]]))) %>% 
       dplyr::bind_rows()
   } else {
-    pbp_extrastats <- lapply(c(1:number.drives),function(x) get_play_stats(nfl.json[[1]]$drives[[x]])) %>% 
+    pbp_extrastats <- lapply(c(1:number.drives),
+                             function(x) suppressWarnings(get_play_stats(nfl.json[[1]]$drives[[x]]))) %>% 
       dplyr::bind_rows()
   }
   
   # Add to the PBP dataset:
   
   PBP <- cbind(PBP,pbp_extrastats)
-  
   
   # Adjusting Possession Team
   PBP$posteam <- ifelse(PBP$posteam == "NULL", dplyr::lag(PBP$posteam),
@@ -1302,6 +1330,75 @@ game_play_by_play <- function(GameID) {
   ## Away Team 
   PBP$AwayTeam <- nfl.json[[1]]$away$abbr
   
+  ## Half Indicator
+  PBP$Half_Ind <- with(PBP,ifelse(qtr %in% c(1,2),"Half1",
+                                  ifelse(qtr %in% c(3,4),"Half2","Overtime")))
+  
+  ## Keep track of timeouts remaining
+  PBP$HomeTimeouts_Remaining_Pre <- vector(length = nrow(PBP))
+  PBP$AwayTimeouts_Remaining_Pre <- vector(length = nrow(PBP))
+  PBP$HomeTimeouts_Remaining_Post <- vector(length = nrow(PBP))
+  PBP$AwayTimeouts_Remaining_Post <- vector(length = nrow(PBP))
+  
+  for (i in 1:nrow(PBP)){
+    # if its the first play in the game set all timeouts remaining
+    # columns to be set to 3, or if the it's the first play in
+    # the second half
+    if (i == 1){
+      PBP$HomeTimeouts_Remaining_Pre[i] <- 3
+      PBP$AwayTimeouts_Remaining_Pre[i] <- 3
+      PBP$HomeTimeouts_Remaining_Post[i] <- 3
+      PBP$AwayTimeouts_Remaining_Post[i] <- 3
+    }  else if (PBP$Half_Ind[i-1] == "Half1" & PBP$Half_Ind[i] == "Half2"){
+      PBP$HomeTimeouts_Remaining_Pre[i] <- 3
+      PBP$AwayTimeouts_Remaining_Pre[i] <- 3
+      PBP$HomeTimeouts_Remaining_Post[i] <- 3
+      PBP$AwayTimeouts_Remaining_Post[i] <- 3
+    } else if (PBP$Half_Ind[i-1] == "Half2" &  PBP$Half_Ind[i] == "Overtime") {
+      # if it's the start of overtime then go to 2 timeouts
+      PBP$HomeTimeouts_Remaining_Pre[i] <- 2
+      PBP$AwayTimeouts_Remaining_Pre[i] <- 2
+      PBP$HomeTimeouts_Remaining_Post[i] <- 2
+      PBP$AwayTimeouts_Remaining_Post[i] <- 2
+    } else {
+      # the _Pre for columns are the _Post of the previous row
+      PBP$HomeTimeouts_Remaining_Pre[i] <- PBP$HomeTimeouts_Remaining_Post[i-1]
+      PBP$AwayTimeouts_Remaining_Pre[i] <- PBP$AwayTimeouts_Remaining_Post[i-1]
+      PBP$HomeTimeouts_Remaining_Post[i] <- PBP$HomeTimeouts_Remaining_Post[i-1]
+      PBP$AwayTimeouts_Remaining_Post[i] <- PBP$AwayTimeouts_Remaining_Post[i-1]
+    }
+    # If Timeout_Indicator == 1 then subtract 1 from which team
+    # called the timeout:
+    if (PBP$Timeout_Indicator[i] == 1){
+      if (PBP$Timeout_Team[i] == PBP$HomeTeam[i]){
+        PBP$HomeTimeouts_Remaining_Post[i] <- PBP$HomeTimeouts_Remaining_Pre[i] - 1
+      } else{
+        PBP$AwayTimeouts_Remaining_Post[i] <- PBP$AwayTimeouts_Remaining_Pre[i] - 1
+      }
+    }
+  }
+  
+  # Create a column, posteam_timeouts_rem:
+  PBP$posteam_timeouts_pre <- ifelse(PBP$posteam == PBP$HomeTeam,
+                                     PBP$HomeTimeouts_Remaining_Pre,
+                                     PBP$AwayTimeouts_Remaining_Pre)
+  
+  
+  # Fixing error row in 2010 game:
+  
+  if (GameID == 2010112107){
+    err_play_index <- which(PBP$qtr == 2 & PBP$down == 2 &
+                              PBP$TimeSecs == 1862)
+    PBP[err_play_index,"Passer"] <- "D.Brees"
+    PBP[err_play_index,"PassAttempt"] <- 1
+    PBP[err_play_index,"PassOutcome"] <- "Complete"
+    PBP[err_play_index,"PassLength"] <- "Deep"
+    PBP[err_play_index,"PassLocation"] <- "left"
+    PBP[err_play_index,"PassLength"] <- 20
+    PBP[err_play_index,"Yards.Gained"] <- 20
+    PBP[err_play_index,"Touchdown"] <- 1
+  }
+  
   ## Adding in Win Probability ##
   
   PBP <- win_probability(PBP)
@@ -1341,6 +1438,9 @@ game_play_by_play <- function(GameID) {
          "ChalReplayResult", "Accepted.Penalty", "PenalizedTeam", "PenaltyType", 
          "PenalizedPlayer", "Penalty.Yards", "PosTeamScore", "DefTeamScore", 
          "ScoreDiff", "AbsScoreDiff", "HomeTeam", "AwayTeam",
+         "Timeout_Indicator","Timeout_Team","posteam_timeouts_pre",
+         "HomeTimeouts_Remaining_Pre","AwayTimeouts_Remaining_Pre",
+         "HomeTimeouts_Remaining_Post","AwayTimeouts_Remaining_Post",
          "No_Score_Prob","Opp_Field_Goal_Prob","Opp_Safety_Prob",
          "Opp_Touchdown_Prob","Field_Goal_Prob","Safety_Prob",
          "Touchdown_Prob","ExPoint_Prob","TwoPoint_Prob",
