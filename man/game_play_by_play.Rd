@@ -82,6 +82,7 @@ The added variables are specified below:
                  \item{No Play, QB Kneel, Spike, Timeout}
          }  
  \item{"Passer"} - The passer on the play if it was a pass play
+ \item{"Passer_ID"} - NFL GSIS player ID for the passer
  \item{"PassAttempt"} - Binary: 1 if a pass was attempted else 0
  \item{"PassOutcome"} - Pass Result: Complete or Incomplete Pass  
  \item{"PassLength"} - Categorical variable indicating the length of the pass:
@@ -90,10 +91,12 @@ The added variables are specified below:
  \item{"InterceptionThrown"} - Binary: 1 if an interception else 0
  \item{"Interceptor"} - The player who intercepted the ball
  \item{"Rusher"} - The runner on the play if it was a running play
+ \item{"Rusher_ID"} - NFL GSIS player ID for the rusher
  \item{"RushAttempt"} - Binary: 1 if a run was attempted else 0
  \item{"RunLocation"} - Location of the run: left, middle, right
  \item{"RunGap"} - Gap of the run: guard, tackle, end 
  \item{"Receiver"} - The targeted receiver of a play
+ \item{"Receiver_ID"} - NFL GSIS player ID for the receiver
  \item{"Reception"} - Binary: 1 if a reception was recorded else 0
  \item{"ReturnResult"} - Result of a punt, kickoff, interception, or 
  fumble return: Fair Catch, Touchback, Touchdown
@@ -146,6 +149,18 @@ The added variables are specified below:
  \item{"AbsScoreDiff"} - Absolute value of the score differential
  \item{"HomeTeam"} - The home team
  \item{"AwayTeam"} - The away team
+ \item{"Timeout_Indicator"} - Binary: 1 if a timeout was charge else 0
+ \item{"Timeout_Team"} - Team charged with penalty (None if no timeout)
+ \item{"posteam_timeouts_pre"} - Number of timeouts remaining for possession
+ team at the start of the play
+ \item{"HomeTimeouts_Remaining_Pre"} - Number of timeouts remaining for home
+ team at the start of the play
+ \item{"AwayTimeouts_Remaining_Pre"} - Number of timeouts remaining for away
+ team at the start of the play
+ \item{"HomeTimeouts_Remaining_Post"} - Number of timeouts remaining for home
+ team at the end of the play (handles loss of timeout from lost challenge)
+ \item{"AwayTimeouts_Remaining_Post"} - Number of timeouts remaining for away
+ team at the end of the play (handles loss of timeout from lost challenge)
  \item{"No_Score_Prob"} - Probability of no score occurring within the half
  \item{"Opp_Field_Goal_Prob"} - Probability of the defensive team scoring a
  field goal next
