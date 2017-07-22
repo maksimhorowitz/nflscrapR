@@ -73,6 +73,7 @@
 #'                  \item{No Play, QB Kneel, Spike, Timeout}
 #'          }  
 #'  \item{"Passer"} - The passer on the play if it was a pass play
+#'  \item{"Passer_ID"} - NFL GSIS player ID for the passer
 #'  \item{"PassAttempt"} - Binary: 1 if a pass was attempted else 0
 #'  \item{"PassOutcome"} - Pass Result: Complete or Incomplete Pass  
 #'  \item{"PassLength"} - Categorical variable indicating the length of the pass:
@@ -81,10 +82,12 @@
 #'  \item{"InterceptionThrown"} - Binary: 1 if an interception else 0
 #'  \item{"Interceptor"} - The player who intercepted the ball
 #'  \item{"Rusher"} - The runner on the play if it was a running play
+#'  \item{"Rusher_ID"} - NFL GSIS player ID for the rusher
 #'  \item{"RushAttempt"} - Binary: 1 if a run was attempted else 0
 #'  \item{"RunLocation"} - Location of the run: left, middle, right
 #'  \item{"RunGap"} - Gap of the run: guard, tackle, end 
 #'  \item{"Receiver"} - The targeted receiver of a play
+#'  \item{"Receiver_ID"} - NFL GSIS player ID for the receiver
 #'  \item{"Reception"} - Binary: 1 if a reception was recorded else 0
 #'  \item{"ReturnResult"} - Result of a punt, kickoff, interception, or 
 #'  fumble return: Fair Catch, Touchback, Touchdown
@@ -259,6 +262,12 @@ game_play_by_play <- function(GameID) {
       # Return the dataframe
       result <- lapply(c(1:length(players_list$players)),
                        function(x) as.data.frame(do.call(rbind,players_list$players[[x]]))) %>% dplyr::bind_rows()
+      # Get the Player IDs:
+      player_ids <- names(players_list$players)
+      # For each player, get the number of rows for them and repeat their ID that many times:
+      player_ids_vector <- as.vector(unlist(sapply(c(1:length(player_ids)),
+                                                   function(x) rep(player_ids[x],length(players_list$players[[x]])))))
+      result$PlayerID <- player_ids_vector
     }
     return(result)
   }
@@ -274,7 +283,10 @@ game_play_by_play <- function(GameID) {
                                    "YardsAfterCatch"= 0,
                                    "QBHit"=0,
                                    "Timeout_Indicator"=0,
-                                   "Timeout_Team"=as.character("None")))
+                                   "Timeout_Team"=as.character("None"),
+                                   "Passer_ID" = as.character("None"),
+                                   "Rusher_ID" = as.character("None"),
+                                   "Receiver_ID" = as.character("None")))
     } else{
       # Find AirYards:
       if (111 %in% play_stat_df$statId){
@@ -330,15 +342,46 @@ game_play_by_play <- function(GameID) {
         to <- 0
         to_team <- as.character("None")
       }
+      # Passer ID:
+      if (any(c(14, 15, 16, 111, 112, 20) %in% play_stat_df$statId)){
+        passer_id <- as.character(play_stat_df$PlayerID[which(play_stat_df$statId %in% c(14, 15, 16, 111, 112, 20))])
+        # Only the first one
+        passer_id <- passer_id[1]
+      } else{
+        passer_id <- "None"
+      }
+      # Rusher ID:
+      if (any(c(10, 11, 12, 13) %in% play_stat_df$statId)){
+        rusher_id <- as.character(play_stat_df$PlayerID[which(play_stat_df$statId %in% c(10, 11, 12, 13))])
+        # Only the first one
+        rusher_id <- rusher_id[1]
+      } else{
+        rusher_id <- "None"
+      }
+      # Receiver ID:
+      if (any(c(21, 22, 113, 115) %in% play_stat_df$statId)){
+        receiver_id <- as.character(play_stat_df$PlayerID[which(play_stat_df$statId %in% c(21, 22, 113, 115))])
+        # Only the first one
+        receiver_id <- receiver_id[1]
+      } else{
+        receiver_id <- "None"
+      }
       # Return as a dataframe:
       result <- as.data.frame(list("AirYards"=airyards,
                                    "YardsAfterCatch"=yac,
                                    "QBHit"=qbhit,
                                    "Timeout_Indicator"=to,
-                                   "Timeout_Team"=to_team))
+                                   "Timeout_Team"=to_team,
+                                   "Passer_ID"=passer_id,
+                                   "Rusher_ID"=rusher_id,
+                                   "Receiver_ID"=receiver_id))
     }
-    colnames(result) <- c("AirYards","YardsAfterCatch","QBHit","Timeout_Indicator","Timeout_Team")
+    colnames(result) <- c("AirYards","YardsAfterCatch","QBHit","Timeout_Indicator","Timeout_Team",
+                          "Passer_ID","Rusher_ID","Receiver_ID")
     result$Timeout_Team <- as.character(result$Timeout_Team)
+    result$Passer_ID <- as.character(result$Passer_ID)
+    result$Rusher_ID <- as.character(result$Rusher_ID)
+    result$Receiver_ID <- as.character(result$Receiver_ID)
     return(result)
   }
   
@@ -1429,9 +1472,9 @@ game_play_by_play <- function(GameID) {
          "ydstogo", "ydsnet", "GoalToGo", "FirstDown", 
          "posteam", "DefensiveTeam", "desc", "PlayAttempted", "Yards.Gained", 
          "sp", "Touchdown", "ExPointResult", "TwoPointConv", "DefTwoPoint", 
-         "Safety", "Onsidekick", "PuntResult", "PlayType", "Passer", "PassAttempt", "PassOutcome", 
+         "Safety", "Onsidekick", "PuntResult", "PlayType", "Passer","Passer_ID", "PassAttempt", "PassOutcome", 
          "PassLength","AirYards","YardsAfterCatch","QBHit", "PassLocation", "InterceptionThrown", "Interceptor",
-         "Rusher", "RushAttempt", "RunLocation", "RunGap",  "Receiver", 
+         "Rusher","Rusher_ID", "RushAttempt", "RunLocation", "RunGap",  "Receiver","Receiver_ID",
          "Reception", "ReturnResult", "Returner", "BlockingPlayer","Tackler1", "Tackler2", 
          "FieldGoalResult", "FieldGoalDistance", 
          "Fumble", "RecFumbTeam", "RecFumbPlayer", "Sack", "Challenge.Replay",
@@ -1446,7 +1489,6 @@ game_play_by_play <- function(GameID) {
          "Touchdown_Prob","ExPoint_Prob","TwoPoint_Prob",
          "ExpPts","EPA","Home.WP.pre",  "Away.WP.pre", "Home.WP.post", 
          "Away.WP.post", "Home.WPA", "Away.WPA","WPA")]
-
 }
 
 ################################################################## 
