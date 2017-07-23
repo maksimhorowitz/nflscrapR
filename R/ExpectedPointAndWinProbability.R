@@ -73,7 +73,7 @@ expected_points <- function(dataset) {
     missed_fg_ep_preds[end_game_i,] <- rep(0,ncol(missed_fg_ep_preds))
     
     # Get the probability of making the field goal:
-    make_fg_prob <- as.numeric(predict(fgxp_model, newdata= data, type="response"))
+    make_fg_prob <- as.numeric(mgcv::predict.gam(fgxp_model, newdata= data, type="response"))
     
     # Multiply each value of the missed_fg_ep_preds by the 1 - make_fg_prob
     missed_fg_ep_preds <- missed_fg_ep_preds * (1 - make_fg_prob)
@@ -114,7 +114,7 @@ expected_points <- function(dataset) {
     kickoff_preds <- as.data.frame(predict(ep_model, newdata = kickoff_data, type = "probs"))
     colnames(kickoff_preds) <- c("No_Score","Opp_Field_Goal","Opp_Safety","Opp_Touchdown",
                                       "Field_Goal","Safety","Touchdown")
-    # Find the FG attempts:
+    # Find the kickoffs:
     kickoff_i <- which(data$PlayType == "Kickoff")
     
     # Now update the probabilities:
@@ -338,84 +338,240 @@ expected_points <- function(dataset) {
 
 ################# Win Probability Fucntion #####################
 
-#' Win probability function to add win probability columns for the offense and 
-#' defense for each play in the game
+#' Win probability function to add win probability columns for the home and 
+#' away teams for each play in the game
 #' @description This function takes in the output of the game level play by play
 #' function and returns the same dataframe with six new columns representing the
 #' win probability for the home and away team pre and post snap and win probability
-#' added.  The model used to calculate win probability is a genarlized addative
-#'  model with three explanatory variables.
+#' added.  The model used to calculate win probability is a generalized additive
+#' model using the expected score differential, time remaining in game,
+#' also accounting for the timeouts remaining for both teams. Overtime win 
+#' probability is calculated separately using the scoring event probabilities.
 #' @param dataset (data.frame object) A data.frame as exported from the 
 #' game_play_by_play function
-#' @return The input dataframe with the addition of four win probability columns 
-#' for the home and away 
+#' @return The input dataframe with the addition of six win probability columns 
+#' giving the win probability for the possession team, the WPA for each play,
+#' the pre and post win probability for both the home and away teams.
 #' @export
 win_probability <- function(dataset) {
+  # Initialize the vector to store the predicted win probability
+  # with respect to the possession team:
+  OffWinProb <- rep(NA, nrow(dataset))
   
-  dataset$down <- as.character(dataset$down)
-  # Categorize special teams plays into one play type
-  dataset$down[which(dataset$PlayType == "Kickoff")] <- "SpecialTeams"
-  dataset$down[which(dataset$PlayType == "Extra Point")] <- "SpecialTeams"
-  dataset$down[which(dataset$PlayType == "Onside Kick")] <- "SpecialTeams"
-  dataset$down[which(!is.na(dataset$TwoPointConv))] <- "SpecialTeams"
+  # Changing down into a factor variable
+  dataset$down <- factor(dataset$down)
   
-  dataset$down <- as.factor(dataset$down)
+  # Create a variable that is time remaining until end of half and game:
+  dataset$TimeSecs_Remaining <- ifelse(dataset$qtr %in% c(1,2),
+                                       dataset$TimeSecs - 1800,
+                                       ifelse(dataset$qtr == 5,
+                                              dataset$TimeSecs + 900,
+                                              dataset$TimeSecs))
   
-  ## Add inverse time variable ##
-  dataset$invtime <- 1/(dataset$TimeSecs + .0000000001)
+  # Expected Score Differential
+  dataset <- dplyr::mutate(dataset, ExpScoreDiff = ExpPts + ScoreDiff)
   
-  OffWinProb <- as.numeric(round(mgcv::predict.gam(object = win.prob.model.gam3, 
-                                      newdata = dataset, type = "response"), 3))
   
+  # Ratio of time to yard line
+  dataset <- dplyr::mutate(dataset,
+                           Time_Yard_Ratio = (1+TimeSecs_Remaining)/(1+yrdline100))
+  
+  # Opponents timeouts remaining:
+  dataset$oppteam_timeouts_pre <- ifelse(dataset$posteam == dataset$HomeTeam,
+                                         dataset$AwayTimeouts_Remaining_Pre,
+                                         dataset$HomeTimeouts_Remaining_Pre)
+  
+  # Under Two Minute Warning Flag
+  dataset$Under_TwoMinute_Warning <- ifelse(dataset$TimeSecs_Remaining < 120,1,0)
+  
+  
+  # Due to NFL errors make a floor at 0 for the timeouts:
+  dataset$posteam_timeouts_pre <- ifelse(dataset$posteam_timeouts_pre < 0,
+                                         0,dataset$posteam_timeouts_pre)
+  dataset$oppteam_timeouts_pre <- ifelse(dataset$oppteam_timeouts_pre < 0,
+                                         0,dataset$oppteam_timeouts_pre)
+  
+  # Define a form of the TimeSecs_Adj that just takes the original TimeSecs but
+  # resets the overtime back to 900:
+  
+  dataset$TimeSecs_Adj <- ifelse(dataset$qtr == 5,
+                                 dataset$TimeSecs + 900,
+                                 dataset$TimeSecs)
+  
+  # Define a new variable, ratio of Expected Score Differential to TimeSecs_Adj:
+  
+  dataset <- dplyr::mutate(dataset,
+                           ExpScoreDiff_Time_Ratio = ExpScoreDiff / (TimeSecs_Adj + 1))
+  
+  
+  # First check if there's any overtime plays:
+  if (any(dataset$qtr == 5)){
+    # Find the rows that are overtime:
+    overtime_i <- which(dataset$qtr == 5)
+    
+    # Separate the dataset into regular_df and overtime_df:
+    regular_df <- dataset[-overtime_i,]
+    overtime_df <- dataset[overtime_i,]
+    
+    # Use the win prob model to predict the win probability for 
+    # regulation time plays:
+    regular_df$Half_Ind <- with(regular_df,
+                                ifelse(qtr %in% c(1,2),"Half1","Half2"))
+    regular_df$Half_Ind <- as.factor(regular_df$Half_Ind)
+    
+    OffWinProb[-overtime_i] <- as.numeric(mgcv::predict.bam(win_prob_model_epsd,newdata=regular_df,
+                                                            type = "response"))
+    
+    # Separate routine for overtime:
+    
+    # Create a column that is just the first drive of overtime repeated:
+    overtime_df$First_Drive <- rep(min(overtime_df$Drive,na.rm=TRUE),nrow(overtime_df))
+    
+    # Calculate the difference in drive number
+    overtime_df <- dplyr::mutate(overtime_df, Drive_Diff = Drive - First_Drive)
+    
+    # Create an indicator column that means the posteam is losing by 3 and
+    # its the second drive of overtime:
+    
+    overtime_df$One_FG_Game <- ifelse(overtime_df$ScoreDiff == -3 & overtime_df$Drive_Diff == 1,1,0)
+    
+    # Get the Season and Month for rule changes:
+    overtime_df <- dplyr::mutate(overtime_df,
+                                    Season = as.numeric(substr(as.character(GameID),1,4)),
+                                    Month = as.numeric(substr(as.character(GameID),5,6)))
+    
+    # Now create a copy of the dataset to then make the EP predictions for when
+    # a field goal is scored and its not sudden death:
+    overtime_df_ko <- overtime_df
+    
+    # Change the yard line to be 80 for 2009-2015 and 75 otherwise
+    # (accounting for the fact that Jan 2016 is in the 2015 season:
+    overtime_df_ko$yrdline100 <- with(overtime_df_ko,
+                                        ifelse(Season < 2016 | (Season == 2016 & Month < 4), 80, 75))
+    # Not GoalToGo:
+    overtime_df_ko$GoalToGo <- rep(0,nrow(overtime_df_ko))
+    # Now first down:
+    overtime_df_ko$down <- rep("1",nrow(overtime_df_ko))
+    # 10 ydstogo:
+    overtime_df_ko$ydstogo <- rep(10,nrow(overtime_df_ko))
+    overtime_df_ko <- dplyr::mutate(overtime_df_ko,Time_Yard_Ratio = (1+TimeSecs_Remaining)/(1+yrdline100))
+    
+    # Get the predictions from the EP model and calculate the necessary probability:
+    overtime_df_ko_preds <- as.data.frame(predict(current_ep_model4, 
+                                                    newdata = overtime_df_ko, type = "probs"))
+    colnames(overtime_df_ko_preds) <- c("No_Score","Opp_Field_Goal","Opp_Safety","Opp_Touchdown",
+                                          "Field_Goal","Safety","Touchdown")
+    overtime_df_ko_preds <- dplyr::mutate(overtime_df_ko_preds,
+                                            Win_Back = No_Score + Opp_Field_Goal + Opp_Safety + Opp_Touchdown)
+    
+    # Calculate the two possible win probability types, Sudden Death and one Field Goal:
+    overtime_df$Sudden_Death_WP <- overtime_df$Field_Goal_Prob + overtime_df$Touchdown_Prob + overtime_df$Safety_Prob
+    overtime_df$One_FG_WP <- overtime_df$Touchdown_Prob + (overtime_df$Field_Goal_Prob*overtime_df_ko_preds$Win_Back)
+    
+    
+    # Decide which win probability to use:
+    OffWinProb[overtime_i] <- ifelse(overtime_df$Season >= 2012  & (overtime_df$Drive_Diff == 0 | (overtime_df$Drive_Diff == 1 & overtime_df$One_FG_Game == 1)),
+                                     overtime_df$One_FG_WP, overtime_df$Sudden_Death_WP)
+    
+    
+  } else {
+    
+    dataset$Half_Ind <- with(dataset,
+                             ifelse(qtr %in% c(1,2),"Half1","Half2"))
+    dataset$Half_Ind <- as.factor(dataset$Half_Ind)
+    OffWinProb <- as.numeric(mgcv::predict.bam(win_prob_model_epsd,newdata=dataset,
+                                                            type = "response"))
+  }
+  
+  
+  # Defensive win probability:
   DefWinProb <- 1 - OffWinProb
 
   ####### Creating Home team and Away team Win probability Pre-play,     #######
   ####### Post-play, and win prob added                                  ####### 
   
+  # Possession team Win_Prob
+  
+  dataset$Win_Prob <- OffWinProb
+  
   # Home: Pre-play
   
-  dataset$Home.WP.pre <- NA
-
-  dataset$Home.WP.pre[which(dataset$posteam == dataset$HomeTeam)] <- OffWinProb[which(dataset$posteam == dataset$HomeTeam)]
-  dataset$Home.WP.pre[which(dataset$DefensiveTeam == dataset$HomeTeam)] <- DefWinProb[which(dataset$DefensiveTeam == dataset$HomeTeam)]
+  dataset$Home_WP_pre <- ifelse(dataset$posteam == dataset$HomeTeam, OffWinProb, DefWinProb)
   
   # Away: Pre-play
-  dataset$Away.WP.pre <- NA
   
-  dataset$Away.WP.pre[which(dataset$posteam == dataset$AwayTeam)] <- OffWinProb[which(dataset$posteam == dataset$AwayTeam)]
-  dataset$Away.WP.pre[which(dataset$DefensiveTeam == dataset$AwayTeam)] <- DefWinProb[which(dataset$DefensiveTeam == dataset$AwayTeam)]
+  dataset$Away_WP_pre <- ifelse(dataset$posteam == dataset$AwayTeam, OffWinProb, DefWinProb)
   
-  ####### Adding Post Play Win Prob and WPA #######
+  # Create the possible WPA values
+  dataset <- dplyr::mutate(dataset,
+                           # Team keeps possession (most general case):
+                           WPA_base = dplyr::lead(Win_Prob) - Win_Prob,
+                           # Team keeps possession but either Timeout, Two Minute Warning,
+                           # Quarter End is the following row:
+                           WPA_base_nxt = dplyr::lead(Win_Prob,2) - Win_Prob,
+                           # Change of possession and no timeout, 
+                           # two minute warning, or quarter end follows:
+                           WPA_change = (1 - dplyr::lead(Win_Prob)) - Win_Prob,
+                           # Change of possession but either Timeout,
+                           # Two Minute Warning, or
+                           # Quarter End is the following row:
+                           WPA_change_nxt = (1 - dplyr::lead(Win_Prob,2)) - Win_Prob,
+                           # End of quarter, half or end rows:
+                           WPA_halfend_to = 0)
+  # Create a WPA column for the last play of the game:
+  dataset$WPA_final <- ifelse(dplyr::lead(dataset$ScoreDiff) > 0 & dplyr::lead(dataset$posteam) == dataset$HomeTeam,
+                              1 - dataset$Home_WP_pre,
+                              ifelse(dplyr::lead(dataset$ScoreDiff) > 0 & dplyr::lead(dataset$posteam) == dataset$AwayTeam,
+                                     1 - dataset$Away_WP_pre,
+                                     ifelse(dplyr::lead(dataset$ScoreDiff) < 0 & dplyr::lead(dataset$posteam) == dataset$HomeTeam,
+                                            0 - dataset$Home_WP_pre,
+                                            ifelse(dplyr::lead(dataset$ScoreDiff) < 0 & dplyr::lead(dataset$posteam) == dataset$AwayTeam,
+                                                   0 - dataset$Away_WP_pre, 0))))
+
+  # Now make the if-else statements to decide which column to use,
+  # need to make indicator columns first due to missing values:
+  dataset$WPA_base_ind <- with(dataset, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & GameID == dplyr::lead(GameID) & Drive == dplyr::lead(Drive) & dplyr::lead(PlayType) %in% c("Pass","Run","Punt","Sack","Field Goal","No Play","QB Kneel","Spike", "Extra Point"),1,0))
+  dataset$WPA_base_nxt_ind <- with(dataset, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & GameID == dplyr::lead(GameID) & Drive == dplyr::lead(Drive) & dplyr::lead(PlayType) %in% c("Quarter End","Two Minute Warning","Timeout"),1,0))
+  dataset$WPA_change_nxt_ind <- with(dataset, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & GameID == dplyr::lead(GameID) & (Drive != dplyr::lead(Drive) | Drive != dplyr::lead(Drive,2)) & dplyr::lead(PlayType) %in% c("Quarter End","Two Minute Warning","Timeout"),1,0))
+  dataset$WPA_change_ind <- with(dataset,ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & GameID == dplyr::lead(GameID) & Drive != dplyr::lead(Drive) & dplyr::lead(PlayType) %in% c("Pass","Run","Punt","Sack","Field Goal","No Play","QB Kneel","Spike","Kickoff"),1,0))
+  dataset$WPA_halfend_to_ind <- with(dataset, ifelse(PlayType %in% c("Half End","Quarter End",
+                                                                            "End of Game","Timeout") | (GameID == dplyr::lead(GameID) & Touchdown != 1 & is.na(FieldGoalResult) & is.na(ExPointResult) & is.na(TwoPointConv) & Safety != 1 & ((dplyr::lead(PlayType) %in% c("Half End")) | (qtr == 2 & dplyr::lead(qtr)==3) | (qtr == 4 & dplyr::lead(qtr)==5))),1,0))
+  dataset$WPA_final_ind <- with(dataset, ifelse(dplyr::lead(PlayType) %in% "End of Game", 1, 0))
   
-  # Post Play Win Prob - Home Team #
-  dataset$Home.WP.post <- NA
-  dataset$Home.WP.post[!is.na(dataset$Home.WP.pre)] <- dplyr::lead(dataset$Home.WP.pre[!is.na(dataset$Home.WP.pre)])
+  # Replace the missings with 0 due to how ifelse treats missings
+  dataset$WPA_base_ind[is.na(dataset$WPA_base_ind)] <- 0 
+  dataset$WPA_base_nxt_ind[is.na(dataset$WPA_base_nxt_ind)] <- 0
+  dataset$WPA_change_nxt_ind[is.na(dataset$WPA_change_nxt_ind)] <- 0
+  dataset$WPA_change_ind[is.na(dataset$WPA_change_ind)] <- 0 
+  dataset$WPA_halfend_to_ind[is.na(dataset$WPA_halfend_to_ind)] <- 0
+  dataset$WPA_final_ind[is.na(dataset$WPA_final_ind)] <- 0
+
   
-  # Post Play Win Prob - Away Team #
-  dataset$Away.WP.post <- NA
-  dataset$Away.WP.post[!is.na(dataset$Away.WP.pre)] <- dplyr::lead(dataset$Away.WP.pre[!is.na(dataset$Away.WP.pre)])
+  # Assign WPA using these indicator columns: 
+  dataset$WPA <- with(dataset, ifelse(WPA_base_ind == 1,WPA_base,
+                                                ifelse(WPA_base_nxt_ind == 1,WPA_base_nxt,
+                                                       ifelse(WPA_change_nxt_ind == 1,WPA_change_nxt,
+                                                              ifelse(WPA_change_ind == 1,WPA_change,
+                                                                     ifelse(WPA_halfend_to_ind == 1,WPA_halfend_to,
+                                                                            ifelse(WPA_final_ind == 1,WPA_final,NA)))))))
+  # Home and Away post:
   
-  ####### Adding Win Probability Added #######
+  dataset$Home_WP_post <- ifelse(dataset$posteam == dataset$HomeTeam,
+                                 dataset$Home_WP_pre + dataset$WPA,
+                                 dataset$Home_WP_pre - dataset$WPA)
+  dataset$Away_WP_post <- ifelse(dataset$posteam == dataset$AwayTeam,
+                                 dataset$Away_WP_pre + dataset$WPA,
+                                 dataset$Away_WP_pre - dataset$WPA)
   
-  # Home
-  dataset$Home.WPA <- round(dataset$Home.WP.post - dataset$Home.WP.pre, 2)
   
-  # Away
-  dataset$Away.WPA <- round(dataset$Away.WP.post - dataset$Away.WP.pre, 2)
+  # Now drop the unnecessary columns
+  dataset <- dplyr::select(dataset, -c(WPA_base,WPA_base_nxt,WPA_change_nxt,WPA_change,
+                                       WPA_halfend_to, WPA_final, WPA_base_ind,
+                                       WPA_base_nxt_ind, WPA_change_nxt_ind,
+                                       WPA_change_ind, WPA_halfend_to_ind, WPA_final_ind,
+                                       Half_Ind))
   
-  # WPA for the play
-  dataset$WPA <- ifelse(dataset$posteam == dataset$HomeTeam,dataset$Home.WPA,dataset$Away.WPA)
+  return(dataset)
   
-  ### Formatting ###
-  ## Change down back to numeric ##
-  
-  dataset$down[which(dataset$down == "SpecialTeams")] <- NA
-  
-  dataset$down <- as.numeric(dataset$down)
-  
-  invtime.index <- which(colnames(dataset) == "invtime")
-  
-  ## Final output dataframe ##
-  dataset[,-invtime.index]
 }
 

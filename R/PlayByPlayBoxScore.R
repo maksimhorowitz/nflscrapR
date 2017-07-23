@@ -172,22 +172,21 @@
 #'  start of the play
 #'  \item{"EPA"} - Expected points added with respect to the possession
 #'  team considering the result of the play
-#'  \item{"Home.WP.pre"} - The win probability for the home team at the start
+#'  \item{"Home_WP_pre"} - The win probability for the home team at the start
 #'  of the play
-#'  \item{"Away.WP.pre"} - The win probability for the away team at the start
+#'  \item{"Away_WP_pre"} - The win probability for the away team at the start
 #'  of the play
-#'  \item{"Home.WP.post"} - The win probability for the home team at the
+#'  \item{"Home_WP_post"} - The win probability for the home team at the
 #'  end of the play
-#'  \item{"Away.WP.post"} - The win probability for the away team at the
+#'  \item{"Away_WP_post"} - The win probability for the away team at the
 #'  end of the play
-#'  \item{"Home.WPA"} - The win probability added for the home team
-#'  \item{"Away.WPA"} - The win probability added for the away team
+#'  \item{"Win_Prob"} - The win probability added for team with possession
 #'  \item{"WPA"} - The win probability added with respect to the
 #'  possession team
 #'  
 #'  }
 #'  
-#' @return A dataframe with 88 columns specifying various statistics and 
+#' @return A dataframe with 98 columns specifying various statistics and 
 #' outcomes associated with each play of the specified NFL game.
 #' @examples
 #' # Parsed play-by-play of the final game in the 2015 NFL season 
@@ -1442,13 +1441,13 @@ game_play_by_play <- function(GameID) {
     PBP[err_play_index,"Touchdown"] <- 1
   }
   
-  ## Adding in Win Probability ##
-  
-  PBP <- win_probability(PBP)
-  
   ## Adding in Expected Points ##
   
   PBP <- expected_points(PBP)
+  
+  ## Adding in Win Probability ##
+  
+  PBP <- win_probability(PBP)
   
   ##############################################################################
   ## Adding Row for End of Game if not in the data ##
@@ -1487,8 +1486,8 @@ game_play_by_play <- function(GameID) {
          "No_Score_Prob","Opp_Field_Goal_Prob","Opp_Safety_Prob",
          "Opp_Touchdown_Prob","Field_Goal_Prob","Safety_Prob",
          "Touchdown_Prob","ExPoint_Prob","TwoPoint_Prob",
-         "ExpPts","EPA","Home.WP.pre",  "Away.WP.pre", "Home.WP.post", 
-         "Away.WP.post", "Home.WPA", "Away.WPA","WPA")]
+         "ExpPts","EPA","Home_WP_pre",  "Away_WP_pre", "Home_WP_post", 
+         "Away_WP_post","Win_Prob","WPA")]
 }
 
 ################################################################## 
