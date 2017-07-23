@@ -11,7 +11,7 @@ game_play_by_play(GameID)
 given NFL game.}
 }
 \value{
-A dataframe with 88 columns specifying various statistics and 
+A dataframe with 98 columns specifying various statistics and 
 outcomes associated with each play of the specified NFL game.
 }
 \description{
@@ -181,16 +181,15 @@ The added variables are specified below:
  start of the play
  \item{"EPA"} - Expected points added with respect to the possession
  team considering the result of the play
- \item{"Home.WP.pre"} - The win probability for the home team at the start
+ \item{"Home_WP_pre"} - The win probability for the home team at the start
  of the play
- \item{"Away.WP.pre"} - The win probability for the away team at the start
+ \item{"Away_WP_pre"} - The win probability for the away team at the start
  of the play
- \item{"Home.WP.post"} - The win probability for the home team at the
+ \item{"Home_WP_post"} - The win probability for the home team at the
  end of the play
- \item{"Away.WP.post"} - The win probability for the away team at the
+ \item{"Away_WP_post"} - The win probability for the away team at the
  end of the play
- \item{"Home.WPA"} - The win probability added for the home team
- \item{"Away.WPA"} - The win probability added for the away team
+ \item{"Win_Prob"} - The win probability added for team with possession
  \item{"WPA"} - The win probability added with respect to the
  possession team
  
