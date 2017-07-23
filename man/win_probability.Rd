@@ -2,8 +2,8 @@
 % Please edit documentation in R/ExpectedPointAndWinProbability.R
 \name{win_probability}
 \alias{win_probability}
-\title{Win probability function to add win probability columns for the offense and 
-defense for each play in the game}
+\title{Win probability function to add win probability columns for the home and 
+away teams for each play in the game}
 \usage{
 win_probability(dataset)
 }
@@ -12,13 +12,16 @@ win_probability(dataset)
 game_play_by_play function}
 }
 \value{
-The input dataframe with the addition of four win probability columns 
-for the home and away
+The input dataframe with the addition of six win probability columns 
+giving the win probability for the possession team, the WPA for each play,
+the pre and post win probability for both the home and away teams.
 }
 \description{
 This function takes in the output of the game level play by play
 function and returns the same dataframe with six new columns representing the
 win probability for the home and away team pre and post snap and win probability
-added.  The model used to calculate win probability is a genarlized addative
- model with three explanatory variables.
+added.  The model used to calculate win probability is a generalized additive
+model using the expected score differential, time remaining in game,
+also accounting for the timeouts remaining for both teams. Overtime win 
+probability is calculated separately using the scoring event probabilities.
 }
