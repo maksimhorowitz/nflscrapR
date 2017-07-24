@@ -13,7 +13,7 @@
 #' @param GameID (character or numeric) A 10 digit game ID associated with a 
 #' given NFL game.
 #' @details Through list manipulation using the do.call and rbind functions
-#'  a 10 column dataframe with basic information populates directly from the NFL 
+#'  a 13 column dataframe with basic information populates directly from the NFL 
 #'  JSON API.  These columns include the following:
 #' \itemize{
 #'  \item{"Drive"} - Drive number
@@ -172,6 +172,8 @@
 #'  start of the play
 #'  \item{"EPA"} - Expected points added with respect to the possession
 #'  team considering the result of the play
+#'  \item{"airEPA"} - Expected points added from air yards
+#'  \item{"yacEPA"} - Expected points added from yards after catch
 #'  \item{"Home_WP_pre"} - The win probability for the home team at the start
 #'  of the play
 #'  \item{"Away_WP_pre"} - The win probability for the away team at the start
@@ -186,7 +188,7 @@
 #'  
 #'  }
 #'  
-#' @return A dataframe with 98 columns specifying various statistics and 
+#' @return A dataframe with 99 columns specifying various statistics and 
 #' outcomes associated with each play of the specified NFL game.
 #' @examples
 #' # Parsed play-by-play of the final game in the 2015 NFL season 
@@ -1486,7 +1488,7 @@ game_play_by_play <- function(GameID) {
          "No_Score_Prob","Opp_Field_Goal_Prob","Opp_Safety_Prob",
          "Opp_Touchdown_Prob","Field_Goal_Prob","Safety_Prob",
          "Touchdown_Prob","ExPoint_Prob","TwoPoint_Prob",
-         "ExpPts","EPA","Home_WP_pre",  "Away_WP_pre", "Home_WP_post", 
+         "ExpPts","EPA","airEPA","yacEPA","Home_WP_pre",  "Away_WP_pre", "Home_WP_post", 
          "Away_WP_post","Win_Prob","WPA")]
 }
 
@@ -1507,7 +1509,7 @@ game_play_by_play <- function(GameID) {
 #' from a given season.  This dataframe is prime for use with the dplyr and 
 #' plyr packages.
 #' @return A dataframe contains all the play-by-play information for a single
-#'      season.  This includes all the 88 variables collected in our 
+#'      season.  This includes all the 99 variables collected in our 
 #'      game_play_by_play function (see documentation for game_play_by_play for
 #'      details) and a column for the Season.
 #' @examples

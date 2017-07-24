@@ -11,7 +11,7 @@ game_play_by_play(GameID)
 given NFL game.}
 }
 \value{
-A dataframe with 98 columns specifying various statistics and 
+A dataframe with 99 columns specifying various statistics and 
 outcomes associated with each play of the specified NFL game.
 }
 \description{
@@ -22,7 +22,7 @@ This function intakes the JSON play-by-play data of a single
 }
 \details{
 Through list manipulation using the do.call and rbind functions
- a 10 column dataframe with basic information populates directly from the NFL 
+ a 13 column dataframe with basic information populates directly from the NFL 
  JSON API.  These columns include the following:
 \itemize{
  \item{"Drive"} - Drive number
@@ -181,6 +181,8 @@ The added variables are specified below:
  start of the play
  \item{"EPA"} - Expected points added with respect to the possession
  team considering the result of the play
+ \item{"airEPA"} - Expected points added from air yards
+ \item{"yacEPA"} - Expected points added from yards after catch
  \item{"Home_WP_pre"} - The win probability for the home team at the start
  of the play
  \item{"Away_WP_pre"} - The win probability for the away team at the start
