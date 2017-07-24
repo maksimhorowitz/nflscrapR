@@ -6,17 +6,16 @@
 ################################################################## 
 ################# Expected Point Function #####################
 
-## Still need to add an update model.  How do we add models to nflscrapR
-
-#' Expected point function to add an expected point variable for each play in
-#' the play by play
+#' Expected point function to calculate expected points for each play in
+#' the play by play, and the expected points added in three ways, 
+#' basic EPA, air yards EPA, and yards after catch EPA 
 #' @description This function takes in the output of the game level play by play
 #' function and returns the same dataframe with a new column added for expected
 #' points for each valid play.  The expected point model can loaded in the same 
 #' way that datasets can be loaded for this package
 #' @param dataset (data.frame object) A data.frame as exported from the 
 #' game_play_by_play function
-#' @return The input dataframe with the addition of an expected point column
+#' @return The input dataframe with the addition of expected points columns
 #' @export
 expected_points <- function(dataset) {
   
@@ -68,8 +67,8 @@ expected_points <- function(dataset) {
     missed_fg_ep_preds <- as.data.frame(predict(ep_model, newdata = missed_fg_data, type = "probs"))
     colnames(missed_fg_ep_preds) <- c("No_Score","Opp_Field_Goal","Opp_Safety","Opp_Touchdown",
                                  "Field_Goal","Safety","Touchdown")
-    # Find the rows where TimeSecs became 0 or negative and make all the probs equal to 0:
-    end_game_i <- which(missed_fg_data$TimeSecs <= 0)
+    # Find the rows where TimeSecs_Remaining became 0 or negative and make all the probs equal to 0:
+    end_game_i <- which(missed_fg_data$TimeSecs_Remaining <= 0)
     missed_fg_ep_preds[end_game_i,] <- rep(0,ncol(missed_fg_ep_preds))
     
     # Get the probability of making the field goal:
@@ -229,6 +228,8 @@ expected_points <- function(dataset) {
                               EPA_off_ep = 1 - ExpPts,
                               # Offense two-point conversion:
                               EPA_off_tp = 2 - ExpPts,
+                              # Missing PAT:
+                              EPA_PAT_fail = 0 - ExpPts,
                               # Opponent Safety:
                               EPA_safety = -2 - ExpPts,
                               # End of half/game or timeout or QB Kneel:
@@ -252,9 +253,9 @@ expected_points <- function(dataset) {
                               # Offense fieldgoal:
                               PTDA_off_fg = 0 - Touchdown_Prob,
                               # Offense extra-point conversion:
-                              PTDA_off_ep = 0 - Touchdown_Prob,
+                              PTDA_off_ep = 0,
                               # Offense two-point conversion:
-                              PTDA_off_tp = 0 - Touchdown_Prob,
+                              PTDA_off_tp = 0,
                               # Opponent Safety:
                               PTDA_safety = 0 - Touchdown_Prob,
                               # End of half/game or timeout or QB Kneel:
@@ -272,6 +273,7 @@ expected_points <- function(dataset) {
   pbp_data_epa$EPA_off_fg_ind <- with(pbp_data_epa, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & PlayType != "QB Kneel" & FieldGoalResult == "Good",1,0))
   pbp_data_epa$EPA_off_ep_ind <- with(pbp_data_epa, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & PlayType != "QB Kneel" & ExPointResult == "Made",1,0))
   pbp_data_epa$EPA_off_tp_ind <- with(pbp_data_epa, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & PlayType != "QB Kneel" & TwoPointConv == "Success", 1,0))
+  pbp_data_epa$EPA_PAT_fail_ind <- with(pbp_data_epa, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & PlayType != "QB Kneel" & (TwoPointConv == "Failure" | ExPointResult == "Missed" | ExPointResult == "Aborted" | ExPointResult == "Blocked"), 1,0))
   pbp_data_epa$EPA_safety_ind <- with(pbp_data_epa, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & PlayType != "QB Kneel" & Safety == 1,1,0))
   pbp_data_epa$EPA_endtime_ind <- with(pbp_data_epa, ifelse(PlayType %in% c("Half End","Quarter End",
                                                                           "End of Game","Timeout","QB Kneel") | (GameID == dplyr::lead(GameID) & Touchdown != 1 & is.na(FieldGoalResult) & is.na(ExPointResult) & is.na(TwoPointConv) & Safety != 1 & ((dplyr::lead(PlayType) %in% c("Half End","End of Game")) | (qtr == 2 & dplyr::lead(qtr)==3) | (qtr == 4 & dplyr::lead(qtr)==5))),1,0))
@@ -299,8 +301,9 @@ expected_points <- function(dataset) {
                                                                                      ifelse(EPA_off_fg_ind == 1,EPA_off_fg,
                                                                                             ifelse(EPA_off_ep_ind == 1,EPA_off_ep,
                                                                                                    ifelse(EPA_off_tp_ind == 1,EPA_off_tp,
-                                                                                                          ifelse(EPA_safety_ind==1,EPA_safety,
-                                                                                                                 ifelse(EPA_endtime_ind==1,EPA_endtime,NA))))))))))))
+                                                                                                          ifelse(pbp_data_epa$EPA_PAT_fail_ind == 1, EPA_PAT_fail,
+                                                                                                                 ifelse(EPA_safety_ind==1,EPA_safety,
+                                                                                                                        ifelse(EPA_endtime_ind==1,EPA_endtime,NA)))))))))))))
 
   # Assign PTDA using these indicator columns: 
   pbp_data_epa$PTDA <- with(pbp_data_epa, ifelse(EPA_base_ind == 1,PTDA_base,
@@ -327,16 +330,114 @@ expected_points <- function(dataset) {
                                                      PTDA_base,PTDA_base_nxt,
                                                      PTDA_change_no_score,PTDA_change_no_score_nxt,
                                                      PTDA_change_score,PTDA_off_td,PTDA_off_fg,PTDA_off_ep,
-                                                     PTDA_off_tp,PTDA_safety,PTDA_endtime))
+                                                     PTDA_off_tp,PTDA_safety,PTDA_endtime, EPA_PAT_fail, EPA_PAT_fail_ind))
 
   
-  # Return the dataset
+  # Ungroup the dataset
+  pbp_data_epa_final <- dplyr::ungroup(pbp_data_epa_final)
+  #return(dplyr::ungroup(pbp_data_epa_final))
   
-  return(dplyr::ungroup(pbp_data_epa_final))
+  # Calculate the airEPA and yacEPA:
+  
+  # Find all Pass Attempts that are also actual plays,
+  pass_plays_i <- which(pbp_data_epa_final$PassAttempt == 1 & pbp_data_epa_final$PlayType != "No Play")
+  
+  # Create a dataframe of pass_plays:
+  
+  pass_pbp_data <- pbp_data_epa_final[pass_plays_i,]
+  
+  # Using the AirYards need to update the following:
+  # - yrdline100
+  # - TimeSecs_Remaining
+  # - GoalToGo
+  # - ydstogo
+  # - Time_Yard_Ratio
+  # - down
+  
+  # First rename the old columns to update for calculating the EP from the air:
+  pass_pbp_data <- dplyr::rename(pass_pbp_data,old_yrdline100=yrdline100,
+                                 old_ydstogo=ydstogo, old_TimeSecs_Remaining=TimeSecs_Remaining,
+                                 old_GoalToGo=GoalToGo,old_down=down)
+  
+  # Create an indicator column for the air yards failing to convert the first down:
+  pass_pbp_data$Turnover_Ind <- ifelse(pass_pbp_data$old_down == 4 & pass_pbp_data$AirYards < pass_pbp_data$old_ydstogo,
+                                       1,0)
+  # Adjust the field position variables:
+  pass_pbp_data$yrdline100 <- ifelse(pass_pbp_data$Turnover_Ind == 0,
+                                     pass_pbp_data$old_yrdline100 - pass_pbp_data$AirYards,
+                                     100 - (pass_pbp_data$old_yrdline100 - pass_pbp_data$AirYards))
+  
+  pass_pbp_data$ydstogo <- ifelse(pass_pbp_data$AirYards >= pass_pbp_data$old_ydstogo | 
+                                    pass_pbp_data$Turnover_Ind == 1,
+                                  10, pass_pbp_data$old_ydstogo - pass_pbp_data$AirYards)
+  
+  pass_pbp_data$down <- ifelse(pass_pbp_data$AirYards >= pass_pbp_data$old_ydstogo | 
+                                 pass_pbp_data$Turnover_Ind == 1,
+                               1, as.numeric(pass_pbp_data$old_down) + 1)
+  
+  pass_pbp_data$GoalToGo <- ifelse((pass_pbp_data$old_GoalToGo == 1 & pass_pbp_data$Turnover_Ind==0) |
+                                     (pass_pbp_data$Turnover_Ind == 0 & pass_pbp_data$old_GoalToGo == 0 & pass_pbp_data$yrdline100 <= 10) |
+                                     (pass_pbp_data$Turnover_Ind == 1 & pass_pbp_data$yrdline100 <= 10),1,0)
+  
+  # Adjust the time with the average incomplete pass time:
+  pass_pbp_data$TimeSecs_Remaining <- pass_pbp_data$old_TimeSecs_Remaining - 5.704673
+  
+  
+  pass_pbp_data <- dplyr::mutate(pass_pbp_data,
+                                 Time_Yard_Ratio = (1+TimeSecs_Remaining)/(1+yrdline100))
+  
+  # Make the new down a factor:
+  pass_pbp_data$down <- as.factor(pass_pbp_data$down)
+  
+  # Get the new predicted probabilites:
+  pass_pbp_data_preds <- as.data.frame(predict(current_ep_model4, newdata = pass_pbp_data, type = "probs"))
+  colnames(pass_pbp_data_preds) <- c("No_Score","Opp_Field_Goal","Opp_Safety","Opp_Touchdown",
+                               "Field_Goal","Safety","Touchdown")
+  # Convert to air EP:
+  pass_pbp_data_preds <- dplyr::mutate(pass_pbp_data_preds, airEP = (Opp_Safety*-2) + (Opp_Field_Goal*-3) + 
+                                   (Opp_Touchdown*-7) + (Safety*2) + (Field_Goal*3) + (Touchdown*7))
+  
+  # Return back to the passing data:
+  pass_pbp_data$airEP <- pass_pbp_data_preds$airEP
+  
+  # For the plays that have TimeSecs_Remaining 0 or less, set airEP to 0:
+  pass_pbp_data$airEP[which(pass_pbp_data$TimeSecs_Remaining<=0)] <- 0
+  
+  # Calculate the airEPA based on 4 scenarios:
+  pass_pbp_data$airEPA <- with(pass_pbp_data, ifelse(old_yrdline100 - AirYards <= 0,
+                                                     7 - ExpPts,
+                                                     ifelse(old_yrdline100 - AirYards > 99,
+                                                            -2 - ExpPts,
+                                                            ifelse(Turnover_Ind == 1,
+                                                                   (-1*airEP) - ExpPts,airEP - ExpPts))))
+  
+  # If the play is a two-point conversion then change the airEPA to NA since
+  # no air yards are provided:
+  pass_pbp_data$airEPA <- with(pass_pbp_data, ifelse(!is.na(TwoPointConv),
+                                                     NA,airEPA))
+  
+  # Calculate the yards after catch EPA:
+  pass_pbp_data <- dplyr::mutate(pass_pbp_data,yacEPA = EPA - airEPA)
+  
+  # if Yards after catch is 0 make yacEPA set to 0:
+  pass_pbp_data$yacEPA <- ifelse(pass_pbp_data$YardsAfterCatch == 0 & pass_pbp_data$Reception==1,
+                                 0, pass_pbp_data$yacEPA)
+  # if Yards after catch is 0 make airEPA set to EPA:
+  pass_pbp_data$airEPA <- ifelse(pass_pbp_data$YardsAfterCatch == 0 & pass_pbp_data$Reception==1,
+                                 pass_pbp_data$EPA, pass_pbp_data$airEPA)
+  
+  # Now add airEPA and yacEPA to the original dataset:
+  pbp_data_epa_final$airEPA <- NA
+  pbp_data_epa_final$yacEPA <- NA
+  pbp_data_epa_final$airEPA[pass_plays_i] <- pass_pbp_data$airEPA
+  pbp_data_epa_final$yacEPA[pass_plays_i] <- pass_pbp_data$yacEPA
+  
+  # Return the dataset:
+  return(pbp_data_epa_final)
   
 }
 
-################# Win Probability Fucntion #####################
+################# Win Probability Function #####################
 
 #' Win probability function to add win probability columns for the home and 
 #' away teams for each play in the game
