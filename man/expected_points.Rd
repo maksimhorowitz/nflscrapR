@@ -2,8 +2,9 @@
 % Please edit documentation in R/ExpectedPointAndWinProbability.R
 \name{expected_points}
 \alias{expected_points}
-\title{Expected point function to add an expected point variable for each play in
-the play by play}
+\title{Expected point function to calculate expected points for each play in
+the play by play, and the expected points added in three ways, 
+basic EPA, air yards EPA, and yards after catch EPA}
 \usage{
 expected_points(dataset)
 }
@@ -12,7 +13,7 @@ expected_points(dataset)
 game_play_by_play function}
 }
 \value{
-The input dataframe with the addition of an expected point column
+The input dataframe with the addition of expected points columns
 }
 \description{
 This function takes in the output of the game level play by play

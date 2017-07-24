@@ -16,7 +16,7 @@ three weeks of play-by-play will be scraped from the associated season.}
 }
 \value{
 A dataframe contains all the play-by-play information for a single
-     season.  This includes all the 88 variables collected in our 
+     season.  This includes all the 99 variables collected in our 
      game_play_by_play function (see documentation for game_play_by_play for
      details) and a column for the Season.
 }
