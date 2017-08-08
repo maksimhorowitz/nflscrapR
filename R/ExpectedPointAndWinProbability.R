@@ -28,16 +28,22 @@ expected_points <- function(dataset) {
                                         ifelse(dataset$qtr == 5,
                                                dataset$TimeSecs + 900,
                                                dataset$TimeSecs))
+  # Create log_ydstogo:
+  dataset <- dplyr::mutate(dataset, log_ydstogo = log(ydstogo))
   
-  # Ratio of time to yard line
+  # Create Under_TwoMinute_Warning indicator
+  dataset$Under_TwoMinute_Warning <- ifelse(dataset$TimeSecs_Remaining < 120,1,0)
+  
+  # Add columns for season and month:
   dataset <- dplyr::mutate(dataset,
-                           Time_Yard_Ratio = (1+TimeSecs_Remaining)/(1+yrdline100))
+                           Season = as.numeric(substr(as.character(GameID),1,4)),
+                           Month = as.numeric(substr(as.character(GameID),5,6)))
   
   # Define the predict_EP_prob() function:
   # INPUT:  - data: play-by-play dataset
   #         - ep_model: multinom EP model to predict probabilities
   #                     of the next scoring event for basic plays
-  #         - fg_model: gam FG model to predict FG success rate
+  #         - fg_model: bam FG model to predict FG success rate
   # OUTPUT: - play-by-play dataset with predicted probabilities for
   #           each of the type of next scoring events, and additionally
   #           the probability of the PAT attempts
@@ -52,8 +58,7 @@ expected_points <- function(dataset) {
     missed_fg_data <- data
     # Subtract 5.065401 from TimeSecs:
     missed_fg_data$TimeSecs_Remaining <- missed_fg_data$TimeSecs_Remaining - 5.065401
-    missed_fg_data <- dplyr::mutate(missed_fg_data,Time_Yard_Ratio = (1+TimeSecs_Remaining)/(1+yrdline100))
-    
+
     # Correct the yrdline100:
     missed_fg_data$yrdline100 <- 100 - (missed_fg_data$yrdline100 + 8)
     # Not GoalToGo:
@@ -62,6 +67,11 @@ expected_points <- function(dataset) {
     missed_fg_data$down <- rep("1",nrow(data))
     # 10 ydstogo:
     missed_fg_data$ydstogo <- rep(10,nrow(data))
+    # Create log_ydstogo:
+    missed_fg_data <- dplyr::mutate(missed_fg_data, log_ydstogo = log(ydstogo))
+    
+    # Create Under_TwoMinute_Warning indicator
+    missed_fg_data$Under_TwoMinute_Warning <- ifelse(missed_fg_data$TimeSecs_Remaining < 120,1,0)
     
     # Get the new predicted probabilites:
     missed_fg_ep_preds <- as.data.frame(predict(ep_model, newdata = missed_fg_data, type = "probs"))
@@ -72,7 +82,7 @@ expected_points <- function(dataset) {
     missed_fg_ep_preds[end_game_i,] <- rep(0,ncol(missed_fg_ep_preds))
     
     # Get the probability of making the field goal:
-    make_fg_prob <- as.numeric(mgcv::predict.gam(fgxp_model, newdata= data, type="response"))
+    make_fg_prob <- as.numeric(mgcv::predict.bam(fgxp_model, newdata= data, type="response"))
     
     # Multiply each value of the missed_fg_ep_preds by the 1 - make_fg_prob
     missed_fg_ep_preds <- missed_fg_ep_preds * (1 - make_fg_prob)
@@ -93,9 +103,6 @@ expected_points <- function(dataset) {
     # Calculate the EP for receiving a touchback (from the point of view for recieving team)
     # and update the columns for Kickoff plays:
     kickoff_data <- data
-    kickoff_data <- dplyr::mutate(kickoff_data,
-                                  Season = as.numeric(substr(as.character(GameID),1,4)),
-                                  Month = as.numeric(substr(as.character(GameID),5,6)))
     
     # Change the yard line to be 80 for 2009-2015 and 75 otherwise
     # (accounting for the fact that Jan 2016 is in the 2015 season:
@@ -107,7 +114,8 @@ expected_points <- function(dataset) {
     kickoff_data$down <- rep("1",nrow(data))
     # 10 ydstogo:
     kickoff_data$ydstogo <- rep(10,nrow(data))
-    kickoff_data <- dplyr::mutate(kickoff_data,Time_Yard_Ratio = (1+TimeSecs_Remaining)/(1+yrdline100))
+    # Create log_ydstogo:
+    kickoff_data <- dplyr::mutate(kickoff_data, log_ydstogo = log(ydstogo))
     
     # Get the new predicted probabilites:
     kickoff_preds <- as.data.frame(predict(ep_model, newdata = kickoff_data, type = "probs"))
@@ -178,7 +186,7 @@ expected_points <- function(dataset) {
   }
   
   # Use the predict_EP_Prob on the pbp_data:
-  pbp_ep_probs <- predict_EP_prob(dataset, current_ep_model4, current_fgxp_model)
+  pbp_ep_probs <- predict_EP_prob(dataset, ep_model, fg_model)
   
   # Join them together:
   dataset <- cbind(dataset, pbp_ep_probs)
@@ -351,7 +359,8 @@ expected_points <- function(dataset) {
   # - TimeSecs_Remaining
   # - GoalToGo
   # - ydstogo
-  # - Time_Yard_Ratio
+  # - log_ydstogo
+  # - Under_TwoMinute_Warning
   # - down
   
   # First rename the old columns to update for calculating the EP from the air:
@@ -370,6 +379,8 @@ expected_points <- function(dataset) {
   pass_pbp_data$ydstogo <- ifelse(pass_pbp_data$AirYards >= pass_pbp_data$old_ydstogo | 
                                     pass_pbp_data$Turnover_Ind == 1,
                                   10, pass_pbp_data$old_ydstogo - pass_pbp_data$AirYards)
+  # Create log_ydstogo:
+  pass_pbp_data <- dplyr::mutate(pass_pbp_data, log_ydstogo = log(ydstogo))
   
   pass_pbp_data$down <- ifelse(pass_pbp_data$AirYards >= pass_pbp_data$old_ydstogo | 
                                  pass_pbp_data$Turnover_Ind == 1,
@@ -382,15 +393,14 @@ expected_points <- function(dataset) {
   # Adjust the time with the average incomplete pass time:
   pass_pbp_data$TimeSecs_Remaining <- pass_pbp_data$old_TimeSecs_Remaining - 5.704673
   
-  
-  pass_pbp_data <- dplyr::mutate(pass_pbp_data,
-                                 Time_Yard_Ratio = (1+TimeSecs_Remaining)/(1+yrdline100))
+  # Create Under_TwoMinute_Warning indicator
+  pass_pbp_data$Under_TwoMinute_Warning <- ifelse(pass_pbp_data$TimeSecs_Remaining < 120,1,0)
   
   # Make the new down a factor:
   pass_pbp_data$down <- as.factor(pass_pbp_data$down)
   
   # Get the new predicted probabilites:
-  pass_pbp_data_preds <- as.data.frame(predict(current_ep_model4, newdata = pass_pbp_data, type = "probs"))
+  pass_pbp_data_preds <- as.data.frame(predict(ep_model, newdata = pass_pbp_data, type = "probs"))
   colnames(pass_pbp_data_preds) <- c("No_Score","Opp_Field_Goal","Opp_Safety","Opp_Touchdown",
                                "Field_Goal","Safety","Touchdown")
   # Convert to air EP:
@@ -555,10 +565,14 @@ win_probability <- function(dataset) {
     overtime_df_ko$down <- rep("1",nrow(overtime_df_ko))
     # 10 ydstogo:
     overtime_df_ko$ydstogo <- rep(10,nrow(overtime_df_ko))
-    overtime_df_ko <- dplyr::mutate(overtime_df_ko,Time_Yard_Ratio = (1+TimeSecs_Remaining)/(1+yrdline100))
+    # Create log_ydstogo:
+    overtime_df_ko <- dplyr::mutate(overtime_df_ko, log_ydstogo = log(ydstogo))
+    
+    # Create Under_TwoMinute_Warning indicator
+    overtime_df_ko$Under_TwoMinute_Warning <- ifelse(overtime_df_ko$TimeSecs_Remaining < 120,1,0)
     
     # Get the predictions from the EP model and calculate the necessary probability:
-    overtime_df_ko_preds <- as.data.frame(predict(current_ep_model4, 
+    overtime_df_ko_preds <- as.data.frame(predict(ep_model, 
                                                     newdata = overtime_df_ko, type = "probs"))
     colnames(overtime_df_ko_preds) <- c("No_Score","Opp_Field_Goal","Opp_Safety","Opp_Touchdown",
                                           "Field_Goal","Safety","Touchdown")
