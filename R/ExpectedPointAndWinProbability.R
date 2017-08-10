@@ -530,7 +530,7 @@ win_probability <- function(dataset) {
                                 ifelse(qtr %in% c(1,2),"Half1","Half2"))
     regular_df$Half_Ind <- as.factor(regular_df$Half_Ind)
     
-    OffWinProb[-overtime_i] <- as.numeric(mgcv::predict.bam(win_prob_model_epsd_bam,newdata=regular_df,
+    OffWinProb[-overtime_i] <- as.numeric(mgcv::predict.bam(wp_model,newdata=regular_df,
                                                             type = "response"))
     
     # Separate routine for overtime:
@@ -594,7 +594,7 @@ win_probability <- function(dataset) {
     dataset$Half_Ind <- with(dataset,
                              ifelse(qtr %in% c(1,2),"Half1","Half2"))
     dataset$Half_Ind <- as.factor(dataset$Half_Ind)
-    OffWinProb <- as.numeric(mgcv::predict.bam(win_prob_model_epsd_bam,newdata=dataset,
+    OffWinProb <- as.numeric(mgcv::predict.bam(wp_model,newdata=dataset,
                                                             type = "response"))
   }
   
