@@ -72,7 +72,17 @@ extracting_gameids <- function(Season, playoffs = FALSE) {
     names(game.id.list) <- NULL
   }
   
-  game.id.list
+  # Find which game.id.list have happened based on the date,
+  # first find the current date and put it in a format for comparing:
+  current.date <- stringr::str_replace_all(Sys.Date(),pattern = "-","")
+  
+  # Create a date form the game_ids to compare to the current_date:
+  date.game.id.list <- substr(game.id.list, 1, 8)
+  
+  # Only use the game_ids that are on or before the given date
+  game.id.list <- game.id.list[which(date.game.id.list <= current.date)]
+  
+  return(game.id.list)
 }
 
 
