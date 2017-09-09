@@ -1526,6 +1526,15 @@ season_play_by_play <- function(Season, Weeks = 16) {
   # season and runs the game_play_by_play function across the entire season
   game_ids <- extracting_gameids(Season)
   
+  # Create a boolean vector showing which of the game_ids has URLs
+  # that exist - so the function can run during games:
+  game_ids_exist <- sapply(game_ids, function(x) RCurl::url.exists(proper_jsonurl_formatting(x)))
+  
+  # Only use the game_ids that exist:
+  game_ids <- game_ids[game_ids_exist]
+  
+  # Only use the which
+  
   if (Weeks %in% 3:15) {
     game_ids <- game_ids[1:(16*Weeks)-1]
   } else if (Weeks %in% 1:2) {
