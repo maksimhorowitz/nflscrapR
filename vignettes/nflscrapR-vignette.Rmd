@@ -1,6 +1,6 @@
 ---
 title: "Introducing nflscrapR: A how to guide"
-author: "Maksim Horowitz (@bklynmaks)"
+author: "Maksim Horowitz (@bklynmaks) and Ron Yurko (@Stat_Ron)"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
@@ -11,12 +11,11 @@ vignette: >
 
 ## Introduction
 
-The lack of publicly available National Football League (NFL) data sources has been a major obstacle in the creation of modern, reproducible research in football analytics.  While clean play-by-play and season-level data is available via open-source software packages in other sports, the equivalent datasets are not freely available for researchers interested in the statistical analysis of the NFL.  We created a publicly available, open-source R package called nflscrapR that allows easy access to NFL data from 2009-2016.  Using a JSON API maintained by the NFL, this package downloads, cleans, parses, and outputs datasets at the individual play, player, game, and season levels.  Our package allows for the advancement of NFL research in the public domain by allowing analysts to develop from a common source, enhancing reproducibility of NFL research.  This document shows example use cases of the different functions of nflscrapR. These examples explore just a few different areas of analysis in the NFL showing the ease of using this package:
-
+The lack of publicly available National Football League (NFL) data has been a major obstacle in the creation of modern, reproducible research in football analytics.  While clean play-by-play and season-level data is available via open-source software packages in other sports, the equivalent datasets are not freely available for researchers interested in the statistical analysis of the NFL. We created a publicly available, open-source R package called `nflscrapR` that allows easy access to NFL data from 2009-2017.  Using a JSON API maintained by the NFL, this package downloads, cleans, parses, and outputs datasets at the individual play, player, game, and season levels. In addition, this package uses win probability and expected points models, build using the data from this package, to provide advanced metrics for users.  Our package allows for the advancement of NFL research in the public domain by allowing analysts to develop from a common source, enhancing reproducibility of NFL research.  This document shows example use cases of the different functions of nflscrapR. These examples explore just a few different areas of analysis in the NFL showing the ease of using this package:
 
 ## Loading the `nflscrapR` package
 
-Use the following code.  The devtools packages is needed to download `nflscrapR` as the package is currently hosted on Github:
+The devtools packages is needed to download `nflscrapR` as the package is currently hosted on Github:
 
 ```{r, eval = FALSE}
 library(devtools)
@@ -48,7 +47,7 @@ head(games2014)
 
 ## Play-by-Play Functions
 
-The `nflscrapR` package contains two `play-by-play` functions.  The single game function outputs a 99 column dataframe and the season long function outputs an 100 column dataframe, each with detailed information about each play including pre-snap information, play call, and post snap results, expected point values, and win probability measures.  To explore the documentation of the function and to learn more about what each column describes, use the following code:
+The `nflscrapR` package contains two `play-by-play` functions.  The single game function outputs a 99 column dataframe and the season long function outputs an 100 column dataframe, each with detailed information about each play including pre-snap information, play call, and post snap results, expected point values, and win probability measures. To explore the documentation of the function and to learn more about what each column describes, use the following code:
 
 ```{r, eval= FALSE}
 
@@ -60,9 +59,9 @@ help(game_play_by_play)
 - `season_play_by_play`: extracts a full season's play-by-play data
     + _**Note this function takes a minute or two to run**_
     
-*Note: There are errors within the NFL API raw data. Numerous extra-point scores are 
-missing due to what seems to be a bug in the API.  Alas, this does not have a major
-effect on the data outside of a few point difference in scores and win probability.*
+*Note: There are errors within the API maintained by the NFL. Numerous extra-point attempts are 
+missing due to a bug in the API.  Alas, this does not have a major
+effect on the data or the models.*
     
 ### Using `game_play_by_play`
 
@@ -87,8 +86,8 @@ superbowl47 %>% dplyr::group_by(posteam) %>% summarize(offensiveplays = n()) %>%
   filter(., posteam != "")
 ```
 
-As seen above the Ravens ran more plays than the 49ers.  There are many directions
-one can move for further insight.  Some ideas are as follows:
+As seen above the Ravens ran more plays than the 49ers. It would be interestin to explore 
+what this play differential means in terms of time of possession, scoring opportunities, and play selections.  Some ideas on how to proceed are below:
 
 - Examining time of possession to see if one team dictated pace of play
 - Dive into expected point and win probability values to see the true value of 
@@ -115,7 +114,7 @@ suppressMessages(library(gridExtra))
 
 # Using dplyr and knitr to find statistics 
 sb_team_summary_stats <- superbowl47 %>% group_by(posteam) %>% 
-                      summarise(offensiveplays = n(), 
+                      summarize(offensiveplays = n(), 
                                 avg.yards.gained = mean(Yards.Gained, 
                                                         na.rm = TRUE),
                                 pointsperplay = max(PosTeamScore, na.rm = TRUE) / n(),
@@ -163,12 +162,12 @@ grid.arrange(plot_yards, plot_points, plot_time, ncol =2)
 
 ### The season_play_by_play function
 
-The above example is just one way to manipulate play-by-play dataframes to gather insights about a single football game. The `season_play_by_play` function allows users to gather further insights on the season level. To read an example of `season_play_by_play`, check out this analysis of [Adrian Peterson's running tendancies posted on the CMU Sports Analytics  club blog](https://tartansportsanalytics.com/2016/03/24/introducing-nflscrapr-part-2/).
+The above example is just one way to manipulate play-by-play dataframes to gather insights about a single football game. The `season_play_by_play` function allows users to gather further insights on the season level. To read an example of `season_play_by_play`, check out this analysis of [Adrian Peterson's running tendancies posted on the CMU Sports Analytics  club blog](https://www.cmusportsanalytics.com/introducing-nflscrapr-part-2/).
 
 ## Detailed Boxscore Functions
 
 Another set of useful and interesting functions in nflscrapR are the detailed box score functions. These functions output game and season level statistics ranging from passing to defense to kick returning. The season level functions output dataframes
-with 56 columns while the game level function outputs a dataframe with 55 columns.
+with 57 columns while the game level function outputs a dataframe with 56 columns.
 
 There are three different detailed box score functions.  The are summarized as follows:
 
@@ -182,7 +181,7 @@ to run.*
 
 ### Using season_player_game
 
-Below, an example is shown using the `season_player_game` function.  Explored in these plots are a number of ways to visualize player data across the seasons.  The first plot shows Joe Flacco's passing yards by game across the past 7 seasons.  Also, plotted below that are his pass attempts per game to visualize his evolution from a game manager to a top-tier quarterback.
+Below, an example is shown using the `season_player_game` function.  Explored in these plots are a number of ways to visualize player data across the seasons.  The first plot shows Joe Flacco's passing yards by game across the past 8 seasons. Also, plotted below,s are his pass attempts per game to visualize his evolution from a game manager to a solid (average?) starting quarterback.
 
 ```{r, echo = FALSE}
 data(playerstats09, playerstats10, playerstats11, playerstats12,
@@ -195,12 +194,8 @@ allplayerstats <- dplyr::bind_rows(playerstats09, playerstats10, playerstats11,
 
 ```{r, eval = FALSE}
 
-# Loading all the statistics for each player by game from 2009-2015
-# Note: The below code takes about 15 minutes to run.
-
-# ****** USE RONS UPDATED DATA FRAMES HERE ****** #
-https://raw.githubusercontent.com/ryurko/nflscrapR-data/master/data/game_player_stats/game_passing_df.csv
-
+# Loading all the statistics for each player by game from 2009-2016
+# Note: The below code takes about 10 minutes to run.
 
 playerstats09 <- season_player_game(Season = 2009)
 playerstats10 <- season_player_game(Season = 2010)
@@ -211,7 +206,7 @@ playerstats14 <- season_player_game(Season = 2014)
 playerstats15 <- season_player_game(Season = 2015)
 playerstats16 <- season_player_game(Season = 2016)
 
-# Combining into one dataframe using rbind()
+# Combining into one dataframe using bind_rows()
 
 allplayerstats <- dplyr::bind_rows(playerstats09, playerstats10, playerstats11,
                         playerstats12, playerstats13, playerstats14,
@@ -229,7 +224,7 @@ dim(allplayerstats)
 flacco_data <- dplyr::filter(allplayerstats, name == "J.Flacco") %>%
   arrange(date)
 
-# Add games player.  Note in 2015 Flacco was injured in Week 10:
+# Add games played. Note in 2015 Flacco was injured in Week 10:
 flacco_data <- flacco_data %>%
   group_by(Season) %>% 
   dplyr::mutate(gamenumber = row_number(date))
@@ -250,20 +245,20 @@ flacco_passyds_plot <- ggplot(flacco_data, aes(x = gamenumber, y = passyds)) +
   facet_wrap(~Season, ncol = 1) 
 ```
 
-The plot below of Flacco's passing yards across games provides an interesting visual.
-By examining the plot one can see that he usually has a strong first game followed by a much weaker second game (excluding the 2015 season).  One can also see that in 2015 Flacco was one pace to throw for a career high in yards in a season before he was derailed by a torn ACL.  
+The plot of Flacco's passing yards across games provides an interesting visual.
+By examining the plot you can see that he usually has a strong first game followed by a much weaker second game (excluding the 2015 season).  You can also see that in 2015 Flacco was on pace to throw for a career high in yards in a season before he was derailed by a torn ACL.  
 
 ```{r, echo = FALSE, fig.align= "center", fig.height= 9, fig.width=9}
 flacco_passyds_plot
 ```
 
-Now examined are Flacco's pass attempts across games.  This allows visualization of 
+Now examined are Flacco's pass attempts by game.  This allows visualization of 
 his progression from a game manager to the solid (average?) quarterback that he his today. One can observe the following insights from the bar plots below:
 
 - Flacco's most consistent season in terms of pass attempts was 2010
-- In 2013 and 2014 the Ravens started the season aggressively relying heavily on
-the passing game with 62 attempts in the first game
-- In 2009, 2010, and 2011 Flacco's attempts tailed off at the end of the seasons. This could be related to the Ravens having already clinched a playoff berth by that point in the season.
+- In 2013 and 2014 the Ravens started the season relying heavily on
+the passing game with 62 attempts by Flacco in the first game
+- In 2009, 2010, and 2011 Flacco's attempts tailed off at the end of the seasons. This is potentially related to the fact that the Ravens had already clinched playoff berths and were trying to remain fresh for the playoffs.
 
 ```{r, fig.align= "center", fig.height= 9, fig.width=9}
 
@@ -288,10 +283,10 @@ ggplot(flacco_data, aes(x = gamenumber, y = pass.att)) +
 Similar exploration of game level statistics can be done with with the `player_game`
 function.  The nice thing about the `player_game` function is that it downloads, parses, and cleans the data very quickly so if you are interested in particular games, you can download the data instantaneously.
 
-The `agg_player_season` function allows users to visualize season total statistics which is beneficial for building running list of statistics or easily calculating total from the available range of seasons. 
+The `agg_player_season` function allows users to visualize season total statistics which is beneficial for building running lists of statistics or easily calculating totals from the available range of seasons. 
 
 Note, there is also a simple box score function available which separates each of the
-measured statistics into different lists of dataframes.  This is much more similar what is seen in a standard box score.  The function is named: `simple_boxscore`
+measured statistics into lists of dataframes.  This is much more similar to what is seen in a standard box score. The function is named: `simple_boxscore`
 
 ## Roster Function
 
@@ -302,7 +297,11 @@ data set stored in the package. The following code shows the roster for the Tenn
 ```{r}
 
 # Find Titans Abbreviation
+
+# Load team name dataset
 data(nflteams)
+
+# Find Tennessee's abbreviation
 ten_abbr <- filter(nflteams, TeamName == "Tennessee Titans")$Abbr
 
 # Load the Titans Roster from 2013
@@ -315,11 +314,11 @@ head(tenroster2013)
 
 The `drive_summary` function allows users to download datasets with information about each drive in a game.  The input requires a GameID, and the outputted dataframe has
 18 columns.  The help documentation for the function describes each of the columns 
-in more detail.  Drives summaries provide interesting insight into what type of play calling leads to specific type of drive results such as scoring plays, punts, or turnovers.
+in more detail.
 
 ### Using the drive_summary function
 
-Displayed below is an interactive table of the drive summaries of the last game of the 2015 season between the Minnesota Viking and the Green Bay Packers.
+Displayed below is a dataset of the drive summaries of the last game of the 2015 season between the Minnesota Viking and the Green Bay Packers.
 ```{r}
 # Drive summary from final game of 2015 season
 min_gb_drivesummary <- drive_summary(GameID = 2016010310)
