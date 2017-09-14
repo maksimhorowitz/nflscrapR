@@ -48,7 +48,7 @@ head(games2014)
 
 ## Play-by-Play Functions
 
-The `nflscrapR` package contains two `play-by-play` functions.  The single game function outputs a 62 column dataframe and the season long function outputs a 63 column dataframe, each with detailed information about each play including pre-snap informations, play call, and post snap results.  To explore the documentation of the function and to learn more about what each column describes, use the following code:
+The `nflscrapR` package contains two `play-by-play` functions.  The single game function outputs a 99 column dataframe and the season long function outputs an 100 column dataframe, each with detailed information about each play including pre-snap information, play call, and post snap results, expected point values, and win probability measures.  To explore the documentation of the function and to learn more about what each column describes, use the following code:
 
 ```{r, eval= FALSE}
 
@@ -62,7 +62,7 @@ help(game_play_by_play)
     
 *Note: There are errors within the NFL API raw data. Numerous extra-point scores are 
 missing due to what seems to be a bug in the API.  Alas, this does not have a major
-effect on the games outside of a few point difference in scores.*
+effect on the data outside of a few point difference in scores and win probability.*
     
 ### Using `game_play_by_play`
 
@@ -83,7 +83,7 @@ We see that Superbowl XLVII had `r nrow(superbowl47)` plays. Now we will explore
 ```{r}
 # Counting Offensive Plays using dplyr
 suppressMessages(library(dplyr))
-superbowl47 %>% group_by(posteam) %>% summarise(offensiveplays = n()) %>%
+superbowl47 %>% dplyr::group_by(posteam) %>% summarize(offensiveplays = n()) %>%
   filter(., posteam != "")
 ```
 
@@ -91,10 +91,9 @@ As seen above the Ravens ran more plays than the 49ers.  There are many directio
 one can move for further insight.  Some ideas are as follows:
 
 - Examining time of possession to see if one team dictated pace of play
+- Dive into expected point and win probability values to see the true value of 
+each teams possession time
 - Analyze run pass breaks downs of both teams to see play calling tenancies
-- Take a further step and look at plays by drive to see if there was one 
-specific drive that created the differences in total offensive plays between
-the teams
 - Add more statistics on the "play" level such as yards per play, points
 per play, or play duration
 
@@ -119,7 +118,7 @@ sb_team_summary_stats <- superbowl47 %>% group_by(posteam) %>%
                       summarise(offensiveplays = n(), 
                                 avg.yards.gained = mean(Yards.Gained, 
                                                         na.rm = TRUE),
-                                pointsperplay = max(PosTeamScore) / n(),
+                                pointsperplay = max(PosTeamScore, na.rm = TRUE) / n(),
                                 playduration = mean(PlayTimeDiff)) %>%
                         filter(., posteam != "") %>% 
                       as.data.frame() 
@@ -132,7 +131,8 @@ plot_yards <- ggplot(sb_team_summary_stats, aes(x = posteam, y = avg.yards.gaine
                         size = 4, fontface = "bold") +
             labs(title = "Superbowl 47: Yards per Play by Team",
                  x = "Teams", y = "Average Yards per Play") +
-            scale_fill_manual(values = c("#241773", "#B3995D"))
+            scale_fill_manual(values = c("#241773", "#B3995D")) +
+  theme(plot.title = element_text(hjust = .5, face = "bold"))
 
 # Points per play plot
 plot_points <- ggplot(sb_team_summary_stats, aes(x = posteam, y = pointsperplay)) +
@@ -142,7 +142,8 @@ plot_points <- ggplot(sb_team_summary_stats, aes(x = posteam, y = pointsperplay)
                         size = 4, fontface = "bold") +
             labs(title = "Superbowl 47: Points per Play by Team",
                  x = "Teams", y = "Points per Play") +
-            scale_fill_manual(values = c("#241773", "#B3995D"))
+            scale_fill_manual(values = c("#241773", "#B3995D")) +
+  theme(plot.title = element_text(hjust = .5, face = "bold"))
 
 # Play duration plot
 plot_time <- ggplot(sb_team_summary_stats, aes(x = posteam, y = playduration)) +
@@ -152,27 +153,28 @@ plot_time <- ggplot(sb_team_summary_stats, aes(x = posteam, y = playduration)) +
                         size = 4, fontface = "bold") +
             labs(title = "Superbowl 47: Average Play Time Duration \n by Team",
                  x = "Teams", y = "Average Play Duration") +
-            scale_fill_manual(values = c("#241773", "#B3995D"))
+            scale_fill_manual(values = c("#241773", "#B3995D"))+
+  theme(plot.title = element_text(hjust = .5, face = "bold"))
 
-
+# Plotting the three charts together 
 grid.arrange(plot_yards, plot_points, plot_time, ncol =2)
 
 ```
 
 ### The season_play_by_play function
 
-The above example is just one way to manipulate play-by-play dataframes gather insights about a single football game. The `season_play_by_play` function allows users to gather further insights on aggregate levels.  Seasons generate tens of thousands of plays primed for insights.  To read an example of `season_play_by_play`, check out this analysis of [Adrian Peterson's running tendancies posted on the CMU Sports Analytics  club blog](https://tartansportsanalytics.com/2016/03/24/introducing-nflscrapr-part-2/).
+The above example is just one way to manipulate play-by-play dataframes to gather insights about a single football game. The `season_play_by_play` function allows users to gather further insights on the season level. To read an example of `season_play_by_play`, check out this analysis of [Adrian Peterson's running tendancies posted on the CMU Sports Analytics  club blog](https://tartansportsanalytics.com/2016/03/24/introducing-nflscrapr-part-2/).
 
 ## Detailed Boxscore Functions
 
-Another set of useful and interesting functions in nflscrapR are the detailed box score functions.  These functions output game and season level statistics ranging from passing to defense to kick returning. The season level functions output dataframes
+Another set of useful and interesting functions in nflscrapR are the detailed box score functions. These functions output game and season level statistics ranging from passing to defense to kick returning. The season level functions output dataframes
 with 56 columns while the game level function outputs a dataframe with 55 columns.
 
 There are three different detailed box score functions.  The are summarized as follows:
 
 - `player_game`: outputs a dataframe for a single game with one line per player who recorded any
 measurable statistics ranging from passing to kick returning
-- `season_player_game`: outputs a dataframe for an entire season.  **One line per player per game**.  All statistics measured statistics are reported.
+- `season_player_game`: outputs a dataframe for an entire season.  **One line per player per game**.  All measured statistics are included.
 - `agg_player_season`: outputs a dataframe with aggregate statistics for an entire season. There is one line per player in this dataframe.
 
 *Note: The `season_player_game` and `agg_player_game` functions take a few minutes
@@ -186,15 +188,19 @@ Below, an example is shown using the `season_player_game` function.  Explored in
 data(playerstats09, playerstats10, playerstats11, playerstats12,
      playerstats13, playerstats14, playerstats15)
 
-allplayerstats <- rbind(playerstats09, playerstats10, playerstats11,
+allplayerstats <- dplyr::bind_rows(playerstats09, playerstats10, playerstats11,
                         playerstats12, playerstats13, playerstats14,
-                        playerstats15)
+                        playerstats15, playerstats16)
 ```
 
 ```{r, eval = FALSE}
 
 # Loading all the statistics for each player by game from 2009-2015
 # Note: The below code takes about 15 minutes to run.
+
+# ****** USE RONS UPDATED DATA FRAMES HERE ****** #
+https://raw.githubusercontent.com/ryurko/nflscrapR-data/master/data/game_player_stats/game_passing_df.csv
+
 
 playerstats09 <- season_player_game(Season = 2009)
 playerstats10 <- season_player_game(Season = 2010)
@@ -203,33 +209,38 @@ playerstats12 <- season_player_game(Season = 2012)
 playerstats13 <- season_player_game(Season = 2013)
 playerstats14 <- season_player_game(Season = 2014)
 playerstats15 <- season_player_game(Season = 2015)
+playerstats16 <- season_player_game(Season = 2016)
 
 # Combining into one dataframe using rbind()
 
-allplayerstats <- rbind(playerstats09, playerstats10, playerstats11,
+allplayerstats <- dplyr::bind_rows(playerstats09, playerstats10, playerstats11,
                         playerstats12, playerstats13, playerstats14,
-                        playerstats15)
+                        playerstats15, playerstats16)
 
 # Examining dimensions:
 dim(allplayerstats)
+
 ```
 
 ```{r}
 #### Using ggplot to explore Joe Flacco's passing tends ###
 
-# filter for Flacco
-flacco_data <- filter(allplayerstats, name == "J.Flacco")
-flacco_data <- flacco_data[order(flacco_data$date),]
+# filter for Flacco and arrange by game data
+flacco_data <- dplyr::filter(allplayerstats, name == "J.Flacco") %>%
+  arrange(date)
 
-# Add games player.  Note in 2015 Flacco was injured in Week 10
-flacco_data$gamenumber <- as.factor(c(rep(1:16, times = 6), 1:10))
+# Add games player.  Note in 2015 Flacco was injured in Week 10:
+flacco_data <- flacco_data %>%
+  group_by(Season) %>% 
+  dplyr::mutate(gamenumber = row_number(date))
 
 # Creating Passing Yards Plot by game
 flacco_passyds_plot <- ggplot(flacco_data, aes(x = gamenumber, y = passyds)) + 
   theme_bw() +
   geom_bar(stat = "identity", aes(alpha = passyds), fill = "#241773") +
     theme(strip.background = element_rect(fill = "black", size = 1.5),
-        strip.text = element_text(color = "white", face = "bold")) +
+        strip.text = element_text(color = "white", face = "bold"),
+        plot.title = element_text(hjust = 0.5, face = "bold")) +
   geom_label(aes(x = gamenumber, y = ifelse(passyds > 70, passyds - 60,
                                             passyds + 10), 
                  label = passyds), 
@@ -247,7 +258,7 @@ flacco_passyds_plot
 ```
 
 Now examined are Flacco's pass attempts across games.  This allows visualization of 
-his progression from a game manager to the elite level quarterback that he his today. What one can observe the following insights from the bar plots below:
+his progression from a game manager to the solid (average?) quarterback that he his today. One can observe the following insights from the bar plots below:
 
 - Flacco's most consistent season in terms of pass attempts was 2010
 - In 2013 and 2014 the Ravens started the season aggressively relying heavily on
@@ -261,7 +272,8 @@ ggplot(flacco_data, aes(x = gamenumber, y = pass.att)) +
   theme_bw() +
   geom_bar(stat = "identity", aes(alpha = pass.att), fill = "#241773") +
     theme(strip.background = element_rect(fill = "black", size = 1.5),
-        strip.text = element_text(color = "white", face = "bold")) +
+        strip.text = element_text(color = "white", face = "bold"),
+        plot.title = element_text(hjust = 0.5, face = "bold")) +
   geom_label(aes(x = gamenumber, y = ifelse(pass.att > 60, pass.att - 5,
                                             pass.att), 
                  label = pass.att), 
@@ -274,7 +286,7 @@ ggplot(flacco_data, aes(x = gamenumber, y = pass.att)) +
 ### Using `player_game` and `agg_player_season`
 
 Similar exploration of game level statistics can be done with with the `player_game`
-function.  The nice thing about the `player_game` function is that it downloads, parses, and cleans the data very quickly so if you are interested in particular games, you can download the data almost instantaneously.
+function.  The nice thing about the `player_game` function is that it downloads, parses, and cleans the data very quickly so if you are interested in particular games, you can download the data instantaneously.
 
 The `agg_player_season` function allows users to visualize season total statistics which is beneficial for building running list of statistics or easily calculating total from the available range of seasons. 
 
@@ -286,8 +298,6 @@ measured statistics into different lists of dataframes.  This is much more simil
 Users can also download a data set of rosters for each team by season.  The rosters
 include all players **who recorded a measured statistic** in the raw data.  That is, if a player did not record either a passing, rushing, receiving, defensive, punt return, kick return, punting, or kicking statistic they will not be on the roster. To use the function, you must identify a season of interest and also identify the team abbreviations of your team of interest.  To find team initials, load the nflteams
 data set stored in the package. The following code shows the roster for the Tennessee Titans in 2013:
-
-*Note: The `season_rosters` function takes a few minutes to run*
 
 ```{r}
 
@@ -303,7 +313,7 @@ head(tenroster2013)
 
 ## Drive Summary Function
 
-The `drive_summary` function allows users to download data sets with information about each drive in a game.  The input requires a GameID, and the outputted dataframe has
+The `drive_summary` function allows users to download datasets with information about each drive in a game.  The input requires a GameID, and the outputted dataframe has
 18 columns.  The help documentation for the function describes each of the columns 
 in more detail.  Drives summaries provide interesting insight into what type of play calling leads to specific type of drive results such as scoring plays, punts, or turnovers.
 

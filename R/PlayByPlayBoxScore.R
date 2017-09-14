@@ -1628,7 +1628,6 @@ drive_summary <- function(GameID) {
   end.data <- data.frame(do.call(rbind, (drive.data$end)))
   colnames(end.data) <- c("EndQrt", "EndTime", "EndYardln", "EndTeam")
   
-  
   start.index <- which(colnames(drive.data) == "start")
   end.index <- which(colnames(drive.data) == "end")
   
@@ -1646,6 +1645,11 @@ drive_summary <- function(GameID) {
   }
   # Removing last row and 4th column of irrelevant information
   drive.data.final <- drive.data.final[-nrow(drive.data),-c(3,4)]
+  
+  # Unlisting Columns 
+  
+  drive.data.final <-  drive.data.final %>%
+    dplyr::mutate_all(unlist)
   
   # Output
   drive.data.final[,c("GameID", "DriveNumber", "posteam", "qtr", "fds",
