@@ -175,8 +175,7 @@ buildNameAbbr <- . %>%
 #' @description This sub-function, calls buildNameAbbr and getPageNumbers to
 #' scrape player positions by season.
 getPlayers <- function(position, season, 
-                       type=c('REG', 'POST', 'PRE'))
-{
+                       type=c('REG', 'POST', 'PRE')) {
   # Give position name
   message(sprintf('Extracting %s', position))
   

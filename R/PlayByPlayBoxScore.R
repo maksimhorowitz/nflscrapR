@@ -1500,10 +1500,6 @@ game_play_by_play <- function(GameID) {
 #' 
 #' @param Season (numeric) A 4-digit year corresponding to an NFL season of 
 #' interest
-#' @param Weeks (numeric) A number corresponding to the number of weeks of data
-#' you want to be scraped and included in the output. If you input 3, the first
-#' three weeks of play-by-play will be scraped from the associated season.
-#'
 #' @details This function calls the extracting_gameids, 
 #' proper_jsonurl_formatting, and game_play_by_play to aggregate all the plays 
 #' from a given season.  This dataframe is prime for use with the dplyr and 
@@ -1519,7 +1515,7 @@ game_play_by_play <- function(GameID) {
 #' # Looking at all Pittsburgh Steelers offensive plays 
 #' subset(pbp.data.2010, posteam = "PIT")
 #' @export
-season_play_by_play <- function(Season, Weeks = 16) {
+season_play_by_play <- function(Season) {
   # Google R style format
   
   # Below the function put together the proper URLs for each game in each 
@@ -1530,18 +1526,20 @@ season_play_by_play <- function(Season, Weeks = 16) {
   # that exist - so the function can run during games:
   game_ids_exist <- sapply(game_ids, function(x) RCurl::url.exists(proper_jsonurl_formatting(x)))
   
+  # Check to see that the url is not empty
+  
   # Only use the game_ids that exist:
   game_ids <- game_ids[game_ids_exist]
   
-  # Only use the which
+  # Apply the play by play function to all of the game_ids
+  # Also added catch if the play by play feed is throws an error
+  # for games that are intiialized early.
   
-  if (Weeks %in% 3:15) {
-    game_ids <- game_ids[1:(16*Weeks)-1]
-  } else if (Weeks %in% 1:2) {
-    game_ids <- game_ids[1:(16*Weeks)]
-  }
-  
-  pbp_data_unformatted <- lapply(game_ids, FUN = game_play_by_play)
+  pbp_data_unformatted <- lapply(c(game_ids[1:10], 2017100800), 
+                                 FUN = function (x) {
+                                        tryCatch(game_play_by_play(x),
+                                                 error = function(e) {})}
+                                 )
   
   df_pbp_data <- dplyr::bind_rows(pbp_data_unformatted) %>%
                   dplyr::mutate(Season = Season)

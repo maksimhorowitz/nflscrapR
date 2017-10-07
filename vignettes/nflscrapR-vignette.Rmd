@@ -226,7 +226,7 @@ flacco_data <- dplyr::filter(allplayerstats, name == "J.Flacco") %>%
 
 # Add games played. Note in 2015 Flacco was injured in Week 10:
 flacco_data <- flacco_data %>%
-  group_by(Season) %>% 
+  dplyr::group_by(Season) %>% 
   dplyr::mutate(gamenumber = row_number(date))
 
 # Creating Passing Yards Plot by game
