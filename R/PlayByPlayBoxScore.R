@@ -1535,7 +1535,7 @@ season_play_by_play <- function(Season) {
   # Also added catch if the play by play feed is throws an error
   # for games that are intiialized early.
   
-  pbp_data_unformatted <- lapply(c(game_ids[1:10], 2017100800), 
+  pbp_data_unformatted <- lapply(game_ids, 
                                  FUN = function (x) {
                                         tryCatch(game_play_by_play(x),
                                                  error = function(e) {})}
