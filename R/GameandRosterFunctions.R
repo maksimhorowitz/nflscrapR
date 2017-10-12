@@ -22,16 +22,9 @@
 #' # All games in 2015 Season
 #' season_games(2015) # Will output a dataframe
 #' @export
-season_games <- function(Season, Weeks = 16, sleep.seconds = 0) {
+season_games <- function(Season, sleep.seconds = 0) {
   
   game_ids <- extracting_gameids(Season)
-  
-  # If statement to specify the week variable
-  if (Weeks %in% 4:13) {
-    game_ids <- game_ids[1:(16*Weeks)-1]
-  } else if (Weeks %in% c(1:3, 14:15)) {
-    game_ids <- game_ids[1:(16*Weeks)]
-  }
   
   game_urls <- sapply(game_ids, proper_jsonurl_formatting)
   
@@ -64,9 +57,8 @@ season_games <- function(Season, Weeks = 16, sleep.seconds = 0) {
   games <- suppressWarnings(dplyr::bind_rows(games.unformatted) %>% 
             dplyr::mutate(GameID = game_ids, 
                    date = date))
-
-  # Output Dataframe
   
+  # Output dataframe
   games %>% dplyr::select(GameID, date, 
                           home, away, homescore, awayscore)
   
@@ -183,8 +175,7 @@ buildNameAbbr <- . %>%
 #' @description This sub-function, calls buildNameAbbr and getPageNumbers to
 #' scrape player positions by season.
 getPlayers <- function(position, season, 
-                       type=c('REG', 'POST', 'PRE'))
-{
+                       type=c('REG', 'POST', 'PRE')) {
   # Give position name
   message(sprintf('Extracting %s', position))
   

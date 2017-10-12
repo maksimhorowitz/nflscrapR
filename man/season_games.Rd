@@ -4,7 +4,7 @@
 \alias{season_games}
 \title{Game Information for All Games in a Season}
 \usage{
-season_games(Season, Weeks = 16, sleep.seconds = 0)
+season_games(Season, sleep.seconds = 0)
 }
 \arguments{
 \item{Season}{(numeric): A 4-digit year associated with a given NFL season}
