@@ -323,7 +323,8 @@ expected_points <- function(dataset) {
                                                         dplyr::lead(PlayType) %in% c("Quarter End",
                                                                                      "Two Minute Warning",
                                                                                      "Timeout") &
-                                                        (Drive != dplyr::lead(Drive,2)), 1, 0))
+                                                        (Drive != dplyr::lead(Drive,2)) &
+                                                        (posteam != dplyr::lead(posteam,2)), 1, 0))
   pbp_data_epa$EPA_base_nxt_ind <- with(pbp_data_epa,
                                         ifelse(GameID == dplyr::lead(GameID) & 
                                                  GameID == dplyr::lead(GameID,2) &
@@ -335,6 +336,7 @@ expected_points <- function(dataset) {
   pbp_data_epa$EPA_change_no_score_ind <- with(pbp_data_epa,
                                                ifelse(GameID == dplyr::lead(GameID) & 
                                                         Drive != dplyr::lead(Drive) &
+                                                        posteam != dplyr::lead(posteam) &
                                                         dplyr::lead(PlayType) %in% 
                                                         c("Pass","Run","Punt","Sack",
                                                           "Field Goal","No Play",
