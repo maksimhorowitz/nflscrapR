@@ -323,7 +323,7 @@ expected_points <- function(dataset) {
                                                         dplyr::lead(PlayType) %in% c("Quarter End",
                                                                                      "Two Minute Warning",
                                                                                      "Timeout") &
-                                                        (Drive != dplyr::lead(Drive,2)),
+                                                        (Drive != dplyr::lead(Drive,2)) &
                                                         (posteam != dplyr::lead(posteam,2)), 1, 0))
   pbp_data_epa$EPA_base_nxt_ind <- with(pbp_data_epa,
                                         ifelse(GameID == dplyr::lead(GameID) & 
