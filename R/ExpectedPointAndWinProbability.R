@@ -22,22 +22,31 @@ expected_points <- function(dataset) {
   # Changing down into a factor variable
   dataset$down <- factor(dataset$down)
   
+  # Add columns for season and month:
+  dataset <- dplyr::mutate(dataset,
+                           Season = as.numeric(substr(as.character(GameID),1,4)),
+                           Month = as.numeric(substr(as.character(GameID),5,6)))
+  
   # Create a variable that is time remaining until end of half and game:
   dataset$TimeSecs_Remaining <- ifelse(dataset$qtr %in% c(1,2),
                                        dataset$TimeSecs - 1800,
-                                        ifelse(dataset$qtr == 5,
-                                               dataset$TimeSecs + 900,
-                                               dataset$TimeSecs))
+                                       ifelse(dataset$qtr == 5 & 
+                                                (dataset$Season == 2017 & 
+                                                   dataset$Month > 4),
+                                              dataset$TimeSecs + 600,
+                                              ifelse(dataset$qtr == 5 &
+                                                       (dataset$Season < 2017 |
+                                                          (dataset$Season == 2017 &
+                                                             dataset$Month <= 4)),
+                                                     dataset$TimeSecs + 900,
+                                                     dataset$TimeSecs)))
+  
   # Create log_ydstogo:
   dataset <- dplyr::mutate(dataset, log_ydstogo = log(ydstogo))
   
   # Create Under_TwoMinute_Warning indicator
   dataset$Under_TwoMinute_Warning <- ifelse(dataset$TimeSecs_Remaining < 120,1,0)
   
-  # Add columns for season and month:
-  dataset <- dplyr::mutate(dataset,
-                           Season = as.numeric(substr(as.character(GameID),1,4)),
-                           Month = as.numeric(substr(as.character(GameID),5,6)))
   
   # Define the predict_EP_prob() function:
   # INPUT:  - data: play-by-play dataset
@@ -214,80 +223,126 @@ expected_points <- function(dataset) {
   # to use as the final EPA):
   pbp_data_epa <- dplyr::group_by(pbp_data_ep,GameID)
   pbp_data_epa <- dplyr::mutate(pbp_data_epa,
-                              # Team keeps possession (most general case):
-                              EPA_base = dplyr::lead(ExpPts) - ExpPts,
-                              # Team keeps possession but either Timeout, Two Minute Warning,
-                              # Quarter End is the following row:
-                              EPA_base_nxt = dplyr::lead(ExpPts,2) - ExpPts,
-                              # Change of possession without defense scoring
-                              # and no timeout, two minute warning, or quarter end follows:
-                              EPA_change_no_score = -dplyr::lead(ExpPts) - ExpPts,
-                              # Change of possession without defense scoring
-                              # but either Timeout, Two Minute Warning,
-                              # Quarter End is the following row:
-                              EPA_change_no_score_nxt = -dplyr::lead(ExpPts,2) - ExpPts,
-                              # Change of possession with defense scoring touchdown:
-                              EPA_change_score = -7 - ExpPts,
-                              # Offense touchdown:
-                              EPA_off_td = 7 - ExpPts,
-                              # Offense fieldgoal:
-                              EPA_off_fg = 3 - ExpPts,
-                              # Offense extra-point conversion:
-                              EPA_off_ep = 1 - ExpPts,
-                              # Offense two-point conversion:
-                              EPA_off_tp = 2 - ExpPts,
-                              # Missing PAT:
-                              EPA_PAT_fail = 0 - ExpPts,
-                              # Opponent Safety:
-                              EPA_safety = -2 - ExpPts,
-                              # End of half/game or timeout or QB Kneel:
-                              EPA_endtime = 0,
-                              # Team keeps possession (most general case):
-                              PTDA_base = dplyr::lead(Touchdown_Prob) - Touchdown_Prob,
-                              # Team keeps possession but either Timeout, Two Minute Warning,
-                              # Quarter End is the following row:
-                              PTDA_base_nxt = dplyr::lead(Touchdown_Prob,2) - Touchdown_Prob,
-                              # Change of possession without defense scoring
-                              # and no timeout, two minute warning, or quarter end follows:
-                              PTDA_change_no_score = dplyr::lead(Opp_Touchdown_Prob) - Touchdown_Prob,
-                              # Change of possession without defense scoring
-                              # but either Timeout, Two Minute Warning,
-                              # Quarter End is the following row:
-                              PTDA_change_no_score_nxt = dplyr::lead(Opp_Touchdown_Prob,2) - Touchdown_Prob,
-                              # Change of possession with defense scoring touchdown:
-                              PTDA_change_score = 0 - Touchdown_Prob,
-                              # Offense touchdown:
-                              PTDA_off_td = 1 - Touchdown_Prob,
-                              # Offense fieldgoal:
-                              PTDA_off_fg = 0 - Touchdown_Prob,
-                              # Offense extra-point conversion:
-                              PTDA_off_ep = 0,
-                              # Offense two-point conversion:
-                              PTDA_off_tp = 0,
-                              # Opponent Safety:
-                              PTDA_safety = 0 - Touchdown_Prob,
-                              # End of half/game or timeout or QB Kneel:
-                              PTDA_endtime = 0)
+                                # Offense touchdown (including kickoff returns):
+                                EPA_off_td = 7 - ExpPts,
+                                # Offense fieldgoal:
+                                EPA_off_fg = 3 - ExpPts,
+                                # Offense extra-point conversion:
+                                EPA_off_ep = 1 - ExpPts,
+                                # Offense two-point conversion:
+                                EPA_off_tp = 2 - ExpPts,
+                                # Missing PAT:
+                                EPA_PAT_fail = 0 - ExpPts,
+                                # Opponent Safety:
+                                EPA_safety = -2 - ExpPts,
+                                # End of half/game or timeout or QB Kneel:
+                                EPA_endtime = 0,
+                                # Defense scoring touchdown (including punt returns):
+                                EPA_change_score = -7 - ExpPts,
+                                # Change of possession without defense scoring
+                                # and no timeout, two minute warning, or quarter end follows:
+                                EPA_change_no_score = -dplyr::lead(ExpPts) - ExpPts,
+                                # Change of possession without defense scoring
+                                # but either Timeout, Two Minute Warning,
+                                # Quarter End is the following row:
+                                EPA_change_no_score_nxt = -dplyr::lead(ExpPts,2) - ExpPts,
+                                # Team keeps possession but either Timeout, Two Minute Warning,
+                                # Quarter End is the following row:
+                                EPA_base_nxt = dplyr::lead(ExpPts,2) - ExpPts,
+                                # Team keeps possession (most general case):
+                                EPA_base = dplyr::lead(ExpPts) - ExpPts,
+                                # Now the same for PTDA:
+                                # Team keeps possession (most general case):
+                                PTDA_base = dplyr::lead(Touchdown_Prob) - Touchdown_Prob,
+                                # Team keeps possession but either Timeout, Two Minute Warning,
+                                # Quarter End is the following row:
+                                PTDA_base_nxt = dplyr::lead(Touchdown_Prob,2) - Touchdown_Prob,
+                                # Change of possession without defense scoring
+                                # and no timeout, two minute warning, or quarter end follows:
+                                PTDA_change_no_score = dplyr::lead(Opp_Touchdown_Prob) - Touchdown_Prob,
+                                # Change of possession without defense scoring
+                                # but either Timeout, Two Minute Warning,
+                                # Quarter End is the following row:
+                                PTDA_change_no_score_nxt = dplyr::lead(Opp_Touchdown_Prob,2) - Touchdown_Prob,
+                                # Change of possession with defense scoring touchdown:
+                                PTDA_change_score = 0 - Touchdown_Prob,
+                                # Offense touchdown:
+                                PTDA_off_td = 1 - Touchdown_Prob,
+                                # Offense fieldgoal:
+                                PTDA_off_fg = 0 - Touchdown_Prob,
+                                # Offense extra-point conversion:
+                                PTDA_off_ep = 0,
+                                # Offense two-point conversion:
+                                PTDA_off_tp = 0,
+                                # Offense PAT fail:
+                                PTDA_PAT_fail = 0,
+                                # Opponent Safety:
+                                PTDA_safety = 0 - Touchdown_Prob,
+                                # End of half/game or timeout or QB Kneel:
+                                PTDA_endtime = 0)
 
-  # Now make the if-else statements to decide which column to use,
-  # need to make indicator columns first due to missing values
-  # that cause errors with the extra points and two point conversions:
-  pbp_data_epa$EPA_base_ind <- with(pbp_data_epa, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & PlayType != "QB Kneel" & GameID == dplyr::lead(GameID) & Drive == dplyr::lead(Drive) & sp == 0 & dplyr::lead(PlayType) %in% c("Pass","Run","Punt","Sack","Field Goal","No Play","QB Kneel","Spike"),1,0))
-  pbp_data_epa$EPA_base_nxt_ind <- with(pbp_data_epa, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & PlayType != "QB Kneel" & GameID == dplyr::lead(GameID) & Drive == dplyr::lead(Drive) & sp == 0 & dplyr::lead(PlayType) %in% c("Quarter End","Two Minute Warning","Timeout"),1,0))
-  pbp_data_epa$EPA_change_no_score_nxt_ind <- with(pbp_data_epa, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & PlayType != "QB Kneel" & GameID == dplyr::lead(GameID) & sp == 0  & (Drive != dplyr::lead(Drive) | Drive != dplyr::lead(Drive,2)) & dplyr::lead(PlayType) %in% c("Quarter End","Two Minute Warning","Timeout"),1,0))
-  pbp_data_epa$EPA_change_no_score_ind <- with(pbp_data_epa,ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & PlayType != "QB Kneel" & GameID == dplyr::lead(GameID) & sp == 0 & Drive != dplyr::lead(Drive) & dplyr::lead(PlayType) %in% c("Pass","Run","Punt","Sack","Field Goal","No Play","QB Kneel","Spike"),1,0))
-  pbp_data_epa$EPA_change_score_ind <- with(pbp_data_epa, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & PlayType != "QB Kneel" & Touchdown == 1 & (InterceptionThrown == 1 | (Fumble == 1 & RecFumbTeam != posteam)),1,0))
-  pbp_data_epa$EPA_off_td_ind <- with(pbp_data_epa, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & PlayType != "QB Kneel" & Touchdown == 1 & (InterceptionThrown != 1 & Fumble != 1), 1,0))
-  pbp_data_epa$EPA_off_fg_ind <- with(pbp_data_epa, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & PlayType != "QB Kneel" & FieldGoalResult == "Good",1,0))
-  pbp_data_epa$EPA_off_ep_ind <- with(pbp_data_epa, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & PlayType != "QB Kneel" & ExPointResult == "Made",1,0))
-  pbp_data_epa$EPA_off_tp_ind <- with(pbp_data_epa, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & PlayType != "QB Kneel" & TwoPointConv == "Success", 1,0))
-  pbp_data_epa$EPA_PAT_fail_ind <- with(pbp_data_epa, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & PlayType != "QB Kneel" & (TwoPointConv == "Failure" | ExPointResult == "Missed" | ExPointResult == "Aborted" | ExPointResult == "Blocked"), 1,0))
-  pbp_data_epa$EPA_safety_ind <- with(pbp_data_epa, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & PlayType != "QB Kneel" & Safety == 1,1,0))
-  pbp_data_epa$EPA_endtime_ind <- with(pbp_data_epa, ifelse(PlayType %in% c("Half End","Quarter End",
-                                                                          "End of Game","Timeout","QB Kneel") | (GameID == dplyr::lead(GameID) & Touchdown != 1 & is.na(FieldGoalResult) & is.na(ExPointResult) & is.na(TwoPointConv) & Safety != 1 & ((dplyr::lead(PlayType) %in% c("Half End","End of Game")) | (qtr == 2 & dplyr::lead(qtr)==3) | (qtr == 4 & dplyr::lead(qtr)==5))),1,0))
-
+  # Define the scoring plays first:
+  pbp_data_epa$EPA_off_td_ind <- with(pbp_data_epa, 
+                                      ifelse(sp == 1 & Touchdown == 1 & 
+                                               ((PlayType %in% c("Pass","Run") &
+                                               (InterceptionThrown != 1 & 
+                                                  Fumble != 1)) | (PlayType == "Kickoff" &
+                                                                     ReturnResult == "Touchdown")), 1,0))
+  pbp_data_epa$EPA_off_fg_ind <- with(pbp_data_epa,
+                                      ifelse(PlayType %in% c("Field Goal","Run") &
+                                               FieldGoalResult == "Good", 1, 0))
+  pbp_data_epa$EPA_off_ep_ind <- with(pbp_data_epa,
+                                      ifelse(ExPointResult == "Made" & PlayType != "No Play", 1, 0))
+  pbp_data_epa$EPA_off_tp_ind <- with(pbp_data_epa,
+                                      ifelse(TwoPointConv == "Success" & PlayType != "No Play", 1, 0))
+  pbp_data_epa$EPA_PAT_fail_ind <- with(pbp_data_epa,
+                                        ifelse(PlayType != "No Play" & (ExPointResult %in% c("Missed", "Aborted", "Blocked") | 
+                                                                          TwoPointConv == "Failure"), 1, 0))
+  pbp_data_epa$EPA_safety_ind <- with(pbp_data_epa,
+                                      ifelse(PlayType != "No Play" & Safety == 1, 1, 0))
+  pbp_data_epa$EPA_endtime_ind <- with(pbp_data_epa,
+                                       ifelse(PlayType %in% c("Half End","Quarter End",
+                                                              "End of Game","Timeout","QB Kneel") | 
+                                                (GameID == dplyr::lead(GameID) & sp != 1 & 
+                                                   Touchdown != 1 & 
+                                                   is.na(FieldGoalResult) & is.na(ExPointResult) & 
+                                                   is.na(TwoPointConv) & Safety != 1 & 
+                                                   ((dplyr::lead(PlayType) %in% c("Half End","End of Game")) | 
+                                                      (qtr == 2 & dplyr::lead(qtr)==3) | 
+                                                      (qtr == 4 & dplyr::lead(qtr)==5))),1,0))
+  pbp_data_epa$EPA_change_score_ind <- with(pbp_data_epa,
+                                            ifelse(PlayType != "No Play" & sp == 1 & 
+                                                     Touchdown == 1 & 
+                                                     (InterceptionThrown == 1 | 
+                                                        (Fumble == 1 & RecFumbTeam != posteam) |
+                                                        (PlayType == "Punt" & ReturnResult == "Touchdown")), 1, 0))
+  pbp_data_epa$EPA_change_no_score_nxt_ind <- with(pbp_data_epa,
+                                               ifelse(GameID == dplyr::lead(GameID) & 
+                                                        GameID == dplyr::lead(GameID,2) &
+                                                        sp != 1  & 
+                                                        dplyr::lead(PlayType) %in% c("Quarter End",
+                                                                                     "Two Minute Warning",
+                                                                                     "Timeout") &
+                                                        (Drive != dplyr::lead(Drive,2)), 1, 0))
+  pbp_data_epa$EPA_base_nxt_ind <- with(pbp_data_epa,
+                                        ifelse(GameID == dplyr::lead(GameID) & 
+                                                 GameID == dplyr::lead(GameID,2) &
+                                                 sp != 1  & 
+                                                 dplyr::lead(PlayType) %in% c("Quarter End",
+                                                                              "Two Minute Warning",
+                                                                              "Timeout") &
+                                                 (Drive == dplyr::lead(Drive,2)), 1, 0))
+  pbp_data_epa$EPA_change_no_score_ind <- with(pbp_data_epa,
+                                               ifelse(GameID == dplyr::lead(GameID) & 
+                                                        Drive != dplyr::lead(Drive) &
+                                                        dplyr::lead(PlayType) %in% 
+                                                        c("Pass","Run","Punt","Sack",
+                                                          "Field Goal","No Play",
+                                                          "QB Kneel","Spike"), 1, 0))
+  
+  
   # Replace the missings with 0 due to how ifelse treats missings
-  pbp_data_epa$EPA_base_ind[is.na(pbp_data_epa$EPA_base_ind)] <- 0 
+  pbp_data_epa$EPA_PAT_fail_ind[is.na(pbp_data_epa$EPA_PAT_fail_ind)] <- 0 
   pbp_data_epa$EPA_base_nxt_ind[is.na(pbp_data_epa$EPA_base_nxt_ind)] <- 0
   pbp_data_epa$EPA_change_no_score_nxt_ind[is.na(pbp_data_epa$EPA_change_no_score_nxt_ind)] <- 0
   pbp_data_epa$EPA_change_no_score_ind[is.na(pbp_data_epa$EPA_change_no_score_ind)] <- 0 
@@ -300,42 +355,44 @@ expected_points <- function(dataset) {
   pbp_data_epa$EPA_endtime_ind[is.na(pbp_data_epa$EPA_endtime_ind)] <- 0
 
   # Assign EPA using these indicator columns: 
-  pbp_data_epa$EPA <- with(pbp_data_epa, ifelse(EPA_base_ind == 1,EPA_base,
-                                                  ifelse(EPA_base_nxt_ind == 1,EPA_base_nxt,
-                                                         ifelse(EPA_change_no_score_nxt_ind == 1,EPA_change_no_score_nxt,
-                                                                ifelse(EPA_change_no_score_ind == 1,EPA_change_no_score,
-                                                                       ifelse(EPA_change_score_ind == 1,EPA_change_score,
-                                                                              ifelse(EPA_off_td_ind == 1,EPA_off_td,
-                                                                                     ifelse(EPA_off_fg_ind == 1,EPA_off_fg,
-                                                                                            ifelse(EPA_off_ep_ind == 1,EPA_off_ep,
-                                                                                                   ifelse(EPA_off_tp_ind == 1,EPA_off_tp,
-                                                                                                          ifelse(pbp_data_epa$EPA_PAT_fail_ind == 1, EPA_PAT_fail,
-                                                                                                                 ifelse(EPA_safety_ind==1,EPA_safety,
-                                                                                                                        ifelse(EPA_endtime_ind==1,EPA_endtime,NA)))))))))))))
+  pbp_data_epa$EPA <- with(pbp_data_epa,
+                           ifelse(EPA_off_td_ind == 1, EPA_off_td,
+                                  ifelse(EPA_off_fg_ind == 1, EPA_off_fg,
+                                         ifelse(EPA_off_ep_ind == 1, EPA_off_ep,
+                                                ifelse(EPA_off_tp_ind == 1, EPA_off_tp,
+                                                       ifelse(EPA_PAT_fail_ind == 1, EPA_PAT_fail,
+                                                              ifelse(EPA_safety_ind == 1, EPA_safety,
+                                                                     ifelse(EPA_endtime_ind == 1, EPA_endtime,
+                                                                            ifelse(EPA_change_score_ind == 1, EPA_change_score,
+                                                                                   ifelse(EPA_change_no_score_nxt_ind == 1, EPA_change_no_score_nxt,
+                                                                                          ifelse(EPA_base_nxt_ind == 1, EPA_base_nxt,
+                                                                                                 ifelse(EPA_change_no_score_ind == 1, EPA_change_no_score,
+                                                                                                        EPA_base))))))))))))
 
   # Assign PTDA using these indicator columns: 
-  pbp_data_epa$PTDA <- with(pbp_data_epa, ifelse(EPA_base_ind == 1,PTDA_base,
-                                               ifelse(EPA_base_nxt_ind == 1,PTDA_base_nxt,
-                                                      ifelse(EPA_change_no_score_nxt_ind == 1,PTDA_change_no_score_nxt,
-                                                             ifelse(EPA_change_no_score_ind == 1,PTDA_change_no_score,
-                                                                    ifelse(EPA_change_score_ind == 1,PTDA_change_score,
-                                                                           ifelse(EPA_off_td_ind == 1,PTDA_off_td,
-                                                                                  ifelse(EPA_off_fg_ind == 1,PTDA_off_fg,
-                                                                                         ifelse(EPA_off_ep_ind == 1,PTDA_off_ep,
-                                                                                                ifelse(EPA_off_tp_ind == 1,PTDA_off_tp,
-                                                                                                       ifelse(EPA_safety_ind==1,PTDA_safety,
-                                                                                                              ifelse(EPA_endtime_ind==1,PTDA_endtime,NA))))))))))))
-
+  pbp_data_epa$PTDA <- with(pbp_data_epa,
+                           ifelse(EPA_off_td_ind == 1, PTDA_off_td,
+                                  ifelse(EPA_off_fg_ind == 1, PTDA_off_fg,
+                                         ifelse(EPA_off_ep_ind == 1, PTDA_off_ep,
+                                                ifelse(EPA_off_tp_ind == 1, PTDA_off_tp,
+                                                       ifelse(EPA_PAT_fail_ind == 1, PTDA_PAT_fail,
+                                                              ifelse(EPA_safety_ind == 1, PTDA_safety,
+                                                                     ifelse(EPA_endtime_ind == 1, PTDA_endtime,
+                                                                            ifelse(EPA_change_score_ind == 1, PTDA_change_score,
+                                                                            ifelse(EPA_change_no_score_nxt_ind == 1, PTDA_change_no_score_nxt,
+                                                                                   ifelse(EPA_base_nxt_ind == 1, PTDA_base_nxt,
+                                                                                          ifelse(EPA_change_no_score_ind == 1, PTDA_change_no_score,
+                                                                                                 PTDA_base))))))))))))
 
   # Now drop the unnecessary columns
   pbp_data_epa_final <- dplyr::select(pbp_data_epa, -c(EPA_base,EPA_base_nxt,
                                                      EPA_change_no_score,EPA_change_no_score_nxt,
                                                      EPA_change_score,EPA_off_td,EPA_off_fg,EPA_off_ep,
-                                                     EPA_off_tp,EPA_safety,EPA_base_ind,EPA_base_nxt_ind,
+                                                     EPA_off_tp,EPA_safety,EPA_base_nxt_ind,
                                                      EPA_change_no_score_ind,EPA_change_no_score_nxt_ind,
                                                      EPA_change_score_ind,EPA_off_td_ind,EPA_off_fg_ind,EPA_off_ep_ind,
                                                      EPA_off_tp_ind,EPA_safety_ind, EPA_endtime_ind, EPA_endtime,
-                                                     PTDA_base,PTDA_base_nxt,
+                                                     PTDA_base,PTDA_base_nxt,PTDA_PAT_fail,
                                                      PTDA_change_no_score,PTDA_change_no_score_nxt,
                                                      PTDA_change_score,PTDA_off_td,PTDA_off_fg,PTDA_off_ep,
                                                      PTDA_off_tp,PTDA_safety,PTDA_endtime, EPA_PAT_fail, EPA_PAT_fail_ind))
@@ -472,12 +529,25 @@ win_probability <- function(dataset) {
   # Changing down into a factor variable
   dataset$down <- factor(dataset$down)
   
+  # Get the Season and Month for rule changes:
+  dataset <- dplyr::mutate(dataset,
+                           Season = as.numeric(substr(as.character(GameID),1,4)),
+                           Month = as.numeric(substr(as.character(GameID),5,6)))
+
+  
   # Create a variable that is time remaining until end of half and game:
   dataset$TimeSecs_Remaining <- ifelse(dataset$qtr %in% c(1,2),
                                        dataset$TimeSecs - 1800,
-                                       ifelse(dataset$qtr == 5,
-                                              dataset$TimeSecs + 900,
-                                              dataset$TimeSecs))
+                                       ifelse(dataset$qtr == 5 & 
+                                                (dataset$Season == 2017 & 
+                                                   dataset$Month > 4),
+                                              dataset$TimeSecs + 600,
+                                              ifelse(dataset$qtr == 5 &
+                                                       (dataset$Season < 2017 |
+                                                          (dataset$Season == 2017 &
+                                                             dataset$Month <= 4)),
+                                                     dataset$TimeSecs + 900,
+                                                     dataset$TimeSecs)))
   
   # Expected Score Differential
   dataset <- dplyr::mutate(dataset, ExpScoreDiff = ExpPts + ScoreDiff)
@@ -503,11 +573,18 @@ win_probability <- function(dataset) {
                                          0,dataset$oppteam_timeouts_pre)
   
   # Define a form of the TimeSecs_Adj that just takes the original TimeSecs but
-  # resets the overtime back to 900:
+  # resets the overtime back to 900 or 600 depending on year:
   
-  dataset$TimeSecs_Adj <- ifelse(dataset$qtr == 5,
-                                 dataset$TimeSecs + 900,
-                                 dataset$TimeSecs)
+  dataset$TimeSecs_Adj <- ifelse(dataset$qtr == 5 & 
+                                   (dataset$Season == 2017 & 
+                                      dataset$Month > 4),
+                                 dataset$TimeSecs + 600,
+                                 ifelse(dataset$qtr == 5 &
+                                          (dataset$Season < 2017 |
+                                             (dataset$Season == 2017 &
+                                                dataset$Month <= 4)),
+                                        dataset$TimeSecs + 900,
+                                        dataset$TimeSecs))
   
   # Define a new variable, ratio of Expected Score Differential to TimeSecs_Adj:
   
@@ -545,11 +622,6 @@ win_probability <- function(dataset) {
     # its the second drive of overtime:
     
     overtime_df$One_FG_Game <- ifelse(overtime_df$ScoreDiff == -3 & overtime_df$Drive_Diff == 1,1,0)
-    
-    # Get the Season and Month for rule changes:
-    overtime_df <- dplyr::mutate(overtime_df,
-                                    Season = as.numeric(substr(as.character(GameID),1,4)),
-                                    Month = as.numeric(substr(as.character(GameID),5,6)))
     
     # Now create a copy of the dataset to then make the EP predictions for when
     # a field goal is scored and its not sudden death:
@@ -643,18 +715,39 @@ win_probability <- function(dataset) {
                                             ifelse(dplyr::lead(dataset$ScoreDiff) < 0 & dplyr::lead(dataset$posteam) == dataset$AwayTeam,
                                                    0 - dataset$Away_WP_pre, 0))))
 
-  # Now make the if-else statements to decide which column to use,
-  # need to make indicator columns first due to missing values:
-  dataset$WPA_base_ind <- with(dataset, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & GameID == dplyr::lead(GameID) & Drive == dplyr::lead(Drive) & dplyr::lead(PlayType) %in% c("Pass","Run","Punt","Sack","Field Goal","No Play","QB Kneel","Spike", "Extra Point"),1,0))
-  dataset$WPA_base_nxt_ind <- with(dataset, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & GameID == dplyr::lead(GameID) & Drive == dplyr::lead(Drive) & dplyr::lead(PlayType) %in% c("Quarter End","Two Minute Warning","Timeout"),1,0))
-  dataset$WPA_change_nxt_ind <- with(dataset, ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & GameID == dplyr::lead(GameID) & (Drive != dplyr::lead(Drive) | Drive != dplyr::lead(Drive,2)) & dplyr::lead(PlayType) %in% c("Quarter End","Two Minute Warning","Timeout"),1,0))
-  dataset$WPA_change_ind <- with(dataset,ifelse(PlayType != "No Play" & PlayType != "Timeout" & PlayType != "Half End" & PlayType != "Quarter End" & PlayType != "End of Game" & GameID == dplyr::lead(GameID) & Drive != dplyr::lead(Drive) & dplyr::lead(PlayType) %in% c("Pass","Run","Punt","Sack","Field Goal","No Play","QB Kneel","Spike","Kickoff"),1,0))
+
+  dataset$WPA_base_nxt_ind <- with(dataset, 
+                                   ifelse(GameID == dplyr::lead(GameID) & 
+                                            Drive == dplyr::lead(Drive,2) & 
+                                            dplyr::lead(PlayType) %in% 
+                                            c("Quarter End","Two Minute Warning","Timeout"),1,0))
+  dataset$WPA_change_nxt_ind <- with(dataset, 
+                                     ifelse(GameID == dplyr::lead(GameID) & 
+                                              Drive != dplyr::lead(Drive,2) & 
+                                              dplyr::lead(PlayType) %in% 
+                                              c("Quarter End","Two Minute Warning","Timeout"),1,0))
+  dataset$WPA_change_ind <- with(dataset,
+                                 ifelse(GameID == dplyr::lead(GameID) & 
+                                          Drive != dplyr::lead(Drive) & 
+                                          dplyr::lead(PlayType) %in% 
+                                          c("Pass","Run","Punt","Sack",
+                                            "Field Goal","No Play","QB Kneel",
+                                            "Spike","Kickoff"),1,0))
   dataset$WPA_halfend_to_ind <- with(dataset, ifelse(PlayType %in% c("Half End","Quarter End",
-                                                                            "End of Game","Timeout") | (GameID == dplyr::lead(GameID) & Touchdown != 1 & is.na(FieldGoalResult) & is.na(ExPointResult) & is.na(TwoPointConv) & Safety != 1 & ((dplyr::lead(PlayType) %in% c("Half End")) | (qtr == 2 & dplyr::lead(qtr)==3) | (qtr == 4 & dplyr::lead(qtr)==5))),1,0))
+                                                                     "End of Game","Timeout") | 
+                                                       (GameID == dplyr::lead(GameID) & sp != 1 &
+                                                          Touchdown != 1 & 
+                                                          is.na(FieldGoalResult) & 
+                                                          is.na(ExPointResult) & 
+                                                          is.na(TwoPointConv) & 
+                                                          Safety != 1 & 
+                                                          ((dplyr::lead(PlayType) %in% 
+                                                              c("Half End")) | 
+                                                             (qtr == 2 & dplyr::lead(qtr)==3) | 
+                                                             (qtr == 4 & dplyr::lead(qtr)==5))),1,0))
   dataset$WPA_final_ind <- with(dataset, ifelse(dplyr::lead(PlayType) %in% "End of Game", 1, 0))
   
   # Replace the missings with 0 due to how ifelse treats missings
-  dataset$WPA_base_ind[is.na(dataset$WPA_base_ind)] <- 0 
   dataset$WPA_base_nxt_ind[is.na(dataset$WPA_base_nxt_ind)] <- 0
   dataset$WPA_change_nxt_ind[is.na(dataset$WPA_change_nxt_ind)] <- 0
   dataset$WPA_change_ind[is.na(dataset$WPA_change_ind)] <- 0 
@@ -663,13 +756,14 @@ win_probability <- function(dataset) {
 
   
   # Assign WPA using these indicator columns: 
-  dataset$WPA <- with(dataset, ifelse(WPA_base_ind == 1,WPA_base,
-                                                ifelse(WPA_base_nxt_ind == 1,WPA_base_nxt,
-                                                       ifelse(WPA_change_nxt_ind == 1,WPA_change_nxt,
-                                                              ifelse(WPA_change_ind == 1,WPA_change,
-                                                                     ifelse(WPA_halfend_to_ind == 1,WPA_halfend_to,
-                                                                            ifelse(WPA_final_ind == 1,WPA_final,NA)))))))
-  # Home and Away post:
+  dataset$WPA <- with(dataset, 
+                      ifelse(WPA_final_ind == 1,WPA_final,
+                             ifelse(WPA_halfend_to_ind == 1, WPA_halfend_to,
+                                    ifelse(WPA_change_nxt_ind == 1, WPA_change_nxt,
+                                           ifelse(WPA_base_nxt_ind == 1, WPA_base_nxt,
+                                                  ifelse(WPA_change_ind == 1, WPA_change,
+                                                  WPA_base))))))
+    # Home and Away post:
   
   dataset$Home_WP_post <- ifelse(dataset$posteam == dataset$HomeTeam,
                                  dataset$Home_WP_pre + dataset$WPA,
@@ -681,11 +775,10 @@ win_probability <- function(dataset) {
   
   # Now drop the unnecessary columns
   dataset <- dplyr::select(dataset, -c(WPA_base,WPA_base_nxt,WPA_change_nxt,WPA_change,
-                                       WPA_halfend_to, WPA_final, WPA_base_ind,
+                                       WPA_halfend_to, WPA_final,
                                        WPA_base_nxt_ind, WPA_change_nxt_ind,
                                        WPA_change_ind, WPA_halfend_to_ind, WPA_final_ind,
                                        Half_Ind))
-  
   return(dataset)
   
 }
