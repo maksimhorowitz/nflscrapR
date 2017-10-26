@@ -335,6 +335,7 @@ expected_points <- function(dataset) {
   pbp_data_epa$EPA_change_no_score_ind <- with(pbp_data_epa,
                                                ifelse(GameID == dplyr::lead(GameID) & 
                                                         Drive != dplyr::lead(Drive) &
+                                                        posteam != dplyr::lead(posteam) &
                                                         dplyr::lead(PlayType) %in% 
                                                         c("Pass","Run","Punt","Sack",
                                                           "Field Goal","No Play",
