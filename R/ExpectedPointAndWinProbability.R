@@ -402,8 +402,7 @@ expected_points <- function(dataset) {
   
   # Ungroup the dataset
   pbp_data_epa_final <- dplyr::ungroup(pbp_data_epa_final)
-  #return(dplyr::ungroup(pbp_data_epa_final))
-  
+
   # Calculate the airEPA and yacEPA:
   
   # Find all Pass Attempts that are also actual plays,
@@ -774,6 +773,21 @@ win_probability <- function(dataset) {
                                  dataset$Away_WP_pre + dataset$WPA,
                                  dataset$Away_WP_pre - dataset$WPA)
   
+  # For plays with playtype of End of Game, use the previous play's WP_post columns
+  # as the pre and post, since those are already set to be 1 and 0:
+  dataset$Home_WP_pre <- with(dataset,
+                              ifelse(PlayType == "End of Game", dplyr::lag(Home_WP_post),
+                                     Home_WP_pre))
+  dataset$Home_WP_post <- with(dataset,
+                              ifelse(PlayType == "End of Game", dplyr::lag(Home_WP_post),
+                                     Home_WP_post))
+  dataset$Away_WP_pre <- with(dataset,
+                              ifelse(PlayType == "End of Game", dplyr::lag(Away_WP_post),
+                                     Away_WP_pre))
+  dataset$Away_WP_post <- with(dataset,
+                               ifelse(PlayType == "End of Game", dplyr::lag(Away_WP_post),
+                                      Away_WP_post))
+  
   
   # Now drop the unnecessary columns
   dataset <- dplyr::select(dataset, -c(WPA_base,WPA_base_nxt,WPA_change_nxt,WPA_change,
@@ -781,6 +795,228 @@ win_probability <- function(dataset) {
                                        WPA_base_nxt_ind, WPA_change_nxt_ind,
                                        WPA_change_ind, WPA_halfend_to_ind, WPA_final_ind,
                                        Half_Ind))
+  
+  
+  # Calculate the airWPA and yacWPA:
+  
+  # Find all Pass Attempts that are also actual plays,
+  pass_plays_i <- which(dataset$PassAttempt == 1 & dataset$PlayType != "No Play")
+  
+  # Create a dataframe of pass_plays:
+  
+  pass_pbp_data <- dataset[pass_plays_i,]
+  
+  # Since airEPA has already been calculated, only need to update
+  # the columns related to time as well as calculate a new 
+  # ExpScoreDiff using the airEPA. Additionally if the air yards
+  # result in a turnover then need to flip variables accordingly.
+  
+  # First calculate the new ExpScoreDiff using airEPA:
+  pass_pbp_data <- dplyr::mutate(pass_pbp_data, ExpScoreDiff = ExpPts + airEPA + ScoreDiff)
+  
+  # Adjust the time with the average incomplete pass time:
+  pass_pbp_data$TimeSecs_Remaining <- pass_pbp_data$TimeSecs_Remaining - 5.704673
+  
+  # Adjust Under_TwoMinute_Warning indicator:
+  pass_pbp_data$Under_TwoMinute_Warning <- ifelse(pass_pbp_data$TimeSecs_Remaining < 120,1,0)
+  
+  # Adjust TimeSecs_Adj:
+  pass_pbp_data$TimeSecs_Adj <- pass_pbp_data$TimeSecs_Adj - 5.704673
+  
+  # Adjust the ExpScoreDiff_Time_Ratio:
+  pass_pbp_data <- dplyr::mutate(pass_pbp_data,
+                           ExpScoreDiff_Time_Ratio = ExpScoreDiff / (TimeSecs_Adj + 1))
+  
+  # For now treat as no overtime - then will adjust accordingly afterwards if there
+  # are any overtime plays:
+  pass_pbp_data$Half_Ind <- with(pass_pbp_data,
+                           ifelse(qtr %in% c(1,2),"Half1","Half2"))
+  pass_pbp_data$Half_Ind <- as.factor(pass_pbp_data$Half_Ind)
+  
+  # Create an indicator column for the air yards failing to convert the first down:
+  pass_pbp_data$Turnover_Ind <- ifelse(pass_pbp_data$down == 4 & pass_pbp_data$AirYards < pass_pbp_data$ydstogo,
+                                       1,0)
+  
+  # If the Turnover_Ind is 1 then flip the variables with the score and timeouts,
+  # by first storing the old timeout columns:
+  pass_pbp_data$old_posteam_timeouts_pre <- pass_pbp_data$posteam_timeouts_pre
+  pass_pbp_data$old_oppteam_timeouts_pre <- pass_pbp_data$oppteam_timeouts_pre
+  
+  # Then using ifelse to adjust each:
+  pass_pbp_data$ExpScoreDiff <- ifelse(pass_pbp_data$Turnover_Ind == 1,
+                                       -1 * pass_pbp_data$ExpScoreDiff, pass_pbp_data$ExpScoreDiff)
+  pass_pbp_data$ExpScoreDiff_Time_Ratio <- ifelse(pass_pbp_data$Turnover_Ind == 1,
+                                                  -1 * pass_pbp_data$ExpScoreDiff_Time_Ratio, pass_pbp_data$ExpScoreDiff_Time_Ratio)
+  pass_pbp_data$posteam_timeouts_pre <- ifelse(pass_pbp_data$Turnover_Ind == 1,
+                                               pass_pbp_data$old_oppteam_timeouts_pre,
+                                               pass_pbp_data$old_posteam_timeouts_pre)
+  pass_pbp_data$oppteam_timeouts_pre <- ifelse(pass_pbp_data$Turnover_Ind == 1,
+                                               pass_pbp_data$old_posteam_timeouts_pre,
+                                               pass_pbp_data$old_oppteam_timeouts_pre)
+  
+  # Calculate the airWP:
+  pass_pbp_data$airWP <- as.numeric(mgcv::predict.bam(wp_model,newdata=pass_pbp_data,
+                                             type = "response"))
+  
+  # Now for plays marked with Turnover_Ind, use 1 - airWP to flip back to the original
+  # team with possession:
+  pass_pbp_data$airWP <- ifelse(pass_pbp_data$Turnover_Ind == 1,
+                                1 - pass_pbp_data$airWP, pass_pbp_data$airWP)
+  
+  # For the plays that have TimeSecs_Remaining 0 or less, set airWP to 0:
+  pass_pbp_data$airWP[which(pass_pbp_data$TimeSecs_Remaining<=0)] <- 0
+  
+  # Calculate the airWPA and yacWPA:
+  pass_pbp_data <- dplyr::mutate(pass_pbp_data, airWPA = airWP - Win_Prob,
+                                 yacWPA = WPA - airWPA)
+  
+  
+  # If the play is a two-point conversion then change the airWPA to NA since
+  # no air yards are provided:
+  pass_pbp_data$airWPA <- with(pass_pbp_data, ifelse(!is.na(TwoPointConv),
+                                                     NA,airWPA))
+  pass_pbp_data$yacWPA <- with(pass_pbp_data, ifelse(!is.na(TwoPointConv),
+                                                     NA,yacWPA))
+  
+  # Check to see if there is any overtime plays, if so then need to calculate
+  # by essentially taking the same process as the airEP calculation and using
+  # the resulting probabilities for overtime:
+  
+  # First check if there's any overtime plays:
+  if (any(pass_pbp_data$qtr == 5)){
+    # Find the rows that are overtime:
+    pass_overtime_i <- which(pass_pbp_data$qtr == 5)
+    pass_overtime_df <- pass_pbp_data[pass_overtime_i,]
+    
+    # Use the already created overtime_df and overtime_df_ko_preds, and make
+    # the same adjustments as the airEPA and yacEPA calculations:
+    
+    # Find all Pass Attempts that are also actual plays in overtime:
+    overtime_pass_plays_i <- which(overtime_df$PassAttempt == 1 & overtime_df$PlayType != "No Play")
+    overtime_pass_df <- overtime_df[overtime_pass_plays_i,]
+    overtime_df_ko_preds_pass <- overtime_df_ko_preds[overtime_pass_plays_i,]
+    
+    # Using the AirYards need to update the following:
+    # - yrdline100
+    # - TimeSecs_Remaining
+    # - GoalToGo
+    # - ydstogo
+    # - log_ydstogo
+    # - Under_TwoMinute_Warning
+    # - down
+    
+    # First rename the old columns to update for calculating the EP from the air:
+    overtime_pass_df <- dplyr::rename(overtime_pass_df,old_yrdline100=yrdline100,
+                                   old_ydstogo=ydstogo, old_TimeSecs_Remaining=TimeSecs_Remaining,
+                                   old_GoalToGo=GoalToGo,old_down=down)
+    
+    # Create an indicator column for the air yards failing to convert the first down:
+    overtime_pass_df$Turnover_Ind <- ifelse(overtime_pass_df$old_down == 4 & overtime_pass_df$AirYards < overtime_pass_df$old_ydstogo,
+                                         1,0)
+    # Adjust the field position variables:
+    overtime_pass_df$yrdline100 <- ifelse(overtime_pass_df$Turnover_Ind == 0,
+                                          overtime_pass_df$old_yrdline100 - overtime_pass_df$AirYards,
+                                       100 - (overtime_pass_df$old_yrdline100 - overtime_pass_df$AirYards))
+    
+    overtime_pass_df$ydstogo <- ifelse(overtime_pass_df$AirYards >= overtime_pass_df$old_ydstogo | 
+                                         overtime_pass_df$Turnover_Ind == 1,
+                                    10, overtime_pass_df$old_ydstogo - overtime_pass_df$AirYards)
+    # Create log_ydstogo:
+    overtime_pass_df <- dplyr::mutate(overtime_pass_df, log_ydstogo = log(ydstogo))
+    
+    overtime_pass_df$down <- ifelse(overtime_pass_df$AirYards >= overtime_pass_df$old_ydstogo | 
+                                      overtime_pass_df$Turnover_Ind == 1,
+                                 1, as.numeric(overtime_pass_df$old_down) + 1)
+    
+    overtime_pass_df$GoalToGo <- ifelse((overtime_pass_df$old_GoalToGo == 1 & overtime_pass_df$Turnover_Ind==0) |
+                                       (overtime_pass_df$Turnover_Ind == 0 & overtime_pass_df$old_GoalToGo == 0 & overtime_pass_df$yrdline100 <= 10) |
+                                       (overtime_pass_df$Turnover_Ind == 1 & overtime_pass_df$yrdline100 <= 10),1,0)
+    
+    # Adjust the time with the average incomplete pass time:
+    overtime_pass_df$TimeSecs_Remaining <- overtime_pass_df$old_TimeSecs_Remaining - 5.704673
+    
+    # Create Under_TwoMinute_Warning indicator
+    overtime_pass_df$Under_TwoMinute_Warning <- ifelse(overtime_pass_df$TimeSecs_Remaining < 120,1,0)
+    
+    # Make the new down a factor:
+    overtime_pass_df$down <- as.factor(overtime_pass_df$down)
+    
+    # Get the new predicted probabilites:
+    overtime_pass_data_preds <- as.data.frame(predict(ep_model, newdata = overtime_pass_df, type = "probs"))
+    colnames(pass_pbp_data_preds) <- c("No_Score","Opp_Field_Goal","Opp_Safety","Opp_Touchdown",
+                                       "Field_Goal","Safety","Touchdown")
+    
+    # For the turnover plays flip the scoring probabilities:
+    overtime_pass_data_preds <- dplyr::mutate(overtime_pass_data_preds,
+                                              old_Opp_Field_Goal = Opp_Field_Goal,
+                                              old_Opp_Safety = Opp_Safety,
+                                              old_Opp_Touchdown = Opp_Touchdown,
+                                              old_Field_Goal = Field_Goal,
+                                              old_Safety = Safety,
+                                              old_Touchdown = Touchdown)
+    overtime_pass_data_preds$Opp_Field_Goal <- ifelse(overtime_pass_df$Turnover_Ind == 1,
+                                                      overtime_pass_df$old_Field_Goal,
+                                                      overtime_pass_df$Opp_Field_Goal)
+    overtime_pass_data_preds$Opp_Safety <- ifelse(overtime_pass_df$Turnover_Ind == 1,
+                                                      overtime_pass_df$old_Safety,
+                                                      overtime_pass_df$Opp_Safety)
+    overtime_pass_data_preds$Opp_Touchdown <- ifelse(overtime_pass_df$Turnover_Ind == 1,
+                                                  overtime_pass_df$old_Touchdown,
+                                                  overtime_pass_df$Opp_Touchdown)
+    overtime_pass_data_preds$Field_Goal <- ifelse(overtime_pass_df$Turnover_Ind == 1,
+                                                      overtime_pass_df$old_Opp_Field_Goal,
+                                                      overtime_pass_df$Field_Goal)
+    overtime_pass_data_preds$Safety <- ifelse(overtime_pass_df$Turnover_Ind == 1,
+                                                  overtime_pass_df$old_Opp_Safety,
+                                                  overtime_pass_df$Safety)
+    overtime_pass_data_preds$Touchdown <- ifelse(overtime_pass_df$Turnover_Ind == 1,
+                                                     overtime_pass_df$old_Opp_Touchdown,
+                                                     overtime_pass_df$Touchdown)
+    
+    # Calculate the two possible win probability types, Sudden Death and one Field Goal:
+    pass_overtime_df$Sudden_Death_airWP <- with(overtime_pass_data_preds, Field_Goal + Touchdown + Safety)
+    pass_overtime_df$One_FG_airWP <- overtime_pass_data_preds$Touchdown + (overtime_pass_data_preds$Field_Goal*overtime_df_ko_preds_pass$Win_Back)
+    
+    # Decide which win probability to use:
+    pass_overtime_df$airWP <- ifelse(overtime_pass_df$Season >= 2012  & (overtime_pass_df$Drive_Diff == 0 | (overtime_pass_df$Drive_Diff == 1 & overtime_pass_df$One_FG_Game == 1)),
+                                     pass_overtime_df$One_FG_WP, pass_overtime_df$Sudden_Death_WP)
+    
+    # For the plays that have TimeSecs_Remaining 0 or less, set airWP to 0:
+    pass_overtime_df$airWP[which(overtime_pass_df$TimeSecs_Remaining<=0)] <- 0
+    
+    # Calculate the airWPA and yacWPA:
+    pass_overtime_df <- dplyr::mutate(pass_overtime_df, airWPA = airWP - Win_Prob,
+                                   yacWPA = WPA - airWPA)
+    
+    # If the play is a two-point conversion then change the airWPA to NA since
+    # no air yards are provided:
+    pass_overtime_df$airWPA <- with(pass_overtime_df, ifelse(!is.na(TwoPointConv),
+                                                       NA,airWPA))
+    pass_overtime_df$yacWPA <- with(pass_overtime_df, ifelse(!is.na(TwoPointConv),
+                                                       NA,yacWPA))
+    
+    
+    pass_overtime_df <- pass_pbp_data[pass_overtime_i,]
+    
+    # Now update the overtime rows in the original pass_pbp_data for airWPA and yacWPA:
+    pass_pbp_data$airWPA[pass_overtime_i] <- pass_overtime_df$airWPA
+    pass_pbp_data$yacWPA[pass_overtime_i] <- pass_overtime_df$yacWPA
+  }
+  
+  # if Yards after catch is 0 make yacWPA set to 0:
+  pass_pbp_data$yacWPA <- ifelse(pass_pbp_data$YardsAfterCatch == 0 & pass_pbp_data$Reception==1,
+                                 0, pass_pbp_data$yacWPA)
+  # if Yards after catch is 0 make airWPA set to WPA:
+  pass_pbp_data$airWPA <- ifelse(pass_pbp_data$YardsAfterCatch == 0 & pass_pbp_data$Reception==1,
+                                 pass_pbp_data$WPA, pass_pbp_data$airWPA)
+  
+  # Now add airWPA and yacWPA to the original dataset:
+  dataset$airWPA <- NA
+  dataset$yacWPA <- NA
+  dataset$airWPA[pass_plays_i] <- pass_pbp_data$airWPA
+  dataset$yacWPA[pass_plays_i] <- pass_pbp_data$yacWPA
+  
+  
   return(dataset)
   
 }
