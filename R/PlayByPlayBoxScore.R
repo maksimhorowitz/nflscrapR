@@ -185,6 +185,8 @@
 #'  \item{"Win_Prob"} - The win probability added for team with possession
 #'  \item{"WPA"} - The win probability added with respect to the
 #'  possession team
+#'  \item{"airWPA"} - Win probability added from air yards
+#'  \item{"yacWPA"} - Win probability added from yards after catch
 #'  
 #'  }
 #'  
@@ -1489,7 +1491,7 @@ game_play_by_play <- function(GameID) {
          "Opp_Touchdown_Prob","Field_Goal_Prob","Safety_Prob",
          "Touchdown_Prob","ExPoint_Prob","TwoPoint_Prob",
          "ExpPts","EPA","airEPA","yacEPA","Home_WP_pre",  "Away_WP_pre", "Home_WP_post", 
-         "Away_WP_post","Win_Prob","WPA")]
+         "Away_WP_post","Win_Prob","WPA","airWPA","yacWPA")]
 }
 
 ################################################################## 
