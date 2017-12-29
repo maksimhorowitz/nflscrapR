@@ -194,6 +194,8 @@ The added variables are specified below:
  \item{"Win_Prob"} - The win probability added for team with possession
  \item{"WPA"} - The win probability added with respect to the
  possession team
+ \item{"airWPA"} - Win probability added from air yards
+ \item{"yacWPA"} - Win probability added from yards after catch
  
  }
 }
