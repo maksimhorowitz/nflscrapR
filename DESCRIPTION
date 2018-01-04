@@ -1,37 +1,41 @@
 Package: nflscrapR
-Title: Will scrape NFL play-by-play and boxscore data across full seasons
+Title: Scrapes NFL Play-by-Play and Boxscore Data Across Full Seasons
 Version: 1.4.0
-Authors@R: c(person("Maksim", "Horowitz", role = c("aut", "cre"),
-		     email = "maksim.horowitz@gmail.com"),
-		     person("Ron", "Yurko", role = c("aut"),
-		     email = "ryurko21@gmail.com"))
-Description: This package allows data driven sports enthusiasts to use the NFL JSON API data to perform detailed analysis on the game, player, and season levels.  The 11 functions within this package helps parse and clean the data from Nfl.com for R users.  nflscrapR was build to enhance advanced sports analytics research specifically for American Football with the hopes of developing metrics and insights that could potentially be useful for professional NFL teams. 
-    R (>= 3.0.2)
+Authors@R: c(
+    person("Maksim", "Horowitz", role = c("aut", "cre"), email = "maksim.horowitz@gmail.com"),
+		person("Ron", "Yurko", role = c("aut"),email = "ryurko21@gmail.com"))
+Maintainer: Ron Yurko <ryurko21@gmail.com>
+Description: This package allows data driven sports enthusiasts to use the NFL JSON API data
+    to perform detailed analysis at game, season, and player levels. The functions within
+    this package help parse and clean the data from NFL.com for R users. This package was
+    built to enhance advanced sports analytics research specifically for American football
+    with the hopes of developing metrics and insights that could potentially be useful for
+    professional NFL teams as well as the public.
+Depends: R (>= 3.4.0),
+         nnet,
+         magrittr
+Imports: RJSONIO,
+         RCurl,
+         stringr,
+         lubridate,
+         dplyr,
+         reshape,
+         reshape2,
+         scrapeR,
+         ggplot2,
+         DT,
+         gridExtra,
+         mgcv,
+         rvest,
+         purrr,
+         xml2
+Suggests: testthat,
+          knitr,
+          rmarkdown
 License: CC0
 URL: https://github.com/maksimhorowitz/nflscrapR
 BugReports: https://github.com/maksimhorowitz/nflscrapR/issues
 LazyData: true
-Imports:
-    RJSONIO,
-    RCurl,
-    stringr,
-    lubridate,
-    dplyr,
-    reshape,
-    reshape2,
-    scrapeR,
-    ggplot2,
-    DT,
-    gridExtra,
-    mgcv,
-    rvest,
-    purrr,
-    xml2
-Suggests:
-    testthat,
-    knitr,
-    rmarkdown
 RoxygenNote: 6.0.1
 VignetteBuilder: knitr
-Depends: nnet,
-    magrittr
+

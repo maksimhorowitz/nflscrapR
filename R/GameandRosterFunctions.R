@@ -69,8 +69,24 @@ season_games <- function(Season, sleep.seconds = 0) {
 #' @description This function intakes a year and a team abbreviation and outputs
 #' a dataframe with each player who has played for the specified team and 
 #' recorded a measurable statistic
-#' @param Season: A 4-digit year associated with a given NFL season
-#' @param TeamInt: A string containing the abbreviations for an NFL Team
+#' @param season: A 4-digit year associated with a given NFL season
+#' @param teams: A string vector containing the abbreviations for NFL Team(s)
+#' @param Positions: A string vector containing the abbreviations for NFL position(s).
+#' Can be of the following:
+#' \itemize{
+#' \item{"QUARTERBACK"} (in the default list)
+#' \item{"RUNNING_BACK"} (in the default list)
+#' \item{"WIDE_RECEIVER"} (in the default list)
+#' \item{"TIGHT_END"} (in the default list)
+#' \item{"DEFENSIVE_LINEMAN"} 
+#' \item{"LINEBACKER"}
+#' \item{"DEFENSIVE_BACK"}
+#' \item{"KICKOFF_KICKER"}
+#' \item{"KICK_RETURNER"}
+#' \item{"PUNTER"}
+#' \item{"PUNT_RETURNER"}
+#' \item{"FIELD_GOAL_KICKER"}
+#' }
 #' @details To find team associated abbrevations use the nflteams dataframe 
 #' stored in this package!
 #' @return A dataframe with columns associated with season/year, full player name,
@@ -81,24 +97,21 @@ season_games <- function(Season, sleep.seconds = 0) {
 #' # Roster for Baltimore Ravens in 2013
 #' season_rosters(2013, TeamInt = "BAL") 
 #' @export
-season_rosters <- function(Season, TeamInt) {
+season_rosters <- function(season, teams, 
+                           positions = c("QUARTERBACK", "RUNNING_BACK", "WIDE_RECEIVER", 
+                                         "TIGHT_END")) {
   
-  positions <- c("QUARTERBACK","RUNNING_BACK" ,   
-                 "WIDE_RECEIVER", "TIGHT_END"  ,      
-                 "DEFENSIVE_LINEMAN", "LINEBACKER" ,      
-                 "DEFENSIVE_BACK", "KICKOFF_KICKER",   
-                 "KICK_RETURNER", "PUNTER",           
-                 "PUNT_RETURNER", "FIELD_GOAL_KICKER")
-  
-  rosters <- positions %>% purrr::map_df(getPlayers, season=Season) %>%
-    dplyr::filter(Team == TeamInt) %>% dplyr::group_by(Player, Team, Pos) %>% 
+  # Find the players with the given positions and season filtering to the 
+  # provided teams:
+  positions %>% purrr::map_df(getPlayers, season) %>%
+    dplyr::filter(Team %in% teams) %>% 
+    dplyr::group_by(Player, Team, Pos, GSIS_ID) %>% 
     dplyr::slice(n= 1) %>% 
-    dplyr::mutate(Season = Season) %>% 
-    dplyr::select(Season, Player, Team, Pos, name)
+    dplyr::mutate(Season = season) %>% 
+    dplyr::select(Season, Player, Team, Pos, name, GSIS_ID)
   
-  ## Return the rosters DF ##
-  rosters 
 }
+
 
 ################################################################## 
 # Do not export
@@ -169,6 +182,22 @@ buildNameAbbr <- . %>%
   # combine them into one column
   tidyr::unite(name, First, Last, sep='.', remove=TRUE)
 
+# Do not export
+#' Find the GSIS ID for each player on the provided page.
+findPagePlayerID <- . %>%
+  rvest::html_nodes("td:nth-child(2) a") %>% 
+  rvest::html_attr("href") %>%
+  purrr::map_chr(getGSISID)
+
+# Do not export
+#' For a player's href, get their GSIS ID from their personal url.
+getGSISID <- . %>%
+  paste("http://www.nfl.com", ., sep = "") %>%
+  readLines() %>%
+  grep("GSIS ID", ., value = TRUE) %>%
+  substr(., nchar(.) - 9, nchar(.)) %>%
+  as.character()
+
 ################################################################## 
 # Do not export
 #' Scrape Player Names and Positions
@@ -192,10 +221,20 @@ getPlayers <- function(position, season,
   pageUrls <- buildURL(position=position, 
                        season=season, page=pageSeq, type=type)
   
-  # read the pages and extract info
+  # Extract the player IDs
+  player_ids <- pageUrls %>%
+    # read each URL
+    purrr::map(., .f = function(x) xml2::read_html(x)) %>%
+    # get the player id (this is same order as the )
+    purrr::map(findPagePlayerID) %>%
+    purrr::flatten_chr()
+  
+  # read the pages and extract info, then add the ids:
   pageUrls %>% 
     # read each URL
     purrr::map(., .f = function(x) xml2::read_html(x)) %>% 
     # get the name and position, combine everything into a data.frame
-    purrr::map_df(buildNameAbbr)
+    purrr::map_df(buildNameAbbr) %>%
+    dplyr::mutate(GSIS_ID = player_ids)
+  
 }
