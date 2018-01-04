@@ -4,12 +4,30 @@
 \alias{season_rosters}
 \title{Season Rosters for Teams}
 \usage{
-season_rosters(Season, TeamInt)
+season_rosters(season, teams, positions = c("QUARTERBACK", "RUNNING_BACK",
+  "WIDE_RECEIVER", "TIGHT_END"))
 }
 \arguments{
-\item{Season:}{A 4-digit year associated with a given NFL season}
+\item{season:}{A 4-digit year associated with a given NFL season}
 
-\item{TeamInt:}{A string containing the abbreviations for an NFL Team}
+\item{teams:}{A string vector containing the abbreviations for NFL Team(s)}
+
+\item{Positions:}{A string vector containing the abbreviations for NFL position(s).
+Can be of the following:
+\itemize{
+\item{"QUARTERBACK"} (in the default list)
+\item{"RUNNING_BACK"} (in the default list)
+\item{"WIDE_RECEIVER"} (in the default list)
+\item{"TIGHT_END"} (in the default list)
+\item{"DEFENSIVE_LINEMAN"} 
+\item{"LINEBACKER"}
+\item{"DEFENSIVE_BACK"}
+\item{"KICKOFF_KICKER"}
+\item{"KICK_RETURNER"}
+\item{"PUNTER"}
+\item{"PUNT_RETURNER"}
+\item{"FIELD_GOAL_KICKER"}
+}}
 }
 \value{
 A dataframe with columns associated with season/year, full player name,
