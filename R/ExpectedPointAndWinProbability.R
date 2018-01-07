@@ -59,7 +59,12 @@ expected_points <- function(dataset) {
   
   predict_EP_prob <- function(data, ep_model, fgxp_model){
     # First get the predictions from the base ep_model:
-    base_ep_preds <- as.data.frame(predict(ep_model, newdata = data, type = "probs"))
+    if (nrow(data) > 1) {
+      base_ep_preds <- as.data.frame(predict(ep_model, newdata = data, type = "probs"))
+    } else{
+      base_ep_preds <- as.data.frame(matrix(predict(ep_model, newdata = data, type = "probs"),
+                                                       ncol = 7))
+    }
     colnames(base_ep_preds) <- c("No_Score","Opp_Field_Goal","Opp_Safety","Opp_Touchdown",
                                  "Field_Goal","Safety","Touchdown")
     # ----------------------------------------------------------------------------
@@ -83,7 +88,12 @@ expected_points <- function(dataset) {
     missed_fg_data$Under_TwoMinute_Warning <- ifelse(missed_fg_data$TimeSecs_Remaining < 120,1,0)
     
     # Get the new predicted probabilites:
-    missed_fg_ep_preds <- as.data.frame(predict(ep_model, newdata = missed_fg_data, type = "probs"))
+    if (nrow(missed_fg_data) > 1) {
+      missed_fg_ep_preds <- as.data.frame(predict(ep_model, newdata = missed_fg_data, type = "probs"))
+    } else{
+      missed_fg_ep_preds <- as.data.frame(matrix(predict(ep_model, newdata = missed_fg_data, type = "probs"),
+                                            ncol = 7))
+    }
     colnames(missed_fg_ep_preds) <- c("No_Score","Opp_Field_Goal","Opp_Safety","Opp_Touchdown",
                                  "Field_Goal","Safety","Touchdown")
     # Find the rows where TimeSecs_Remaining became 0 or negative and make all the probs equal to 0:
@@ -127,7 +137,12 @@ expected_points <- function(dataset) {
     kickoff_data <- dplyr::mutate(kickoff_data, log_ydstogo = log(ydstogo))
     
     # Get the new predicted probabilites:
-    kickoff_preds <- as.data.frame(predict(ep_model, newdata = kickoff_data, type = "probs"))
+    if (nrow(kickoff_data) > 1) {
+      kickoff_preds <- as.data.frame(predict(ep_model, newdata = kickoff_data, type = "probs"))
+    } else{
+      kickoff_preds <- as.data.frame(matrix(predict(ep_model, newdata = kickoff_data, type = "probs"),
+                                                 ncol = 7))
+    }
     colnames(kickoff_preds) <- c("No_Score","Opp_Field_Goal","Opp_Safety","Opp_Touchdown",
                                       "Field_Goal","Safety","Touchdown")
     # Find the kickoffs:
@@ -458,7 +473,12 @@ expected_points <- function(dataset) {
   pass_pbp_data$down <- as.factor(pass_pbp_data$down)
   
   # Get the new predicted probabilites:
-  pass_pbp_data_preds <- as.data.frame(predict(ep_model, newdata = pass_pbp_data, type = "probs"))
+  if (nrow(pass_pbp_data) > 1) {
+    pass_pbp_data_preds <- as.data.frame(predict(ep_model, newdata = pass_pbp_data, type = "probs"))
+  } else{
+    pass_pbp_data_preds <- as.data.frame(matrix(predict(ep_model, newdata = pass_pbp_data, type = "probs"),
+                                          ncol = 7))
+  }
   colnames(pass_pbp_data_preds) <- c("No_Score","Opp_Field_Goal","Opp_Safety","Opp_Touchdown",
                                "Field_Goal","Safety","Touchdown")
   # Convert to air EP:
@@ -645,8 +665,12 @@ win_probability <- function(dataset) {
     overtime_df_ko$Under_TwoMinute_Warning <- ifelse(overtime_df_ko$TimeSecs_Remaining < 120,1,0)
     
     # Get the predictions from the EP model and calculate the necessary probability:
-    overtime_df_ko_preds <- as.data.frame(predict(ep_model, 
-                                                    newdata = overtime_df_ko, type = "probs"))
+    if (nrow(overtime_df_ko) > 1) {
+      overtime_df_ko_preds <- as.data.frame(predict(ep_model, newdata = overtime_df_ko, type = "probs"))
+    } else{
+      overtime_df_ko_preds <- as.data.frame(matrix(predict(ep_model, newdata = overtime_df_ko, type = "probs"),
+                                                  ncol = 7))
+    }
     colnames(overtime_df_ko_preds) <- c("No_Score","Opp_Field_Goal","Opp_Safety","Opp_Touchdown",
                                           "Field_Goal","Safety","Touchdown")
     overtime_df_ko_preds <- dplyr::mutate(overtime_df_ko_preds,
@@ -943,12 +967,16 @@ win_probability <- function(dataset) {
     
     # Make the new down a factor:
     overtime_pass_df$down <- as.factor(overtime_pass_df$down)
-    
+
     # Get the new predicted probabilites:
-    overtime_pass_data_preds <- as.data.frame(predict(ep_model, newdata = overtime_pass_df, type = "probs"))
+    if (nrow(overtime_pass_df) > 1) {
+      overtime_pass_data_preds <- as.data.frame(predict(ep_model, newdata = overtime_pass_df, type = "probs"))
+    } else{
+      overtime_pass_data_preds <- as.data.frame(matrix(predict(ep_model, newdata = overtime_pass_df, type = "probs"),
+                                                       ncol = 7))
+    }
     colnames(overtime_pass_data_preds) <- c("No_Score","Opp_Field_Goal","Opp_Safety","Opp_Touchdown",
-                                       "Field_Goal","Safety","Touchdown")
-    
+                                            "Field_Goal","Safety","Touchdown")
     # For the turnover plays flip the scoring probabilities:
     overtime_pass_data_preds <- dplyr::mutate(overtime_pass_data_preds,
                                               old_Opp_Field_Goal = Opp_Field_Goal,
