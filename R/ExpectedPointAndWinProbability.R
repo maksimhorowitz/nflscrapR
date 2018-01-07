@@ -719,17 +719,20 @@ win_probability <- function(dataset) {
 
   dataset$WPA_base_nxt_ind <- with(dataset, 
                                    ifelse(GameID == dplyr::lead(GameID) & 
+                                            posteam == dplyr::lead(posteam,2) &
                                             Drive == dplyr::lead(Drive,2) & 
                                             dplyr::lead(PlayType) %in% 
                                             c("Quarter End","Two Minute Warning","Timeout"),1,0))
   dataset$WPA_change_nxt_ind <- with(dataset, 
                                      ifelse(GameID == dplyr::lead(GameID) & 
                                               Drive != dplyr::lead(Drive,2) & 
+                                              posteam != dplyr::lead(posteam,2) &
                                               dplyr::lead(PlayType) %in% 
                                               c("Quarter End","Two Minute Warning","Timeout"),1,0))
   dataset$WPA_change_ind <- with(dataset,
                                  ifelse(GameID == dplyr::lead(GameID) & 
                                           Drive != dplyr::lead(Drive) & 
+                                          posteam != dplyr::lead(posteam) &
                                           dplyr::lead(PlayType) %in% 
                                           c("Pass","Run","Punt","Sack",
                                             "Field Goal","No Play","QB Kneel",
@@ -943,7 +946,7 @@ win_probability <- function(dataset) {
     
     # Get the new predicted probabilites:
     overtime_pass_data_preds <- as.data.frame(predict(ep_model, newdata = overtime_pass_df, type = "probs"))
-    colnames(pass_pbp_data_preds) <- c("No_Score","Opp_Field_Goal","Opp_Safety","Opp_Touchdown",
+    colnames(overtime_pass_data_preds) <- c("No_Score","Opp_Field_Goal","Opp_Safety","Opp_Touchdown",
                                        "Field_Goal","Safety","Touchdown")
     
     # For the turnover plays flip the scoring probabilities:
@@ -955,23 +958,23 @@ win_probability <- function(dataset) {
                                               old_Safety = Safety,
                                               old_Touchdown = Touchdown)
     overtime_pass_data_preds$Opp_Field_Goal <- ifelse(overtime_pass_df$Turnover_Ind == 1,
-                                                      overtime_pass_df$old_Field_Goal,
-                                                      overtime_pass_df$Opp_Field_Goal)
+                                                      overtime_pass_data_preds$old_Field_Goal,
+                                                      overtime_pass_data_preds$Opp_Field_Goal)
     overtime_pass_data_preds$Opp_Safety <- ifelse(overtime_pass_df$Turnover_Ind == 1,
-                                                      overtime_pass_df$old_Safety,
-                                                      overtime_pass_df$Opp_Safety)
+                                                  overtime_pass_data_preds$old_Safety,
+                                                  overtime_pass_data_preds$Opp_Safety)
     overtime_pass_data_preds$Opp_Touchdown <- ifelse(overtime_pass_df$Turnover_Ind == 1,
-                                                  overtime_pass_df$old_Touchdown,
-                                                  overtime_pass_df$Opp_Touchdown)
+                                                     overtime_pass_data_preds$old_Touchdown,
+                                                     overtime_pass_data_preds$Opp_Touchdown)
     overtime_pass_data_preds$Field_Goal <- ifelse(overtime_pass_df$Turnover_Ind == 1,
-                                                      overtime_pass_df$old_Opp_Field_Goal,
-                                                      overtime_pass_df$Field_Goal)
+                                                  overtime_pass_data_preds$old_Opp_Field_Goal,
+                                                  overtime_pass_data_preds$Field_Goal)
     overtime_pass_data_preds$Safety <- ifelse(overtime_pass_df$Turnover_Ind == 1,
-                                                  overtime_pass_df$old_Opp_Safety,
-                                                  overtime_pass_df$Safety)
+                                              overtime_pass_data_preds$old_Opp_Safety,
+                                              overtime_pass_data_preds$Safety)
     overtime_pass_data_preds$Touchdown <- ifelse(overtime_pass_df$Turnover_Ind == 1,
-                                                     overtime_pass_df$old_Opp_Touchdown,
-                                                     overtime_pass_df$Touchdown)
+                                                 overtime_pass_data_preds$old_Opp_Touchdown,
+                                                 overtime_pass_data_preds$Touchdown)
     
     # Calculate the two possible win probability types, Sudden Death and one Field Goal:
     pass_overtime_df$Sudden_Death_airWP <- with(overtime_pass_data_preds, Field_Goal + Touchdown + Safety)
@@ -979,7 +982,7 @@ win_probability <- function(dataset) {
     
     # Decide which win probability to use:
     pass_overtime_df$airWP <- ifelse(overtime_pass_df$Season >= 2012  & (overtime_pass_df$Drive_Diff == 0 | (overtime_pass_df$Drive_Diff == 1 & overtime_pass_df$One_FG_Game == 1)),
-                                     pass_overtime_df$One_FG_WP, pass_overtime_df$Sudden_Death_WP)
+                                     pass_overtime_df$One_FG_airWP, pass_overtime_df$Sudden_Death_airWP)
     
     # For the plays that have TimeSecs_Remaining 0 or less, set airWP to 0:
     pass_overtime_df$airWP[which(overtime_pass_df$TimeSecs_Remaining<=0)] <- 0
