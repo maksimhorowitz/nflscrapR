@@ -1,9 +1,10 @@
 Package: nflscrapR
-Title: Scrapes NFL Play-by-Play and Boxscore Data Across Full Seasons
+Title: Compiling the NFL Play-by-Play API for easy use in R
 Version: 1.4.0
 Authors@R: c(
     person("Maksim", "Horowitz", role = c("aut", "cre"), email = "maksim.horowitz@gmail.com"),
-		person("Ron", "Yurko", role = c("aut"),email = "ryurko21@gmail.com"))
+		person("Ron", "Yurko", role = c("aut"),email = "ryurko21@gmail.com"),
+		person("Samuel", "Ventura", role = c("aut"),email = "samventura22@gmail.com"))
 Maintainer: Ron Yurko <ryurko21@gmail.com>
 Description: This package allows data driven sports enthusiasts to use the NFL JSON API data
     to perform detailed analysis at game, season, and player levels. The functions within
