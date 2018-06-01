@@ -50,6 +50,7 @@ The added variables are specified below:
 \itemize{
  \item{"Date"} - Date of game
  \item{"GameID"} - The ID of the specified game
+ \item{"play_id"} - Play id within a game
  \item{"TimeSecs"} - Time remaining in game in seconds
  \item{"PlayTimeDiff"} - The time difference between plays in seconds
  \item{"DefensiveTeam"} - The defensive team on the play (for punts the 
