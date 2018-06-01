@@ -41,6 +41,7 @@
 #' \itemize{
 #'  \item{"Date"} - Date of game
 #'  \item{"GameID"} - The ID of the specified game
+#'  \item{"play_id"} - Play id within a game
 #'  \item{"TimeSecs"} - Time remaining in game in seconds
 #'  \item{"PlayTimeDiff"} - The time difference between plays in seconds
 #'  \item{"DefensiveTeam"} - The defensive team on the play (for punts the 
@@ -231,7 +232,7 @@ game_play_by_play <- function(GameID) {
   # that has an empty drive 3 list:
   
   if (GameID == 2013092206){
-    PBP <- lapply(c(1,2,4:number.drives),
+    PBP <- lapply(c(1, 2, 4:number.drives),
                   function(x) cbind("Drive"=x,data.frame(do.call(rbind,nfl.json[[1]]$drives[[x]]$plays))[,c(1:9)])) %>%
       dplyr::bind_rows()
   } else {
@@ -249,7 +250,9 @@ game_play_by_play <- function(GameID) {
   get_play_stats <- function(drive_plays_list){
     result <- lapply(c(1:length(drive_plays_list$plays)),
                      function(x) suppressWarnings(find_extra_stats(drive_plays_list$plays[[x]]))) %>% 
-      dplyr::bind_rows()
+      dplyr::bind_rows() %>%
+      # Include a column for the play_id
+      cbind(data.frame(play_id = names(drive_plays_list$plays)))
     return(result)
   }
   
@@ -260,7 +263,7 @@ game_play_by_play <- function(GameID) {
     # Check the number of players in the play,
     # if empty return "None":
     if (length(players_list$players) == 0){
-      result <- as.data.frame(list("statId"="None"))
+      result <- as.data.frame(list("statId" = "None"))
     } else{
       # Return the dataframe
       result <- lapply(c(1:length(players_list$players)),
@@ -282,20 +285,20 @@ game_play_by_play <- function(GameID) {
     play_stat_df <- return_play_stat_df(play_list)
     # If play_stat_df equals None, then return NA for each:
     if (play_stat_df$statId == "None"){
-      result <- as.data.frame(list("AirYards"=0,
-                                   "YardsAfterCatch"= 0,
-                                   "QBHit"=0,
-                                   "Timeout_Indicator"=0,
-                                   "Timeout_Team"=as.character("None"),
+      result <- as.data.frame(list("AirYards" = 0,
+                                   "YardsAfterCatch" = 0,
+                                   "QBHit" = 0,
+                                   "Timeout_Indicator" = 0,
+                                   "Timeout_Team" = as.character("None"),
                                    "Passer_ID" = as.character("None"),
                                    "Rusher_ID" = as.character("None"),
                                    "Receiver_ID" = as.character("None")))
     } else{
       # Find AirYards:
       if (111 %in% play_stat_df$statId){
-        airyards <- play_stat_df$yards[which(play_stat_df$statId==111)]
+        airyards <- play_stat_df$yards[which(play_stat_df$statId == 111)]
         # Check to see if it's a list
-        if (typeof(airyards)=="list"){
+        if (typeof(airyards) == "list"){
           airyards <- unlist(airyards)
         }
         # Only the first one
@@ -303,30 +306,30 @@ game_play_by_play <- function(GameID) {
         # If NULL then make it 0:
         airyards <- ifelse(is.null(airyards),0,airyards)
       } else if (112 %in% play_stat_df$statId){
-        airyards <- play_stat_df$yards[which(play_stat_df$statId==112)]
+        airyards <- play_stat_df$yards[which(play_stat_df$statId == 112)]
         # Check to see if it's a list
-        if (typeof(airyards)=="list"){
+        if (typeof(airyards) == "list"){
           airyards <- unlist(airyards)
         }
         # Only the first one
         airyards <- airyards[1]
         # If NULL then make it 0:
-        airyards <- ifelse(is.null(airyards),0,airyards)
+        airyards <- ifelse(is.null(airyards), 0, airyards)
       } else {
         airyards <- 0
       }
       # YardsAfterCatch:
       if (113 %in% play_stat_df$statId){
-        yac <- play_stat_df$yards[which(play_stat_df$statId==113)]
+        yac <- play_stat_df$yards[which(play_stat_df$statId == 113)]
         # Check to see if it's a list
-        if (typeof(yac)=="list"){
+        if (typeof(yac) == "list"){
           yac <- unlist(yac)
         }
         # Only the first one
         yac <- yac[1]
         # If NULL then make it 0:
-        yac <- ifelse(is.null(yac),0,yac)
-      } else{
+        yac <- ifelse(is.null(yac), 0, yac)
+      } else {
         yac <- 0
       }
       # QBHit:
@@ -350,7 +353,7 @@ game_play_by_play <- function(GameID) {
         passer_id <- as.character(play_stat_df$PlayerID[which(play_stat_df$statId %in% c(14, 15, 16, 111, 112, 20))])
         # Only the first one
         passer_id <- passer_id[1]
-      } else{
+      } else {
         passer_id <- "None"
       }
       # Rusher ID:
@@ -358,7 +361,7 @@ game_play_by_play <- function(GameID) {
         rusher_id <- as.character(play_stat_df$PlayerID[which(play_stat_df$statId %in% c(10, 11, 12, 13))])
         # Only the first one
         rusher_id <- rusher_id[1]
-      } else{
+      } else {
         rusher_id <- "None"
       }
       # Receiver ID:
@@ -366,18 +369,18 @@ game_play_by_play <- function(GameID) {
         receiver_id <- as.character(play_stat_df$PlayerID[which(play_stat_df$statId %in% c(21, 22, 113, 115))])
         # Only the first one
         receiver_id <- receiver_id[1]
-      } else{
+      } else {
         receiver_id <- "None"
       }
       # Return as a dataframe:
-      result <- as.data.frame(list("AirYards"=airyards,
-                                   "YardsAfterCatch"=yac,
-                                   "QBHit"=qbhit,
-                                   "Timeout_Indicator"=to,
-                                   "Timeout_Team"=to_team,
-                                   "Passer_ID"=passer_id,
-                                   "Rusher_ID"=rusher_id,
-                                   "Receiver_ID"=receiver_id))
+      result <- as.data.frame(list("AirYards" = airyards,
+                                   "YardsAfterCatch" = yac,
+                                   "QBHit" = qbhit,
+                                   "Timeout_Indicator" = to,
+                                   "Timeout_Team" = to_team,
+                                   "Passer_ID" = passer_id,
+                                   "Rusher_ID" = rusher_id,
+                                   "Receiver_ID" = receiver_id))
     }
     colnames(result) <- c("AirYards","YardsAfterCatch","QBHit","Timeout_Indicator","Timeout_Team",
                           "Passer_ID","Rusher_ID","Receiver_ID")
@@ -389,9 +392,9 @@ game_play_by_play <- function(GameID) {
   }
   
   
-  # Generate the dataframe with the three stats:
+  # Generate the dataframe with the extra stats:
   # Catch the situation with GameID == 2013092206 and drive == 3
-  if (GameID == 2013092206){
+  if (GameID == 2013092206) {
     pbp_extrastats <- lapply(c(1,2,4:number.drives),
                              function(x) suppressWarnings(get_play_stats(nfl.json[[1]]$drives[[x]]))) %>% 
       dplyr::bind_rows()
@@ -403,7 +406,7 @@ game_play_by_play <- function(GameID) {
   
   # Add to the PBP dataset:
   
-  PBP <- cbind(PBP,pbp_extrastats)
+  PBP <- cbind(PBP, pbp_extrastats)
   
   # Adjusting Possession Team
   PBP$posteam <- ifelse(PBP$posteam == "NULL", dplyr::lag(PBP$posteam),
@@ -1470,7 +1473,7 @@ game_play_by_play <- function(GameID) {
   
   ##############################################################################
   ## Final OutPut ##
-  PBP[,c("Date", "GameID", "Drive", "qtr", "down", "time", "TimeUnder", 
+  PBP[,c("Date", "GameID", "play_id", "Drive", "qtr", "down", "time", "TimeUnder", 
          "TimeSecs", "PlayTimeDiff", "SideofField", "yrdln", "yrdline100",
          "ydstogo", "ydsnet", "GoalToGo", "FirstDown", 
          "posteam", "DefensiveTeam", "desc", "PlayAttempted", "Yards.Gained", 
