@@ -3,13 +3,30 @@
 \docType{data}
 \name{nflteams}
 \alias{nflteams}
-\title{NFL Team Names and Abbreviations}
-\format{This dataset contains the full team names and abbreviations
-of each of the 32 teams in the NFL.  The data set has 32 rows and 2 columns}
+\title{Dataset of NFL team names, abbreviations, and colors}
+\format{A data frame with one row for each team/abbreviation combo that appears
+in the NFL play-by-play data with the following columns accessed from the 
+`teamcolors` package created by Ben Baumer and Gregory Matthews:
+\describe{
+ \item{team}{full name of the team}
+ \item{abbr}{team abbreviation used in play-by-play data}
+ \item{primary}{team's primary color}
+ \item{secondary}{team's secondary color}
+ \item{tertiary}{team's tertiary color}
+ \item{quaternary}{team's quaternary color}
+ \item{division}{team's division}
+}}
 \usage{
 nflteams
 }
 \description{
-NFL Team Names and Abbreviations
+Dataset of NFL team names, abbreviations, and colors
+}
+\details{
+Team names, abbreviations, divisions, and team colors.
+}
+\examples{
+data(nflteams)
+
 }
 \keyword{datasets}
