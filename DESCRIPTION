@@ -1,6 +1,6 @@
 Package: nflscrapR
 Title: Compiling the NFL Play-by-Play API for easy use in R
-Version: 1.4.0
+Version: 1.8.0
 Authors@R: c(
     person("Maksim", "Horowitz", role = c("aut", "cre"), email = "maksim.horowitz@gmail.com"),
 		person("Ron", "Yurko", role = c("aut"), email = "ryurko21@gmail.com"),
@@ -23,13 +23,13 @@ Imports: RJSONIO,
          reshape,
          reshape2,
          scrapeR,
-         ggplot2,
          DT,
          gridExtra,
          mgcv,
          rvest,
          purrr,
          xml2,
+         hashmap,
          assertthat
 Suggests: testthat,
           knitr,

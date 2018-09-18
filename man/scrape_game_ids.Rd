@@ -2,9 +2,9 @@
 % Please edit documentation in R/scrape_games_and_urls.R
 \name{scrape_game_ids}
 \alias{scrape_game_ids}
-\title{Scrape game ids for a given NFL season (either pre, regular, or post season)}
+\title{Scrape game ids for a given NFL season (either pre, regular, or post-season)}
 \usage{
-scrape_game_ids(season, type = "reg")
+scrape_game_ids(season, type = "reg", weeks = NULL, teams = NULL)
 }
 \arguments{
 \item{season}{Numeric 4-digit year associated with an NFL season}
@@ -12,16 +12,23 @@ scrape_game_ids(season, type = "reg")
 \item{type}{String indicating the type of game ids to find, must either be
 "pre", "reg", or "post" (default is "reg").}
 
-\item{playoffs}{Boolean (TRUE or FALSE) if you want the playoffs game ids 
-instead of the regular season (default is FALSE returning regular season games).}
+\item{weeks}{Numeric vector indicating which weeks of preseason (0 to 4 except
+for 2011 season without Hall of Fame game) or regular season games (1 to 17)
+to grab (default value of NULL corresponds to selecting all available weeks).}
+
+\item{teams}{String vector indicating which teams (based on the abbreviation)
+the function should grab game info for (default value of NULL corresponds to
+selecting all available teams).}
 }
 \value{
-String vector of NFL game ids from the specified season and game types.
+Data frame with columns containing the type, game_id, week number (if
+pre or regular season), and the year of the season.
+for each game id that is scraped.
 }
 \description{
 This function returns all available game ids for a given season,
 with an option specifying which type of game ids to return (either the 
-pre, regular, or post season).
+pre, regular, or post season) as well as the weeks considered.
 }
 \examples{
 # Scraping all game ids from 2017 regular season:
