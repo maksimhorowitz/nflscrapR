@@ -22,33 +22,33 @@ extracting_gameids <- function(Season, playoffs = FALSE) {
   # Setting up to Pull Regular Season Weeks
   
   if (playoffs == FALSE) {
-  # String for the regular season part of the URL
-  url.year.sched <- paste("http://www.nfl.com/schedules", Season, 
-                          "REG", sep = "/")
-  
-  # This Runs through the Week of the season and adds it as part of the URL
-  url.schedule.weeks <- sapply(1:17, FUN = function(x) {
-                                                      paste(url.year.sched, 
-                                                            x, 
-                                                            sep = "" )
-                                                      })
-  # Here I use regular expressions to scrape out the gameids for each game in
-  # the specified season
-  game.id.list <- sapply(url.schedule.weeks, 
-                       FUN = function(x) {
-                              sourceHTML <- scrapeR::scrape(url = x, 
-                                                            headers = TRUE,
-                                                            parse = FALSE)
-                              extract.game.id <- stringr::str_extract_all(
-                                unlist(sourceHTML),
-                                pattern = "data-gameid=\"[0-9]{10}\"")
-                              game.ids <- stringr::str_extract_all(
-                                unlist(extract.game.id),
-                                pattern = "[0-9]{10}")
-                       })
-  
-  game.id.list <- unlist(game.id.list)
-  names(game.id.list) <- NULL
+    # String for the regular season part of the URL
+    url.year.sched <- paste("http://www.nfl.com/schedules", Season, 
+                            "REG", sep = "/")
+    
+    # This Runs through the Week of the season and adds it as part of the URL
+    url.schedule.weeks <- sapply(1:17, FUN = function(x) {
+      paste(url.year.sched, 
+            x, 
+            sep = "" )
+    })
+    # Here I use regular expressions to scrape out the gameids for each game in
+    # the specified season
+    game.id.list <- sapply(url.schedule.weeks, 
+                           FUN = function(x) {
+                             sourceHTML <- scrapeR::scrape(url = x, 
+                                                           headers = TRUE,
+                                                           parse = FALSE)
+                             extract.game.id <- stringr::str_extract_all(
+                               unlist(sourceHTML),
+                               pattern = "data-gameid=\"[0-9]{10}\"")
+                             game.ids <- stringr::str_extract_all(
+                               unlist(extract.game.id),
+                               pattern = "[0-9]{10}")
+                           })
+    
+    game.id.list <- unlist(game.id.list)
+    names(game.id.list) <- NULL
   }
   
   else {
@@ -58,14 +58,14 @@ extracting_gameids <- function(Season, playoffs = FALSE) {
     playoff.gameid.list <- sapply(url.schedule.playffs, 
                                   FUN = function(x) {
                                     sourceHTML <- scrapeR::scrape(url = x, 
-                                                            headers = TRUE,
-                                                            parse = FALSE)
-                                  extract.game.id <- stringr::str_extract_all(
-                                    unlist(sourceHTML),
-                                    pattern = "data-gameid=\"[0-9]{10}\"")
-                                  game.ids <- stringr::str_extract_all(
-                                    unlist(extract.game.id),
-                                    pattern = "[0-9]{10}")
+                                                                  headers = TRUE,
+                                                                  parse = FALSE)
+                                    extract.game.id <- stringr::str_extract_all(
+                                      unlist(sourceHTML),
+                                      pattern = "data-gameid=\"[0-9]{10}\"")
+                                    game.ids <- stringr::str_extract_all(
+                                      unlist(extract.game.id),
+                                      pattern = "[0-9]{10}")
                                   })
     
     game.id.list <- unlist(playoff.gameid.list)
