@@ -2726,6 +2726,8 @@ scrape_season_play_by_play <- function(season, type = "reg", weeks = NULL, teams
   
   # Gather the game ids based on the inputs:
   game_ids <- scrape_game_ids(season, type, weeks, teams) %>%
+    # Remove the pre-season games that were broken in the NFL API:
+    dplyr::filter(!(game_id %in% c(2014081503, 2016080751))) %>%
     dplyr::pull(game_id)
   
   # Go through each game and check if the URL exists:
