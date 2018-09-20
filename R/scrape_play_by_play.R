@@ -1989,7 +1989,7 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
                   "receiving_yards_td", "lateral_receiving_yards",
                   "lateral_receiving_yards_td") %in% play_player_data$nfl_stat))) {
         play_data <- play_data %>%
-          dplyr::mutate(yards_gained = NA)
+          dplyr::mutate(yards_gained = 0)
         
       } else {
         yards_gained_data <- play_player_data %>%
@@ -2235,7 +2235,7 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
                               fumble_recovery_2_player_id = NA,
                               fumble_recovery_2_player_name = NA,
                               td_team = NA, return_team = NA,
-                              timeout_team = NA, yards_gained = NA,
+                              timeout_team = NA, yards_gained = 0,
                               return_yards = NA, air_yards = NA,
                               yards_after_catch = NA, penalty_team = NA,
                               penalty_player_id = NA, 
