@@ -322,6 +322,26 @@ add_ep_variables <- function(pbp_data) {
                                          drive != dplyr::lead(drive, 2) &
                                          posteam != dplyr::lead(posteam, 2),
                                        -dplyr::lead(ExpPts, 2) - ExpPts, EPA),
+                  # Same thing except for when back to back rows of end of
+                  # play that can potentially occur because the NFL likes to 
+                  # make my life difficult:
+                  EPA = dplyr::if_else(is.na(td_team) & field_goal_made == 0 &
+                                         extra_point_good == 0 &
+                                         extra_point_failed == 0 &
+                                         extra_point_blocked == 0 &
+                                         extra_point_aborted == 0 &
+                                         two_point_rush_failed == 0 &
+                                         two_point_pass_failed == 0 &
+                                         two_point_pass_reception_failed == 0 &
+                                         two_point_rush_good == 0 &
+                                         two_point_pass_good == 0 &
+                                         two_point_pass_reception_good == 0 &
+                                         safety == 0 &
+                                         (is.na(dplyr::lead(play_type)) &
+                                            is.na(dplyr::lead(play_type, 2))) &
+                                         drive != dplyr::lead(drive, 3) &
+                                         posteam != dplyr::lead(posteam, 3),
+                                       -dplyr::lead(ExpPts, 3) - ExpPts, EPA),                  
                   # Team keeps possession and no timeout or end of play follows:
                   EPA = dplyr::if_else(is.na(td_team) & field_goal_made == 0 &
                                          extra_point_good == 0 &
@@ -355,7 +375,24 @@ add_ep_variables <- function(pbp_data) {
                                          (is.na(dplyr::lead(play_type)) |
                                             dplyr::lead(timeout) == 1) &
                                          posteam == dplyr::lead(posteam, 2),
-                                       dplyr::lead(ExpPts, 2) - ExpPts, EPA)) %>%
+                                       dplyr::lead(ExpPts, 2) - ExpPts, EPA),
+                  # Same as above but when two rows without play info follow:
+                  EPA = dplyr::if_else(is.na(td_team) & field_goal_made == 0 &
+                                         extra_point_good == 0 &
+                                         extra_point_failed == 0 &
+                                         extra_point_blocked == 0 &
+                                         extra_point_aborted == 0 &
+                                         two_point_rush_failed == 0 &
+                                         two_point_pass_failed == 0 &
+                                         two_point_pass_reception_failed == 0 &
+                                         two_point_rush_good == 0 &
+                                         two_point_pass_good == 0 &
+                                         two_point_pass_reception_good == 0 &
+                                         safety == 0 &
+                                         (is.na(dplyr::lead(play_type)) &
+                                            is.na(dplyr::lead(play_type, 2))) &
+                                         posteam == dplyr::lead(posteam, 3),
+                                       dplyr::lead(ExpPts, 3) - ExpPts, EPA)) %>%
     # Now rename each of the expected points columns to match the style of
     # the updated code:
     dplyr::rename(ep = ExpPts, epa = EPA,
