@@ -18,7 +18,8 @@ outcomes associated with each play of the specified NFL game.
 This function intakes the JSON play-by-play data of a single
  game and parses the play description column into individual variables 
  allowing the user to segment the game in a variety of different ways for 
- model building and analysis.
+ model building and analysis. WARNING: This function is deprecated and will be removed from the package
+ after the 2018-19 season.
 }
 \details{
 Through list manipulation using the do.call and rbind functions

@@ -20,6 +20,8 @@ A dataframe contains all the play-by-play information for a single
 This function outputs all plays of an entire season in one dataframe.  
 It calls the game_play_by_play function and applies it over every 
 game in the season by extracting each game ID and url in the specified season.
+WARNING: This function is deprecated and will be removed from the package
+after the 2018-19 season.
 }
 \details{
 This function calls the extracting_gameids, 

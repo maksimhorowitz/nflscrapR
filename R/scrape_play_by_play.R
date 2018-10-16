@@ -30,10 +30,10 @@
 #' data for the game. See \code{\link{scrape_json_play_by_play}} and 
 #' \code{\link{scrape_html_play_by_play}} for documentation about the 
 #' columns returned.
-#' @example
+#' @examples
 #' # Scrape the play-by-play data for the 2017 Super Bowl by first getting all
 #' # of the post-season game ids then use the required info to scrape the 
-#' play-by-play data (knowing that it's the last game):
+#' # play-by-play data (knowing that it's the last game):
 #' playoff_game_ids_17 <- scrape_game_ids(2017, type = "post")
 #' sb_17_id <- playoff_game_ids_17$game_id[nrow(playoff_game_ids_17)]
 #' sb_17_pbp <- scrape_game_play_by_play(game_id = sb_17_id, type = "post", 
@@ -405,11 +405,21 @@ scrape_game_play_by_play <- function(game_id, type, season, check_url = 1) {
 #' \item{replay_or_challenge_result} - String indicating the result of the 
 #' replay or challenge.
 #' \item{penalty_type} - String indicating the penalty type.
+#' \item{defensive_two_point_attempt} - Binary indicator whether or not the defense
+#' was able to have an attempt on a two point conversion, this results following
+#' a turnover.
+#' \item{defensive_two_point_conv} - Binary indicator whether or not the defense
+#' successfully scored on the two point conversion.
+#' \item{defensive_extra_point_attempt} - Binary indicator whether or not the 
+#' defense was able to have an attempt on an extra point attempt, this results
+#' following a blocked attempt that the defense recovers the ball.
+#' \item{defensive_extra_point_conv} - Binary indicator whether or not the
+#' defense successfully scored on an extra point attempt. 
 #' }
-#' @example
+#' @examples
 #' # Scrape the play-by-play data for the 2017 Super Bowl by first getting all
 #' # of the post-season game ids then use the required info to scrape the 
-#' play-by-play data (knowing that it's the last game):
+#' # play-by-play data (knowing that it's the last game):
 #' playoff_game_ids_17 <- scrape_game_ids(2017, type = "post")
 #' sb_17_id <- playoff_game_ids_17$game_id[nrow(playoff_game_ids_17)]
 #' sb_17_pbp <- scrape_json_play_by_play(game_id = sb_17_id)
@@ -431,7 +441,7 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
   nfl_stat_map <- hashmap::hashmap(as.character(c(2:16, 19:64, 68:80, 82:89,
                                                   91, 93, 95:96, 99, 100, 102:108,
                                                   110:113, 115, 120, 301, 402, 
-                                                  410, 420)),
+                                                  410, 420, 403, 404, 405, 406)),
                                    c("punt_blocked", "first_down_rush",
                                      "first_down_pass", "first_down_penalty",
                                      "third_down_converted", "third_down_failed",
@@ -501,7 +511,11 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
                                      "extra_point_aborted",
                                      "tackle_for_loss_yards",
                                      "kickoff_yard_length",
-                                     "two_point_return"))
+                                     "two_point_return",
+                                     "defensive_two_point_attempt",
+                                     "defensive_two_point_conv",
+                                     "defensive_extra_point_attempt",
+                                     "defensive_extra_point_conv"))
   
   # Next access the JSON feed for the game, catching any errors that potentially
   # occur due to the NFL's connection (or internet issues):
@@ -637,7 +651,10 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
                            "two_point_pass_reception_failed", 
                            "fumble_lost", "own_kickoff_recovery",
                            "own_kickoff_recovery_td", "qb_hit", "extra_point_aborted",
-                           "two_point_return")
+                           "two_point_return", "defensive_two_point_attempt",
+                           "defensive_two_point_conv",
+                           "defensive_extra_point_attempt",
+                           "defensive_extra_point_conv")
       
       # Go through each of the indicator variables to see if the player level
       # dataset has it the NFL stat or not, initializing the play_data row:
@@ -1979,7 +1996,9 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
         rm(penalty_data)
       }
       
-      # (4) Yards associated with the various statistics of the plays:
+      # (4) Yards associated with the various statistics of the plays, 
+      # also creates an indicator to know that the penalty was in addition
+      # to the yards gained:
       
       # Yards gained (or lost) by the possession team:
       if (!(any(c("rushing_yards", "rushing_yards_td",
@@ -1989,7 +2008,7 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
                   "receiving_yards_td", "lateral_receiving_yards",
                   "lateral_receiving_yards_td") %in% play_player_data$nfl_stat))) {
         play_data <- play_data %>%
-          dplyr::mutate(yards_gained = 0)
+          dplyr::mutate(yards_gained = 0, penalty_fix = 0)
         
       } else {
         yards_gained_data <- play_player_data %>%
@@ -2002,7 +2021,8 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
           dplyr::select(yards) %>%
           dplyr::distinct() %>%
           dplyr::slice(1) %>%
-          dplyr::rename(yards_gained = yards)
+          dplyr::rename(yards_gained = yards) %>%
+          dplyr::mutate(penalty_fix = 1)
         
         # Join this data:
         play_data <- play_data %>%
@@ -2018,7 +2038,7 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
                   "kickoff_return_yards", "kickoff_return_yards_td",
                   "lateral_kickoff_return_yards", "lateral_kickoff_return_yards_td") %in% play_player_data$nfl_stat))) {
         play_data <- play_data %>%
-          dplyr::mutate(return_yards = NA)
+          dplyr::mutate(return_yards = 0, return_penalty_fix = 0)
         
       } else {
         return_yards_data <- play_player_data %>%
@@ -2031,7 +2051,8 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
           dplyr::select(yards) %>%
           dplyr::distinct() %>%
           dplyr::slice(1) %>%
-          dplyr::rename(return_yards = yards)
+          dplyr::rename(return_yards = yards) %>%
+          dplyr::mutate(return_penalty_fix = 1)
         
         # Join this data:
         play_data <- play_data %>%
@@ -2160,7 +2181,10 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
                       td_team, return_team, timeout_team, yards_gained,
                       return_yards, air_yards, yards_after_catch, penalty_team,
                       penalty_player_id, penalty_player_name, penalty_yards,
-                      kick_distance)
+                      kick_distance, defensive_two_point_attempt,
+                      defensive_two_point_conv,
+                      defensive_extra_point_attempt,
+                      defensive_extra_point_conv, penalty_fix, return_penalty_fix)
       
       # Else play_data is missing everything: 
     } else {
@@ -2236,12 +2260,17 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
                               fumble_recovery_2_player_name = NA,
                               td_team = NA, return_team = NA,
                               timeout_team = NA, yards_gained = 0,
-                              return_yards = NA, air_yards = NA,
+                              return_yards = 0, air_yards = NA,
                               yards_after_catch = NA, penalty_team = NA,
                               penalty_player_id = NA, 
                               penalty_player_name = NA, 
                               penalty_yards = NA,
-                              kick_distance = NA)
+                              kick_distance = NA,
+                              defensive_two_point_attempt = NA,
+                              defensive_two_point_conv = NA,
+                              defensive_extra_point_attempt = NA,
+                              defensive_extra_point_conv = NA, penalty_fix = 0,
+                              return_penalty_fix = 0)
     }
     
     
@@ -2277,7 +2306,7 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
                   away_team = game_json[[1]]$away$abbr,
                   # Create and modify columns for quarter end
                   quarter_end = stringr::str_detect(desc,
-                                                    "(END QUARTER)|(END GAME)") %>%
+                                                    "(END QUARTER)|(END GAME)|(End of quarter)") %>%
                     as.numeric(),
                   # Modify the time column for the quarter end:
                   time = dplyr::if_else(quarter_end == 1, "00:00", time),
@@ -2302,6 +2331,11 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
                                            dplyr::if_else(posteam_type == "home",
                                                           home_team, away_team),
                                            defteam),
+                  # Now flip the posteam_type as well:
+                  posteam_type = dplyr::if_else(kickoff_attempt == 1,
+                                                dplyr::if_else(posteam_type == "home",
+                                                               "away", "home"),
+                                                posteam_type),
                   # Next need to parse the provided yrdln field into both the side of the 
                   # field the possession team is on as well as the distance from their
                   # opponents' endzone. First update the yrdln field so that the 50 also has
@@ -2445,7 +2479,9 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
                   # Create a play type column: either pass, run, field_goal, extra_point,
                   # kickoff, punt, qb_kneel, qb_spike, or no_play (which includes timeouts and
                   # penalties):
-                  play_type = dplyr::if_else(penalty == 0 & (pass_attempt == 1 |
+                  play_type = dplyr::if_else((penalty == 0 | 
+                                                (penalty == 1 & penalty_fix == 1)) & 
+                                                (pass_attempt == 1 |
                                                                incomplete_pass == 1 |
                                                                two_point_pass_good == 1 |
                                                                two_point_pass_failed == 1 |
@@ -2456,23 +2492,43 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
                                                                pass_touchdown == 1 |
                                                                complete_pass == 1),
                                              "pass", "no_play"),
-                  play_type = dplyr::if_else(penalty == 0 & (two_point_rush_good == 1 |
+                  play_type = dplyr::if_else((penalty == 0 | 
+                                                (penalty == 1 & penalty_fix == 1)) & 
+                                               (two_point_rush_good == 1 |
                                                                two_point_rush_failed == 1 |
                                                                two_point_rush_safety == 1 |
                                                                rush_attempt == 1 |
                                                                rush_touchdown == 1),
                                              "run", play_type),
-                  play_type = dplyr::if_else(penalty == 0 & kickoff_attempt == 1,
-                                             "kickoff", play_type),
-                  play_type = dplyr::if_else(penalty == 0 & punt_attempt == 1,
+                  play_type = dplyr::if_else((penalty == 0 | 
+                                                (penalty == 1 & return_penalty_fix == 1) |
+                                                (penalty == 1 & (punt_inside_twenty == 1 |
+                                                                 punt_in_endzone == 1 |
+                                                                 punt_out_of_bounds == 1 |
+                                                                 punt_downed == 1 |
+                                                                 punt_fair_catch == 1))) & 
+                                               punt_attempt == 1,
                                              "punt", play_type),
-                  play_type = dplyr::if_else(penalty == 0 & qb_spike == 1,
+                  play_type = dplyr::if_else((penalty == 0 | 
+                                                (penalty == 1 & return_penalty_fix == 1) |
+                                                (penalty == 1 & (kickoff_inside_twenty == 1 |
+                                                                 kickoff_in_endzone == 1 |
+                                                                 kickoff_out_of_bounds == 1 | 
+                                                                 kickoff_downed == 1 | 
+                                                                 kickoff_fair_catch == 1))) & 
+                                               kickoff_attempt == 1,
+                                             "kickoff", play_type),
+                  play_type = dplyr::if_else((penalty == 0 | 
+                                                (penalty == 1 & penalty_fix == 1)) & qb_spike == 1,
                                              "qb_spike", play_type),
-                  play_type = dplyr::if_else(penalty == 0 & qb_kneel == 1,
+                  play_type = dplyr::if_else((penalty == 0 | 
+                                                (penalty == 1 & penalty_fix == 1)) & qb_kneel == 1,
                                              "qb_kneel", play_type),
-                  play_type = dplyr::if_else(penalty == 0 & field_goal_attempt == 1,
+                  play_type = dplyr::if_else((penalty == 0 | 
+                                                (penalty == 1 & penalty_fix == 1)) & field_goal_attempt == 1,
                                              "field_goal", play_type),
-                  play_type = dplyr::if_else(penalty == 0 & extra_point_attempt == 1,
+                  play_type = dplyr::if_else((penalty == 0 | 
+                                                (penalty == 1 & penalty_fix == 1)) & extra_point_attempt == 1,
                                              "extra_point", play_type),
                   # Indicator for QB dropbacks (exclude spikes and kneels):
                   qb_dropback = dplyr::if_else(play_type == "pass" | 
@@ -2677,7 +2733,11 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
                   fumble_recovery_2_player_name, return_team, 
                   return_yards, penalty_team, penalty_player_id, 
                   penalty_player_name, penalty_yards, replay_or_challenge, 
-                  replay_or_challenge_result, penalty_type) %>%
+                  replay_or_challenge_result, penalty_type,
+                  defensive_two_point_attempt,
+                  defensive_two_point_conv,
+                  defensive_extra_point_attempt,
+                  defensive_extra_point_conv) %>%
     return
 }
 
@@ -2712,10 +2772,10 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
 #' data for the game. See \code{\link{scrape_json_play_by_play}} and 
 #' \code{\link{scrape_html_play_by_play}} for documentation about the 
 #' columns returned.
-#' @example
+#' @examples
 #' # Scrape the play-by-play data for the 2017 Super Bowl by first getting all
 #' # of the post-season game ids then use the required info to scrape the 
-#' play-by-play data (knowing that it's the last game):
+#' # play-by-play data (knowing that it's the last game):
 #' playoff_game_ids_17 <- scrape_game_ids(2017, type = "post")
 #' sb_17_id <- playoff_game_ids_17$game_id[nrow(playoff_game_ids_17)]
 #' sb_17_pbp <- scrape_game_play_by_play(game_id = sb_17_id, type = "post", 

@@ -339,9 +339,27 @@ challenge.
 \item{replay_or_challenge_result} - String indicating the result of the 
 replay or challenge.
 \item{penalty_type} - String indicating the penalty type.
+\item{defensive_two_point_attempt} - Binary indicator whether or not the defense
+was able to have an attempt on a two point conversion, this results following
+a turnover.
+\item{defensive_two_point_conv} - Binary indicator whether or not the defense
+successfully scored on the two point conversion.
+\item{defensive_extra_point_attempt} - Binary indicator whether or not the 
+defense was able to have an attempt on an extra point attempt, this results
+following a blocked attempt that the defense recovers the ball.
+\item{defensive_extra_point_conv} - Binary indicator whether or not the
+defense successfully scored on an extra point attempt. 
 }
 }
 \description{
 This function returns the play-by-play data available from NFL.com's JSON feed 
 (for games starting in 2009).
+}
+\examples{
+# Scrape the play-by-play data for the 2017 Super Bowl by first getting all
+# of the post-season game ids then use the required info to scrape the 
+# play-by-play data (knowing that it's the last game):
+playoff_game_ids_17 <- scrape_game_ids(2017, type = "post")
+sb_17_id <- playoff_game_ids_17$game_id[nrow(playoff_game_ids_17)]
+sb_17_pbp <- scrape_json_play_by_play(game_id = sb_17_id)
 }
