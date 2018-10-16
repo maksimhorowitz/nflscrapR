@@ -9,7 +9,8 @@
 #' @description This function intakes the JSON play-by-play data of a single
 #'  game and parses the play description column into individual variables 
 #'  allowing the user to segment the game in a variety of different ways for 
-#'  model building and analysis.
+#'  model building and analysis. WARNING: This function is deprecated and will be removed from the package
+#'  after the 2018-19 season.
 #' @param GameID (character or numeric) A 10 digit game ID associated with a 
 #' given NFL game.
 #' @details Through list manipulation using the do.call and rbind functions
@@ -1502,6 +1503,8 @@ game_play_by_play <- function(GameID) {
 #' @description This function outputs all plays of an entire season in one dataframe.  
 #' It calls the game_play_by_play function and applies it over every 
 #' game in the season by extracting each game ID and url in the specified season.
+#' WARNING: This function is deprecated and will be removed from the package
+#' after the 2018-19 season.
 #' 
 #' @param Season (numeric) A 4-digit year corresponding to an NFL season of 
 #' interest
@@ -1522,7 +1525,7 @@ game_play_by_play <- function(GameID) {
 #' @export
 season_play_by_play <- function(Season) {
   # Google R style format
-  
+
   # Below the function put together the proper URLs for each game in each 
   # season and runs the game_play_by_play function across the entire season
   game_ids <- extracting_gameids(Season)
