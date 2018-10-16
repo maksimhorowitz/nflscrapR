@@ -43,3 +43,12 @@ This function acts as a wrapper function for calling the
 \code{\link{scrape_game_play_by_play}} function over all of the games meeting
 the criteria of the user's input.
 }
+\examples{
+# Scrape the play-by-play data for the 2017 Super Bowl by first getting all
+# of the post-season game ids then use the required info to scrape the 
+# play-by-play data (knowing that it's the last game):
+playoff_game_ids_17 <- scrape_game_ids(2017, type = "post")
+sb_17_id <- playoff_game_ids_17$game_id[nrow(playoff_game_ids_17)]
+sb_17_pbp <- scrape_game_play_by_play(game_id = sb_17_id, type = "post", 
+                                      season = 2017)
+}
