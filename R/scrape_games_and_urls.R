@@ -175,6 +175,9 @@ scrape_game_ids <- function(season, type = "reg", weeks = NULL, teams = NULL) {
                   season = rep(season, nrow(game_ids_df))) %>%
     dplyr::select(type, game_id, home_team, away_team, week, season, state_of_game) %>%
     as.data.frame() %>%
+    # Due to how the NFL displays Thursday Night Football games, only use 
+    # the distinct rows:
+    dplyr::distinct() %>%
     return
 }
 
