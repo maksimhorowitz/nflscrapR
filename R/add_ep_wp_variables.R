@@ -149,9 +149,10 @@ add_ep_variables <- function(pbp_data) {
     base_ep_preds[kickoff_i, "No_Score"] <- kickoff_preds[kickoff_i, "No_Score"]
     
     # ----------------------------------------------------------------------------------
-    # Insert probabilities of 0 for everything but No_Score for QB Kneels:
-    # Find the QB Kneels:
-    qb_kneels_i <- which(data$play_type == "qb_kneel")
+    # Insert probabilities of 0 for everything but No_Score for QB Kneels that
+    # occur on the possession team's side of the field:
+    # Find these QB Kneels:
+    qb_kneels_i <- which(data$play_type == "qb_kneel" & data$yrdline100 > 50)
     
     # Now update the probabilities:
     base_ep_preds[qb_kneels_i, "Field_Goal"] <- 0
@@ -302,7 +303,9 @@ add_ep_variables <- function(pbp_data) {
                                          drive != dplyr::lead(drive) &
                                          posteam != dplyr::lead(posteam) &
                                          !is.na(dplyr::lead(play_type)) &
-                                         dplyr::lead(timeout) == 0, 
+                                         (dplyr::lead(timeout) == 0 |
+                                            (dplyr::lead(timeout) == 1 &
+                                               dplyr::lead(play_type) != "no_play")), 
                                          -dplyr::lead(ExpPts) - ExpPts, EPA),
                   # Same thing except for when timeouts and end of play follow:
                   EPA = dplyr::if_else(is.na(td_team) & field_goal_made == 0 &
@@ -318,7 +321,8 @@ add_ep_variables <- function(pbp_data) {
                                          two_point_pass_reception_good == 0 &
                                          safety == 0 &
                                          (is.na(dplyr::lead(play_type)) |
-                                            dplyr::lead(timeout) == 1) &
+                                            (dplyr::lead(timeout) == 1 &
+                                               dplyr::lead(play_type) == "no_play")) &
                                          drive != dplyr::lead(drive, 2) &
                                          posteam != dplyr::lead(posteam, 2),
                                        -dplyr::lead(ExpPts, 2) - ExpPts, EPA),
@@ -357,7 +361,9 @@ add_ep_variables <- function(pbp_data) {
                                          safety == 0 &
                                          posteam == dplyr::lead(posteam) &
                                          !is.na(dplyr::lead(play_type)) &
-                                         dplyr::lead(timeout) == 0, 
+                                         (dplyr::lead(timeout) == 0 |
+                                            (dplyr::lead(timeout) == 1 &
+                                               dplyr::lead(play_type) != "no_play")), 
                                        dplyr::lead(ExpPts) - ExpPts, EPA),
                   # Same but timeout or end of play follows:
                   EPA = dplyr::if_else(is.na(td_team) & field_goal_made == 0 &
@@ -373,7 +379,8 @@ add_ep_variables <- function(pbp_data) {
                                          two_point_pass_reception_good == 0 &
                                          safety == 0 &
                                          (is.na(dplyr::lead(play_type)) |
-                                            dplyr::lead(timeout) == 1) &
+                                            (dplyr::lead(timeout) == 1 &
+                                               dplyr::lead(play_type) == "no_play")) &
                                          posteam == dplyr::lead(posteam, 2),
                                        dplyr::lead(ExpPts, 2) - ExpPts, EPA),
                   # Same as above but when two rows without play info follow:
@@ -799,22 +806,26 @@ add_wp_variables <- function(pbp_data) {
                                    ifelse(posteam == dplyr::lead(posteam, 2) &
                                             drive == dplyr::lead(drive, 2) & 
                                             (is.na(dplyr::lead(play_type)) |
-                                               dplyr::lead(timeout) == 1), 1, 0))
+                                               (dplyr::lead(timeout) == 1 & 
+                                                  dplyr::lead(play_type) == "no_play")), 1, 0))
   
   pbp_data$WPA_change_nxt_ind <- with(pbp_data, 
                                      ifelse(drive != dplyr::lead(drive, 2) & 
                                               posteam != dplyr::lead(posteam, 2) &
                                               (is.na(dplyr::lead(play_type)) |
-                                                 dplyr::lead(timeout) == 1), 1, 0))
+                                                 (dplyr::lead(timeout) == 1 & 
+                                                 dplyr::lead(play_type) == "no_play")), 1, 0))
   
   pbp_data$WPA_change_ind <- with(pbp_data,
                                  ifelse(drive != dplyr::lead(drive) & 
                                           posteam != dplyr::lead(posteam) &
                                           !is.na(dplyr::lead(play_type)) &
-                                          dplyr::lead(timeout) == 0, 1, 0))
+                                          dplyr::lead(timeout) == 0 |
+                                          (dplyr::lead(timeout) == 1 & 
+                                             dplyr::lead(play_type) != "no_play"), 1, 0))
   pbp_data$WPA_halfend_to_ind <- with(pbp_data, 
                                       ifelse(is.na(play_type) |
-                                               timeout == 1, 1, 0))
+                                               (timeout == 1 & play_type == "no_play"), 1, 0))
   pbp_data$WPA_final_ind <- with(pbp_data, ifelse(stringr::str_detect(dplyr::lead(tolower(desc)), 
                                                                       "(end of game)|(end game)"), 1, 0))
   
