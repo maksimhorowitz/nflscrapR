@@ -267,6 +267,7 @@ scrape_game_play_by_play <- function(game_id, type, season, check_url = 1) {
 #' \item{fourth_down_failed} - Binary indicator for if the posteam failed to convert first down on fourth down.
 #' \item{incomplete_pass} - Binary indicator for if the pass was incomplete.
 #' \item{interception} - Binary indicator for if the pass was intercepted.
+#' \item{touchback} - Binary indicator for if a touchback occurred on the play.
 #' \item{punt_inside_twenty} - Binary indicator for if the punt ended inside the twenty yard line.
 #' \item{punt_in_endzone} - Binary indicator for if the punt was in the endzone.
 #' \item{punt_out_of_bounds} - Binary indicator for if the punt went out of bounds.
@@ -2652,7 +2653,10 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
                                                       total_home_score,
                                                       total_away_score),
                   score_differential_post = posteam_score_post - defteam_score_post,
-                  abs_score_differential_post = abs(posteam_score_post - defteam_score_post))
+                  abs_score_differential_post = abs(posteam_score_post - defteam_score_post),
+                  # Create a variable for whether or not a touchback occurred, this
+                  # will apply to any type of play:
+                  touchback = as.numeric(stringr::str_detect(tolower(desc), "touchback")))
   
   # App the expected points columns:
   game_pbp %>%
@@ -2693,7 +2697,7 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
                   total_home_raw_air_wpa, total_away_raw_air_wpa, total_home_raw_yac_wpa, 
                   total_away_raw_yac_wpa, punt_blocked, first_down_rush, first_down_pass, 
                   first_down_penalty, third_down_converted, third_down_failed, 
-                  fourth_down_converted, fourth_down_failed, incomplete_pass,
+                  fourth_down_converted, fourth_down_failed, incomplete_pass, touchback,
                   interception, punt_inside_twenty, punt_in_endzone, punt_out_of_bounds, 
                   punt_downed, punt_fair_catch, kickoff_inside_twenty, kickoff_in_endzone, 
                   kickoff_out_of_bounds, kickoff_downed, kickoff_fair_catch, fumble_forced, fumble_not_forced, 
