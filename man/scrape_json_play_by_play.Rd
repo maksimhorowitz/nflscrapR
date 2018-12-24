@@ -201,6 +201,7 @@ the game so far.
 \item{fourth_down_failed} - Binary indicator for if the posteam failed to convert first down on fourth down.
 \item{incomplete_pass} - Binary indicator for if the pass was incomplete.
 \item{interception} - Binary indicator for if the pass was intercepted.
+\item{touchback} - Binary indicator for if a touchback occurred on the play.
 \item{punt_inside_twenty} - Binary indicator for if the punt ended inside the twenty yard line.
 \item{punt_in_endzone} - Binary indicator for if the punt was in the endzone.
 \item{punt_out_of_bounds} - Binary indicator for if the punt went out of bounds.
