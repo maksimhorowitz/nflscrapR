@@ -820,9 +820,9 @@ add_wp_variables <- function(pbp_data) {
                                  ifelse(drive != dplyr::lead(drive) & 
                                           posteam != dplyr::lead(posteam) &
                                           !is.na(dplyr::lead(play_type)) &
-                                          dplyr::lead(timeout) == 0 |
+                                          (dplyr::lead(timeout) == 0 |
                                           (dplyr::lead(timeout) == 1 & 
-                                             dplyr::lead(play_type) != "no_play"), 1, 0))
+                                             dplyr::lead(play_type) != "no_play")), 1, 0))
   pbp_data$WPA_halfend_to_ind <- with(pbp_data, 
                                       ifelse(is.na(play_type) |
                                                (timeout == 1 & play_type == "no_play"), 1, 0))
