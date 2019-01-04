@@ -21,9 +21,10 @@ the function should grab game info for (default value of NULL corresponds to
 selecting all available teams).}
 }
 \value{
-Data frame with columns containing the type, game_id, week number (if
-pre or regular season), and the year of the season.
-for each game id that is scraped.
+Data frame with columns containing the season type, game_id, week number (if
+pre or regular season), the year of the season, home team, away team, a variable
+indicating the state of the game (POST is over, PRE is before or during),
+game's url, and the home and away team scores if the game is over.
 }
 \description{
 This function returns all available game ids for a given season,
