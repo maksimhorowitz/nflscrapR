@@ -13,9 +13,10 @@
 #' @param teams String vector indicating which teams (based on the abbreviation)
 #' the function should grab game info for (default value of NULL corresponds to
 #' selecting all available teams).
-#' @return Data frame with columns containing the type, game_id, week number (if
-#' pre or regular season), and the year of the season.
-#' for each game id that is scraped. 
+#' @return Data frame with columns containing the season type, game_id, week number (if
+#' pre or regular season), the year of the season, home team, away team, a variable
+#' indicating the state of the game (POST is over, PRE is before or during),
+#' game's url, and the home and away team scores if the game is over.
 #' @examples
 #' # Scraping all game ids from 2017 regular season:
 #' scrape_game_ids(2017) 
@@ -113,6 +114,7 @@ scrape_game_ids <- function(season, type = "reg", weeks = NULL, teams = NULL) {
     stringr::str_extract("[:upper:]{2,4}") %>%
     unlist()
   
+  
   # If the type is post then just gather all the game ids from the post season
   # schedule page (since they are not separated by the week unlike the pre or
   # regular season) and put them together in data frame with week as 18 for now:
@@ -178,6 +180,23 @@ scrape_game_ids <- function(season, type = "reg", weeks = NULL, teams = NULL) {
     # Due to how the NFL displays Thursday Night Football games, only use 
     # the distinct rows:
     dplyr::distinct() %>%
+    # Next create a variable with the url for each game:
+    dplyr::mutate(game_url = sapply(game_id, create_game_json_url),
+                  # Now for each game, if it is over based on the
+                  # state_of_game field then access the scores of the
+                  # game for the home and away teams:
+                  home_score = purrr::map2_dbl(game_url, state_of_game,
+                                               .f = function(x, y) {
+                                                 ifelse(y == "POST",
+                                                        max(RJSONIO::fromJSON(RCurl::getURL(x))[[1]]$home$score),
+                                                        NA)
+                                                 }),
+                  away_score = purrr::map2_dbl(game_url, state_of_game,
+                                               .f = function(x, y) {
+                                                 ifelse(y == "POST",
+                                                        max(RJSONIO::fromJSON(RCurl::getURL(x))[[1]]$away$score),
+                                                        NA)
+                                                 })) %>%
     return
 }
 
