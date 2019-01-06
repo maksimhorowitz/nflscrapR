@@ -2383,13 +2383,17 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
                                                           quarter_seconds_remaining),
                   # Add column for replay or challenge:
                   replay_or_challenge = stringr::str_detect(desc, 
-                                                            "(Replay Official reviewed)|( challenge )") %>%
+                                                            "(Replay Official reviewed)|( challenge(d)? )") %>%
                     as.numeric(),
                   # Result of replay or challenge:
                   replay_or_challenge_result = dplyr::if_else(replay_or_challenge == 1,
-                                                              stringr::str_extract(tolower(desc),
+                                                              dplyr::if_else(
+                                                                stringr::str_detect(tolower(desc),
+                                                                                    "( upheld)|( reversed)|( confirmed)"),
+                                                                stringr::str_extract(tolower(desc),
                                                                                    "( upheld)|( reversed)|( confirmed)") %>%
-                                                                stringr::str_trim(), NA_character_),
+                                                                stringr::str_trim(), "denied"),
+                                                                NA_character_),
                   # Using the various two point indicators, create a column denoting the result
                   # outcome for two point conversions:
                   two_point_conv_result = dplyr::if_else((two_point_rush_good == 1 | 
