@@ -428,6 +428,21 @@ scrape_game_play_by_play <- function(game_id, type, season, check_url = 1) {
 
 scrape_json_play_by_play <- function(game_id, check_url = 1) {
   
+  #Warn users about errors in the NFL data for certain games
+  if (game_id == 2013092206)
+    warning(
+      "Due to an error in the NFL's API, plays from the 3rd drive of game 2013092206 will be missing from the play by play table."
+    )
+  
+  if (game_id %in% c(2013112401, 2013120101))
+    warning(
+      paste0(
+        "Due to an error in the NFL's API, the stats for game ",
+        as.character(game_id),
+        " are incomplete. Most yardage statistics cannot be determined and will be NA in the table."
+      )
+    )
+  
   # First create the game's url:
   game_url <- create_game_json_url(game_id)
   
