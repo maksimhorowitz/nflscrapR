@@ -1325,7 +1325,7 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
           dplyr::select(team, player_name, player_id) %>%
           dplyr::distinct() %>%
           dplyr::slice(1:2) %>%
-          dplyr::mutate(position = paste("tackle_for_loss", 1:n(), sep = "_"))
+          dplyr::mutate(position = paste("tackle_for_loss", 1:dplyr::n(), sep = "_"))
         
         # Now make two separate rows: containing the player_id and player_name:
         tackle_for_loss_id_row <- tackle_for_loss_player_data %>%
@@ -1389,7 +1389,7 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
           dplyr::select(team, player_name, player_id) %>%
           dplyr::distinct() %>%
           dplyr::slice(1:2) %>%
-          dplyr::mutate(position = paste("qb_hit", 1:n(), sep = "_"))
+          dplyr::mutate(position = paste("qb_hit", 1:dplyr::n(), sep = "_"))
         
         # Now make two separate rows: containing the player_id and player_name:
         qb_hit_id_row <- qb_hit_player_data %>%
@@ -1456,7 +1456,7 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
           dplyr::select(team, player_name, player_id) %>%
           dplyr::distinct() %>%
           dplyr::slice(1:2) %>%
-          dplyr::mutate(position = paste("forced_fumble_player", 1:n(), sep = "_"))
+          dplyr::mutate(position = paste("forced_fumble_player", 1:dplyr::n(), sep = "_"))
         
         # Now make 3 separate rows: containing the team, player_id, and player_name:
         forced_fumble_player_team_row <- forced_fumble_player_player_data %>%
@@ -1533,7 +1533,7 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
           dplyr::select(team, player_name, player_id) %>%
           dplyr::distinct() %>%
           dplyr::slice(1:2) %>%
-          dplyr::mutate(position = paste("solo_tackle", 1:n(), sep = "_"))
+          dplyr::mutate(position = paste("solo_tackle", 1:dplyr::n(), sep = "_"))
         
         # Now make three separate rows: containing the team, player_id, and
         # player_name:
@@ -1615,7 +1615,7 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
           dplyr::select(team, player_name, player_id) %>%
           dplyr::distinct() %>%
           dplyr::slice(1:4) %>%
-          dplyr::mutate(position = paste("assist_tackle", 1:n(), sep = "_"))
+          dplyr::mutate(position = paste("assist_tackle", 1:dplyr::n(), sep = "_"))
         
         # Now make three separate rows: containing the team, player_id, and
         # player_name:
@@ -1702,7 +1702,7 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
           dplyr::select(player_name, player_id) %>%
           dplyr::distinct() %>%
           dplyr::slice(1:2) %>%
-          dplyr::mutate(position = paste("pass_defense", 1:n(), sep = "_"))
+          dplyr::mutate(position = paste("pass_defense", 1:dplyr::n(), sep = "_"))
         
         # Now make two separate rows: containing the player_id and player_name:
         pass_defense_id_row <- pass_defense_player_data %>%
@@ -1769,7 +1769,7 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
           dplyr::select(team, player_name, player_id) %>%
           dplyr::distinct() %>%
           dplyr::slice(1:2) %>%
-          dplyr::mutate(position = paste("fumbled", 1:n(), sep = "_"))
+          dplyr::mutate(position = paste("fumbled", 1:dplyr::n(), sep = "_"))
         
         # Now make three separate rows: containing the team, player_id, and
         # player_name:
@@ -1852,7 +1852,7 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
           dplyr::select(team, player_name, player_id, yards) %>%
           dplyr::distinct() %>%
           dplyr::slice(1:2) %>%
-          dplyr::mutate(position = paste("fumble_recovery", 1:n(), sep = "_"))
+          dplyr::mutate(position = paste("fumble_recovery", 1:dplyr::n(), sep = "_"))
         
         # Now make 4 separate rows: containing the team, player_id, yards, and
         # player_name:
