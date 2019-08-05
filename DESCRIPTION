@@ -14,7 +14,7 @@ Description: This package allows data driven sports enthusiasts to use the NFL J
     professional NFL teams as well as the public.
 Depends: R (>= 3.5.0),
          nnet (>= 7.3.12),
-         magrittr (>= 1.5)
+    magrittr
 Imports: RJSONIO (>= 1.3.0),
          RCurl (>= 1.95.4.11),
          stringr (>= 1.3.1),
@@ -41,4 +41,3 @@ BugReports: https://github.com/maksimhorowitz/nflscrapR/issues
 LazyData: true
 RoxygenNote: 6.0.1
 VignetteBuilder: knitr
-

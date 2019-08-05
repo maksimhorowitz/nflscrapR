@@ -21,7 +21,7 @@ A dataframe with the gameID, the game date,
 the home team abbreviation, and away team abbreviation
 }
 \description{
-This function intakes a year associated with a given season
+This deprecated function intakes a year associated with a given season
 and outputs all the game matchups for all 17 weeks of the regular season
 }
 \details{

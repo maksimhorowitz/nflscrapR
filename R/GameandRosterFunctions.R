@@ -6,7 +6,7 @@
 
 # Games in a Season
 #' Game Information for All Games in a Season
-#' @description This function intakes a year associated with a given season
+#' @description This deprecated function intakes a year associated with a given season
 #' and outputs all the game matchups for all 17 weeks of the regular season
 #' @param Season (numeric): A 4-digit year associated with a given NFL season
 #' @param Week (numeric): A number corresponding to the number of weeks of data
@@ -23,6 +23,7 @@
 #' season_games(2015) # Will output a dataframe
 #' @export
 season_games <- function(Season, sleep.seconds = 0) {
+  print("WARNING: this function is deprecated! Please use scrape_game_ids() instead.")
   
   game_ids <- extracting_gameids(Season)
   
