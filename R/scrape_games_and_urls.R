@@ -188,13 +188,13 @@ scrape_game_ids <- function(season, type = "reg", weeks = NULL, teams = NULL) {
                   home_score = purrr::map2_dbl(game_url, state_of_game,
                                                .f = function(x, y) {
                                                  ifelse(y == "POST",
-                                                        max(RJSONIO::fromJSON(RCurl::getURL(x))[[1]]$home$score),
+                                                        max(RJSONIO::fromJSON(RCurl::getURL(x, encoding = "gzip"))[[1]]$home$score),
                                                         NA)
                                                  }),
                   away_score = purrr::map2_dbl(game_url, state_of_game,
                                                .f = function(x, y) {
                                                  ifelse(y == "POST",
-                                                        max(RJSONIO::fromJSON(RCurl::getURL(x))[[1]]$away$score),
+                                                        max(RJSONIO::fromJSON(RCurl::getURL(x, encoding = "gzip"))[[1]]$away$score),
                                                         NA)
                                                  })) %>%
     return
