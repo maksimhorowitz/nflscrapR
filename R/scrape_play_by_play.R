@@ -535,7 +535,7 @@ scrape_json_play_by_play <- function(game_id, check_url = 1) {
   
   # Next access the JSON feed for the game, catching any errors that potentially
   # occur due to the NFL's connection (or internet issues):
-  game_json <- tryCatch(RJSONIO::fromJSON(RCurl::getURL(game_url)),
+  game_json <- tryCatch(RJSONIO::fromJSON(RCurl::getURL(game_url, encoding = "gzip")),
                         error = function(cond) { 
                           message("Connection to NFL.com disrupted, please re-run code.")
                           message(paste("Here is the game's url:", game_url))
