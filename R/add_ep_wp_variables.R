@@ -181,7 +181,7 @@ add_ep_variables <- function(pbp_data) {
     
     # ----------------------------------------------------------------------------------
     # Insert NAs for timeouts and end of play rows:
-    missing_i <- which(data$timeout == 1 | is.na(data$play_type))
+    missing_i <- which((data$timeout == 1 & data$play_type == "no_play") | is.na(data$play_type))
     
     #missing_i <- which(data$PlayType %in% c("Quarter End", "Two Minute Warning", "Timeout",
     #                                        "End of Game", "Half End"))
@@ -413,9 +413,9 @@ add_ep_variables <- function(pbp_data) {
                   extra_point_prob = ExPoint_Prob,
                   two_point_conversion_prob = TwoPoint_Prob) %>%
     # Create columns with cumulative epa totals for both teams:
-    dplyr::mutate(ep = dplyr::if_else(timeout == 1,
+    dplyr::mutate(ep = dplyr::if_else(timeout == 1 & play_type == "no_play",
                                       dplyr::lead(ep), ep),
-                  epa = dplyr::if_else(timeout == 1,
+                  epa = dplyr::if_else(timeout == 1 & play_type == "no_play",
                                        0, epa),
                   home_team_epa = dplyr::if_else(posteam == home_team,
                                                  epa, -epa),
