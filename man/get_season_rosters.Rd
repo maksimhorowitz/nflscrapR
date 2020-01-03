@@ -46,5 +46,5 @@ stored in this package!
 }
 \examples{
 # Roster for Steelers in 2018
-get_season_rosters(2013, teams = "PIT") 
+get_season_rosters(2018, teams = "PIT") 
 }
