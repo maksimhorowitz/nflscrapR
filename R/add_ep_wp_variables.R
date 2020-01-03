@@ -417,6 +417,17 @@ add_ep_variables <- function(pbp_data) {
                                       dplyr::lead(ep), ep),
                   epa = dplyr::if_else(timeout == 1 & play_type == "no_play",
                                        0, epa),
+                  # Change epa for plays occurring at end of half with no scoring
+                  # plays to be just the difference between 0 and starting ep:
+                  epa = dplyr::if_else(((qtr == 2 & 
+                                           (dplyr::lead(qtr) == 3 |
+                                              dplyr::lead(desc) == "END QUARTER 2")) |
+                                          (qtr == 4 & 
+                                             (dplyr::lead(qtr) == 5 |
+                                                dplyr::lead(desc) == "END QUARTER 4"))) & 
+                                         sp == 0 &
+                                         !is.na(play_type), 
+                                       0 - ep, epa),
                   home_team_epa = dplyr::if_else(posteam == home_team,
                                                  epa, -epa),
                   away_team_epa = dplyr::if_else(posteam == away_team,
@@ -804,21 +815,21 @@ add_wp_variables <- function(pbp_data) {
   
   pbp_data$WPA_base_nxt_ind <- with(pbp_data, 
                                    ifelse(posteam == dplyr::lead(posteam, 2) &
-                                            drive == dplyr::lead(drive, 2) & 
+                                            #drive == dplyr::lead(drive, 2) & 
                                             (is.na(dplyr::lead(play_type)) |
                                                (dplyr::lead(timeout) == 1 & 
                                                   dplyr::lead(play_type) == "no_play")), 1, 0))
   
   pbp_data$WPA_change_nxt_ind <- with(pbp_data, 
-                                     ifelse(drive != dplyr::lead(drive, 2) & 
-                                              posteam != dplyr::lead(posteam, 2) &
+                                     ifelse(posteam != dplyr::lead(posteam, 2) &
+                                              #drive != dplyr::lead(drive, 2) & 
                                               (is.na(dplyr::lead(play_type)) |
                                                  (dplyr::lead(timeout) == 1 & 
                                                  dplyr::lead(play_type) == "no_play")), 1, 0))
   
   pbp_data$WPA_change_ind <- with(pbp_data,
-                                 ifelse(drive != dplyr::lead(drive) & 
-                                          posteam != dplyr::lead(posteam) &
+                                 ifelse(posteam != dplyr::lead(posteam) &
+                                          #drive != dplyr::lead(drive) & 
                                           !is.na(dplyr::lead(play_type)) &
                                           (dplyr::lead(timeout) == 0 |
                                           (dplyr::lead(timeout) == 1 & 
