@@ -51,11 +51,11 @@ get_season_rosters <- function(season, teams, type = "reg",
       get_players(position, season, type) 
       }) %>%
     dplyr::filter(Team %in% teams) %>% 
-    dplyr::group_by(Player, Team, Pos, GSIS_ID) %>% 
+    dplyr::group_by(Player, Team, Pos, GSIS_ID, birthdate) %>% 
     dplyr::slice(n= 1) %>% 
     dplyr::mutate(Season = season,
                   season_type = type) %>% 
-    dplyr::select(Season, season_type, Player, name, Team, Pos, GSIS_ID) %>%
+    dplyr::select(Season, season_type, Player, name, Team, Pos, GSIS_ID, birthdate) %>%
     dplyr::rename(season = Season,
                   full_player_name = Player,
                   abbr_player_name = name,
@@ -152,6 +152,25 @@ get_gsis_id <- . %>%
   as.character()
 
 # DO NOT EXPORT
+#' For a player's href, get their birthdate from their personal url.
+get_birthdate <- . %>%
+  paste("http://www.nfl.com", ., sep = "") %>%
+  rvest::html_nodes('p:nth-child(4)') %>% 
+  rvest::html_text() %>% 
+  stringr::str_extract("[0-9]+/[0-9]+/[0-9]+") %>% 
+  lubridate::mdy() %>% 
+  as.character()
+
+
+# DO NOT EXPORT
+#' Find the birthdate for each player on the provided page.
+find_page_player_birthdate <- . %>%
+  rvest::html_nodes("td:nth-child(2) a") %>% 
+  rvest::html_attr("href") %>%
+  purrr::map_chr(get_gsis_id)
+
+
+# DO NOT EXPORT
 #' Scrape player names and positions
 #' 
 #' This sub-function, calls build_name_abbr and get_page_numbers to
@@ -176,12 +195,19 @@ get_players <- function(position, season, type) {
   player_ids <- page_urls %>%
     purrr::map(find_page_player_id) %>%
     purrr::flatten_chr()
+  
+   # Extract the player IDs
+  player_birthdates <- page_urls %>%
+    purrr::map(find_page_player_birthdate) %>%
+    purrr::flatten_chr()
+  
                       
   # read the pages and extract info, then add the ids:
   page_urls %>%
     # get the name and position, combine everything into a data.frame
     purrr::map_df(build_name_abbr) %>%
-    dplyr::mutate(GSIS_ID = player_ids)
+    dplyr::mutate(GSIS_ID = player_ids,
+                  birthdate = player_birthdates)
   
 }
 
