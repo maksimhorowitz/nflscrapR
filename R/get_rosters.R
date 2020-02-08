@@ -146,7 +146,7 @@ find_page_player_id <- . %>%
 #' For a player's href, get their GSIS ID from their personal url.
 get_gsis_id <- . %>%
   paste("http://www.nfl.com", ., sep = "") %>%
-  readLines() %>%
+  readLines(n = 1000) %>%
   grep("GSIS ID", ., value = TRUE) %>%
   substr(., nchar(.) - 9, nchar(.)) %>%
   as.character()
@@ -169,20 +169,16 @@ get_players <- function(position, season, type) {
   
   # build urls
   page_urls <- build_url(position = position,
-                         season = season, page = page_seq, type = type)
+                         season = season, page = page_seq, type = type) %>%
+               purrr::map(function(x) xml2::read_html(x))
   
   # Extract the player IDs
   player_ids <- page_urls %>%
-    # read each URL
-    purrr::map(function(x) xml2::read_html(x)) %>%
-    # get the player id (this is same order as the )
     purrr::map(find_page_player_id) %>%
     purrr::flatten_chr()
-  
+                      
   # read the pages and extract info, then add the ids:
-  page_urls %>% 
-    # read each URL
-    purrr::map(function(x) xml2::read_html(x)) %>% 
+  page_urls %>%
     # get the name and position, combine everything into a data.frame
     purrr::map_df(build_name_abbr) %>%
     dplyr::mutate(GSIS_ID = player_ids)
