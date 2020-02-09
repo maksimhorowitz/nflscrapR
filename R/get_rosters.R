@@ -155,8 +155,9 @@ get_gsis_id <- . %>%
 #' For a player's href, get their birthdate from their personal url.
 get_birthdate <- . %>%
   paste("http://www.nfl.com", ., sep = "") %>%
-  rvest::html_nodes('p:nth-child(4)') %>% 
-  rvest::html_text() %>% 
+  rvest::html_nodes('#player-bio p') %>%
+  rvest::html_text() %>%
+  .[grep("Born", .)] %>%
   stringr::str_extract("[0-9]+/[0-9]+/[0-9]+") %>% 
   lubridate::mdy() %>% 
   as.character()
@@ -167,7 +168,7 @@ get_birthdate <- . %>%
 find_page_player_birthdate <- . %>%
   rvest::html_nodes("td:nth-child(2) a") %>% 
   rvest::html_attr("href") %>%
-  purrr::map_chr(get_gsis_id)
+  purrr::map_chr(get_birthdate)
 
 
 # DO NOT EXPORT
