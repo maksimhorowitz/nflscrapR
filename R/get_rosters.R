@@ -51,11 +51,11 @@ get_season_rosters <- function(season, teams, type = "reg",
       get_players(position, season, type) 
       }) %>%
     dplyr::filter(Team %in% teams) %>% 
-    dplyr::group_by(Player, Team, Pos, GSIS_ID) %>% 
+    dplyr::group_by(Player, Team, Pos, GSIS_ID, birthdate) %>% 
     dplyr::slice(n= 1) %>% 
     dplyr::mutate(Season = season,
                   season_type = type) %>% 
-    dplyr::select(Season, season_type, Player, name, Team, Pos, GSIS_ID) %>%
+    dplyr::select(Season, season_type, Player, name, Team, Pos, GSIS_ID, birthdate) %>%
     dplyr::rename(season = Season,
                   full_player_name = Player,
                   abbr_player_name = name,
@@ -146,10 +146,30 @@ find_page_player_id <- . %>%
 #' For a player's href, get their GSIS ID from their personal url.
 get_gsis_id <- . %>%
   paste("http://www.nfl.com", ., sep = "") %>%
-  readLines() %>%
+  readLines(n = 1000) %>%
   grep("GSIS ID", ., value = TRUE) %>%
   substr(., nchar(.) - 9, nchar(.)) %>%
   as.character()
+
+# DO NOT EXPORT
+#' For a player's href, get their birthdate from their personal url.
+get_birthdate <- . %>%
+  paste("http://www.nfl.com", ., sep = "") %>%
+  rvest::html_nodes('#player-bio p') %>%
+  rvest::html_text() %>%
+  .[grep("Born", .)] %>%
+  stringr::str_extract("[0-9]+/[0-9]+/[0-9]+") %>% 
+  lubridate::mdy() %>% 
+  as.character()
+
+
+# DO NOT EXPORT
+#' Find the birthdate for each player on the provided page.
+find_page_player_birthdate <- . %>%
+  rvest::html_nodes("td:nth-child(2) a") %>% 
+  rvest::html_attr("href") %>%
+  purrr::map_chr(get_birthdate)
+
 
 # DO NOT EXPORT
 #' Scrape player names and positions
@@ -169,23 +189,26 @@ get_players <- function(position, season, type) {
   
   # build urls
   page_urls <- build_url(position = position,
-                         season = season, page = page_seq, type = type)
+                         season = season, page = page_seq, type = type) %>%
+               purrr::map(function(x) xml2::read_html(x))
   
   # Extract the player IDs
   player_ids <- page_urls %>%
-    # read each URL
-    purrr::map(function(x) xml2::read_html(x)) %>%
-    # get the player id (this is same order as the )
     purrr::map(find_page_player_id) %>%
     purrr::flatten_chr()
   
+   # Extract the player IDs
+  player_birthdates <- page_urls %>%
+    purrr::map(find_page_player_birthdate) %>%
+    purrr::flatten_chr()
+  
+                      
   # read the pages and extract info, then add the ids:
-  page_urls %>% 
-    # read each URL
-    purrr::map(function(x) xml2::read_html(x)) %>% 
+  page_urls %>%
     # get the name and position, combine everything into a data.frame
     purrr::map_df(build_name_abbr) %>%
-    dplyr::mutate(GSIS_ID = player_ids)
+    dplyr::mutate(GSIS_ID = player_ids,
+                  birthdate = player_birthdates)
   
 }
 
