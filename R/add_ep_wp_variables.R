@@ -891,7 +891,7 @@ add_wp_variables <- function(pbp_data) {
   pbp_data$home_wp_post <- with(pbp_data,
                                ifelse(stringr::str_detect(tolower(desc), 
                                                           "(end of game)|(end game)"), dplyr::lag(home_wp_post),
-                                      home_wp_post))
+                                      ifelse(dplyr::lag(play_type) == "no_play" && play_type == "no_play", dplyr::lag(home_wp_post),home_wp_post)))
   pbp_data$away_wp <- with(pbp_data,
                            ifelse(stringr::str_detect(tolower(desc), 
                                                       "(end of game)|(end game)"), 
@@ -901,7 +901,7 @@ add_wp_variables <- function(pbp_data) {
   pbp_data$away_wp_post <- with(pbp_data,
                                ifelse(stringr::str_detect(tolower(desc), 
                                                           "(end of game)|(end game)"), dplyr::lag(away_wp_post),
-                                      away_wp_post))
+                                      ifelse(dplyr::lag(play_type) == "no_play" && play_type == "no_play", dplyr::lag(away_wp_post),away_wp_post)))
   
 
   
