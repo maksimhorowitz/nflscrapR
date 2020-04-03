@@ -573,12 +573,13 @@ add_air_yac_ep_variables <- function(pbp_data) {
   # Calculate the yards after catch EPA:
   pass_pbp_data <- dplyr::mutate(pass_pbp_data, yacEPA = epa - airEPA)
   
+  
   # if Yards after catch is 0 make yacEPA set to 0:
-  pass_pbp_data$yacEPA <- ifelse(pass_pbp_data$yards_after_catch == 0 & pass_pbp_data$complete_pass==1,
+  pass_pbp_data$yacEPA <- ifelse(pass_pbp_data$penalty == 0 & pass_pbp_data$yards_after_catch == 0 & pass_pbp_data$complete_pass==1,
                                  0, pass_pbp_data$yacEPA)
   
   # if Yards after catch is 0 make airEPA set to EPA:
-  pass_pbp_data$airEPA <- ifelse(pass_pbp_data$yards_after_catch == 0 & pass_pbp_data$complete_pass == 1,
+  pass_pbp_data$airEPA <- ifelse(pass_pbp_data$penalty == 0 & pass_pbp_data$yards_after_catch == 0 & pass_pbp_data$complete_pass == 1,
                                  pass_pbp_data$epa, pass_pbp_data$airEPA)
   
   # Now add airEPA and yacEPA to the original dataset:
@@ -1253,11 +1254,11 @@ add_air_yac_wp_variables <- function(pbp_data) {
   }
   
   # if Yards after catch is 0 make yacWPA set to 0:
-  pass_pbp_data$yacWPA <- ifelse(pass_pbp_data$yards_after_catch == 0 & 
+  pass_pbp_data$yacWPA <- ifelse(pass_pbp_data$penalty == 0 & pass_pbp_data$yards_after_catch == 0 & 
                                    pass_pbp_data$complete_pass == 1,
                                  0, pass_pbp_data$yacWPA)
   # if Yards after catch is 0 make airWPA set to WPA:
-  pass_pbp_data$airWPA <- ifelse(pass_pbp_data$yards_after_catch == 0 &
+  pass_pbp_data$airWPA <- ifelse(pass_pbp_data$penalty == 0 & pass_pbp_data$yards_after_catch == 0 &
                                    pass_pbp_data$complete_pass == 1,
                                  pass_pbp_data$wpa, pass_pbp_data$airWPA)
   
